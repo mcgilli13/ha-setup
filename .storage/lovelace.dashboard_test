@@ -1,0 +1,787 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace.dashboard_test",
+  "data": {
+    "config": {
+      "views": [
+        {
+          "type": "custom:horizontal-layout",
+          "path": "test",
+          "subview": false,
+          "icon": "mdi:solar-power-variant",
+          "title": "test",
+          "cards": [
+            {
+              "type": "tile",
+              "features_position": "bottom",
+              "vertical": false,
+              "show_entity_picture": false,
+              "hide_state": false,
+              "visibility": [
+                {
+                  "condition": "state",
+                  "entity": "sensor.solax_status",
+                  "state_not": "Normal"
+                }
+              ],
+              "entity": "sensor.solax_status",
+              "view_layout": {
+                "grid-column": 1
+              }
+            },
+            {
+              "type": "entities",
+              "entities": [
+                {
+                  "entity": "input_boolean.ev_force_charging"
+                },
+                {
+                  "entity": "input_boolean.ev_nachtladen"
+                },
+                {
+                  "entity": "sensor.evc_status"
+                },
+                {
+                  "entity": "input_select.ev_auto_typ"
+                },
+                {
+                  "entity": "switch.evc_laden",
+                  "secondary_info": "none"
+                },
+                {
+                  "entity": "sensor.evc_charging_power"
+                },
+                {
+                  "entity": "input_number.ev_ladestrom"
+                },
+                {
+                  "entity": "sensor.cupra_formentor_battery_level"
+                },
+                {
+                  "entity": "sensor.eqa_state_of_charge"
+                }
+              ]
+            },
+            {
+              "type": "custom:better-moment-card",
+              "parentStyle": "line-height:normal;\npadding-bottom:0em;\ndisplay: grid; \ngrid-template-columns: 1fr 1fr 1fr; \ngrid-template-rows: 1fr 1fr; \ngap: 0px; \ngrid-template-areas: \n  'time time vilareal'\n  'date date madrid'; \n",
+              "moment": [
+                {
+                  "format": "HH:mm:ss",
+                  "parentStyle": "font-size:3.0em; \ntext-align:center; \nfont-weight:300; \ngrid-area: time;\nfont-weight:500\n"
+                },
+                {
+                  "format": "cccc, dd MMMM",
+                  "parentStyle": "font-size:1.0em;\nline-height:1em; text-align:center;\npadding-top:0.5em;\ngrid-area: date; \n"
+                },
+                {
+                  "format": "HH:mm:ss",
+                  "timezone": "Europe/Lisbon",
+                  "parentStyle": "text-align:center; \nline-height:2em; \npadding-top:0.2em; \ngrid-area: vilareal;\n",
+                  "template": "<strong>🇵🇹 Vila Real</strong>\n<div style=\"font-size:1.2em;\">{{moment}}</div>\n"
+                },
+                {
+                  "format": "HH:mm:ss",
+                  "timezone": "Europe/Madrid",
+                  "parentStyle": "text-align:center; \nline-height:2em; \ngrid-area: madrid;\n",
+                  "template": "<strong>🇪🇸 Madrid</strong>\n<div style=\"font-size:1.2em;\">{{moment}}</div>\n"
+                }
+              ],
+              "view_layout": {
+                "grid-column": 3
+              }
+            },
+            {
+              "type": "custom:power-flow-card-plus",
+              "entities": {
+                "battery": {
+                  "entity": {
+                    "production": "number.ac_thor_9s_1_power_ac9"
+                  },
+                  "icon": "mdi:heat-wave",
+                  "display_state": "one_way_no_zero",
+                  "name": "AC Thor"
+                },
+                "grid": {
+                  "secondary_info": {},
+                  "entity": {
+                    "production": "sensor.tibber_pulse_micha_stromerzeugung",
+                    "consumption": "sensor.tibber_pulse_micha_energie"
+                  }
+                },
+                "solar": {
+                  "entity": "sensor.solax_ac_power",
+                  "display_zero_state": true,
+                  "secondary_info": {}
+                },
+                "home": {
+                  "secondary_info": {}
+                },
+                "individual": [
+                  {
+                    "entity": "sensor.shellypro3em_a0dd6ca16768_total_active_power",
+                    "secondary_info": {},
+                    "name": "OG"
+                  },
+                  {
+                    "entity": "sensor.wp_anzeige",
+                    "secondary_info": {},
+                    "name": "WP",
+                    "show_direction": false,
+                    "icon": "mdi:heat-pump"
+                  },
+                  {
+                    "entity": "sensor.evc_charging_power",
+                    "secondary_info": {},
+                    "name": "Wallbox",
+                    "icon": "mdi:ev-plug-type2"
+                  },
+                  {
+                    "entity": "sensor.waschen_trocknen_anzeige",
+                    "secondary_info": {},
+                    "name": "Waschen",
+                    "icon": "mdi:washing-machine"
+                  },
+                  {
+                    "entity": "sensor.abwasser_anzeige",
+                    "secondary_info": {},
+                    "name": "Abwasser",
+                    "icon": "mdi:waves"
+                  }
+                ]
+              },
+              "clickable_entities": true,
+              "display_zero_lines": {
+                "mode": "show",
+                "transparency": 50,
+                "grey_color": [
+                  189,
+                  189,
+                  189
+                ]
+              },
+              "use_new_flow_rate_model": true,
+              "w_decimals": 0,
+              "kw_decimals": 1,
+              "min_flow_rate": 0.75,
+              "max_flow_rate": 6,
+              "max_expected_power": 2000,
+              "min_expected_power": 0.01,
+              "watt_threshold": 1000,
+              "transparency_zero_lines": 0,
+              "sort_individual_devices": false
+            },
+            {
+              "type": "gauge",
+              "entity": "sensor.micha_strompreis",
+              "min": 0,
+              "max": 1,
+              "needle": false,
+              "tap_action": {
+                "action": "none"
+              },
+              "severity": {
+                "green": 0,
+                "yellow": 0.35,
+                "red": 0.4
+              },
+              "view_layout": {
+                "grid-column": 2
+              }
+            },
+            {
+              "type": "vertical-stack",
+              "cards": [
+                {
+                  "type": "entities",
+                  "entities": [
+                    {
+                      "entity": "sensor.ac_thor_sollwert"
+                    },
+                    {
+                      "entity": "number.ac_thor_9s_1_power_ac9"
+                    },
+                    {
+                      "entity": "sensor.hausverbrauch_aktuell"
+                    },
+                    {
+                      "entity": "sensor.zuhause_domestic_hot_water_0_tank_temperature"
+                    }
+                  ]
+                },
+                {
+                  "chart_type": "line",
+                  "period": "5minute",
+                  "type": "statistics-graph",
+                  "entities": [
+                    "sensor.zuhause_domestic_hot_water_0_tank_temperature"
+                  ],
+                  "stat_types": [
+                    "mean"
+                  ],
+                  "days_to_show": 1,
+                  "title": "Warmwasser",
+                  "hide_legend": true
+                }
+              ]
+            },
+            {
+              "type": "custom:apexcharts-card",
+              "experimental": {
+                "color_threshold": true
+              },
+              "all_series_config": {
+                "unit": "Cent/kWh"
+              },
+              "apex_config": {
+                "grid": {
+                  "show": true,
+                  "borderColor": "#E0E0E0"
+                },
+                "chart": {
+                  "height": "250px"
+                },
+                "tooltip": {
+                  "enabled": true,
+                  "followCursor": false,
+                  "x": {
+                    "show": false
+                  },
+                  "fixed": {
+                    "enabled": true
+                  }
+                }
+              },
+              "header": {
+                "show": true,
+                "title": "Strompreis",
+                "show_states": true,
+                "colorize_states": true,
+                "standard_format": false
+              },
+              "update_interval": "15min",
+              "graph_span": "48h",
+              "now": {
+                "show": true,
+                "color": "9E9E9E"
+              },
+              "span": {
+                "start": "day"
+              },
+              "series": [
+                {
+                  "entity": "sensor.tibber_prices",
+                  "name": "Preis",
+                  "show": {
+                    "in_header": "before_now",
+                    "name_in_header": false
+                  },
+                  "color_threshold": [
+                    {
+                      "value": 0,
+                      "color": "4DD0E1"
+                    },
+                    {
+                      "value": 20,
+                      "color": "26A69A"
+                    },
+                    {
+                      "value": 25,
+                      "color": "4CAF50"
+                    },
+                    {
+                      "value": 30,
+                      "color": "7CB342"
+                    },
+                    {
+                      "value": 35,
+                      "color": "FBC02D"
+                    },
+                    {
+                      "value": 40,
+                      "color": "EF6C00"
+                    },
+                    {
+                      "value": 45,
+                      "color": "B71C1C"
+                    }
+                  ],
+                  "type": "line",
+                  "curve": "stepline",
+                  "extend_to": false,
+                  "stroke_width": 2,
+                  "float_precision": 2,
+                  "data_generator": "const noon = new Date()\nnoon.setHours(0, 0, 0, 0)\nconst prices = entity.attributes.today.concat(entity.attributes.tomorrow);\nconst data = [];\nfor(let i = 0; i < prices.length; i++) {\n  data.push([noon.getTime() + i * 1000 * 3600, prices[i].total * 100])\n}\nreturn data;\n"
+                }
+              ],
+              "view_layout": {
+                "grid-column": 2
+              }
+            },
+            {
+              "show_current": true,
+              "show_forecast": true,
+              "type": "weather-forecast",
+              "entity": "weather.singen",
+              "forecast_type": "daily"
+            },
+            {
+              "type": "entities",
+              "entities": [
+                {
+                  "entity": "sensor.hausverbrauch_aktuell",
+                  "name": "aktueller Verbrauch"
+                },
+                {
+                  "entity": "sensor.micha_strompreis",
+                  "name": "aktueller Strompreis"
+                },
+                {
+                  "entity": "sensor.tibber_pulse_micha_kumulierte_kosten",
+                  "name": "Kosten heute"
+                },
+                {
+                  "entity": "sensor.micha_monatliche_kosten",
+                  "name": "Kosten Monat"
+                }
+              ]
+            }
+          ],
+          "layout": {
+            "grid-template.columns": "1fr 1fr 1fr"
+          }
+        },
+        {
+          "type": "sections",
+          "max_columns": 4,
+          "title": "Sonos",
+          "path": "sonos",
+          "icon": "mdi:home-sound-in",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "New section"
+                },
+                {
+                  "type": "custom:sonos-card",
+                  "sections": [
+                    "player",
+                    "volumes",
+                    "groups",
+                    "grouping",
+                    "media browser",
+                    "queue"
+                  ],
+                  "topFavorites": [
+                    ""
+                  ],
+                  "dynamicVolumeSlider": false,
+                  "showVolumeUpAndDownButtons": true,
+                  "showFastForwardAndRewindButtons": false,
+                  "hidePlayerControlPowerButton": false,
+                  "hidePlayerControlShuffleButton": true,
+                  "hidePlayerControlPrevTrackButton": false,
+                  "hidePlayerControlRepeatButton": true,
+                  "mediaArtworkOverrides": [
+                    {
+                      "ifMissing": false,
+                      "mediaChannelEquals": "SWR3",
+                      "imageUrl": "https://play-lh.googleusercontent.com/YXyJumk6sgJAzBMcE1CcAV9qhrdncxiQY98U3_B081FBHr-QtK0JESoDdC6TO2rhjdA=w480-h960"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "New section"
+                },
+                {
+                  "type": "custom:better-moment-card",
+                  "parentStyle": "line-height:normal;\npadding-bottom:0em;\ndisplay: grid; \ngrid-template-columns: 1fr 1fr 1fr; \ngrid-template-rows: 1fr 1fr; \ngap: 0px; \ngrid-template-areas: \n  'time time vilareal'\n  'date date madrid'; \n",
+                  "moment": [
+                    {
+                      "format": "HH:mm:ss",
+                      "parentStyle": "font-size:3.0em; \ntext-align:center; \nfont-weight:300; \ngrid-area: time;\nfont-weight:500\n"
+                    },
+                    {
+                      "format": "cccc, dd MMMM",
+                      "parentStyle": "font-size:1.0em;\nline-height:1em; text-align:center;\npadding-top:0.5em;\ngrid-area: date; \n"
+                    },
+                    {
+                      "format": "HH:mm:ss",
+                      "timezone": "Europe/Lisbon",
+                      "parentStyle": "text-align:center; \nline-height:2em; \npadding-top:0.2em; \ngrid-area: vilareal;\n",
+                      "template": "<strong>🇵🇹 Vila Real</strong>\n<div style=\"font-size:1.2em;\">{{moment}}</div>\n"
+                    },
+                    {
+                      "format": "HH:mm:ss",
+                      "timezone": "Europe/Madrid",
+                      "parentStyle": "text-align:center; \nline-height:2em; \ngrid-area: madrid;\n",
+                      "template": "<strong>🇪🇸 Madrid</strong>\n<div style=\"font-size:1.2em;\">{{moment}}</div>\n"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "sections",
+          "title": "Büro",
+          "path": "buro",
+          "icon": "mdi:chair-rolling",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Luftreiniger",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.luftreiniger_buro_leistung"
+                },
+                {
+                  "type": "tile",
+                  "entity": "fan.luftreiniger_buro"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Rollladen",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "tile",
+                  "entity": "cover.rollladen_buro_vorhang",
+                  "icon": "mdi:window-shutter",
+                  "vertical": false,
+                  "features_position": "bottom"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Brunnen Büro"
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.brunnen_buro_schalter"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Heating Büro",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "custom:better-thermostat-ui-card",
+                  "entity": "climate.thermostat_buro",
+                  "disable_window": false,
+                  "disable_buttons": true
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "AC Büro",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "custom:better-thermostat-ui-card",
+                  "entity": "climate.buro",
+                  "disable_window": false,
+                  "disable_buttons": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "sections",
+          "max_columns": 4,
+          "title": "Wohnzimmer",
+          "path": "wohnzimmer",
+          "icon": "mdi:television",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Licht",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "tile",
+                  "entity": "light.leuchte_wohnzimmer"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Rollladen Wohnzimmer"
+                },
+                {
+                  "type": "tile",
+                  "entity": "cover.rollladen_wohnzimmer_vorhang"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Brunnen",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.brunnen_wohnzimmer_schalter"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Vitrine"
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.vitrine_schalter"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Markise Wohnzimmer"
+                },
+                {
+                  "type": "tile",
+                  "entity": "cover.markise_wohnzimmer_vorhang"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Luftreiniger Wohnzimmer"
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.luftreiniger_wohnzimmer_leistung"
+                },
+                {
+                  "type": "tile",
+                  "entity": "fan.luftreiniger_wohnzimmer"
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.temperatur_wohnzimmer_luftfeuchtigkeit",
+                  "name": {
+                    "type": "entity"
+                  },
+                  "vertical": false,
+                  "features_position": "bottom"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "AC Wohnzimmer"
+                },
+                {
+                  "type": "custom:better-thermostat-ui-card",
+                  "entity": "climate.thermostat_wohnzimmer",
+                  "disable_window": false,
+                  "disable_buttons": true,
+                  "name": "Heating Wohnzimmer"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Ir-Fireplace"
+                },
+                {
+                  "type": "custom:better-thermostat-ui-card",
+                  "entity": "climate.buro",
+                  "disable_window": false,
+                  "disable_buttons": true,
+                  "name": "AC Wohnzimmer"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "New section"
+                },
+                {
+                  "type": "tile",
+                  "entity": "button.ir_fireplace_ir_ein_aus",
+                  "name": "Fireplace Toggle",
+                  "vertical": false,
+                  "features_position": "bottom"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "sections",
+          "max_columns": 4,
+          "title": "Flur",
+          "path": "flur",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "New section"
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.shelly1_e89f6d86b9e1",
+                  "name": "Flur"
+                },
+                {
+                  "type": "tile",
+                  "name": "Flur",
+                  "entity": "light.leuchte_flur_leuchte"
+                }
+              ]
+            }
+          ],
+          "icon": "mdi:floor-plan",
+          "cards": []
+        },
+        {
+          "type": "sections",
+          "max_columns": 4,
+          "title": "Draussen",
+          "path": "draussen",
+          "icon": "mdi:border-outside",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "EQA"
+                },
+                {
+                  "type": "tile",
+                  "entity": "button.eqa_preclimate_start"
+                },
+                {
+                  "type": "tile",
+                  "entity": "lock.eqa_lock"
+                },
+                {
+                  "type": "tile",
+                  "entity": "button.eqa_preclimate_stop"
+                },
+                {
+                  "type": "tile",
+                  "entity": "button.eqa_signal_position"
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.eqa_vorklimatisierung"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "masonry",
+          "path": "schlafzimmer",
+          "title": "Schlafzimmer",
+          "icon": "mdi:bed-double-outline",
+          "cards": [
+            {
+              "type": "grid",
+              "square": false,
+              "columns": 1,
+              "cards": [
+                {
+                  "type": "entities",
+                  "entities": [
+                    "remote.samsung_7_series_43"
+                  ],
+                  "title": "Samsung 7 Series (43)"
+                },
+                {
+                  "type": "media-control",
+                  "entity": "media_player.samsung_7_series_43"
+                }
+              ]
+            },
+            {
+              "type": "thermostat",
+              "entity": "climate.schlafzimmer",
+              "features": [
+                {
+                  "type": "climate-hvac-modes",
+                  "hvac_modes": [
+                    "off",
+                    "heat",
+                    "dry",
+                    "cool",
+                    "fan_only",
+                    "heat_cool"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

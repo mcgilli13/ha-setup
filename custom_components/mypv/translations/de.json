@@ -1,0 +1,51 @@
+{
+  "config": {
+    "title": "myPV",
+    "step": {
+      "user": {
+        "data": {
+          "dev_ip": "IP-Adresse für myPV Gerät",
+          "update_interval": "Update-Intervall [s]",
+          "min_ip": "Untere Grenze des IP-Suchbereichs für myPV Geräte",
+          "max_ip": "Obere Grenze des IP-Suchbereichs für myPV Geräte"
+        }
+      }
+    },
+    "error": {
+      "could_not_connect": "Kein myPV-Gerät mit der angegebenen Adresse gefunden",
+      "host_exists": "Gefundenes Gerät wurde bereits konfiguriert",
+      "invalid_interval": "Wert ungültig",
+      "interval_too_short": "Intervall zu kurz, min. 3 s",
+      "interval_too_long": "Intervall zu lang, max. 30 s",
+      "unknown": "Unbekannter Fehler aufgetreten"
+    },
+    "abort": {
+      "host_exists": "Gefundenes Gerät wurde bereits konfiguriert"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "dev_ip": "IP-Adresse für myPV Gerät",
+          "update_interval": "Update-Intervall [s]",
+          "min_ip": "Untere Grenze des IP-Suchbereichs für myPV Geräte",
+          "max_ip": "Obere Grenze des IP-Suchbereichs für myPV Geräte"
+        },
+        "title": "Kommunikationseinstellung"
+      }
+    },
+    "error": {
+      "could_not_connect": "Kein myPV-Gerät mit der angegebenen Adresse gefunden",
+      "host_exists": "Gefundenes Gerät wurde bereits konfiguriert",
+      "invalid_interval": "Wert ungültig",
+      "interval_too_short": "Intervall zu kurz, min. 3 s",
+      "interval_too_long": "Intervall zu lang, max. 30 s",
+      "unknown": "Unbekannter Fehler aufgetreten"
+    },
+    "abort": {
+      "host_exists": "Gefundenes Gerät wurde bereits konfiguriert",
+      "options_updated": "Die Optionen wurden aktualisiert."
+    }
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "minor_version": 2,
+  "key": "energy",
+  "data": {
+    "energy_sources": [
+      {
+        "type": "grid",
+        "flow_from": [
+          {
+            "stat_energy_from": "sensor.tibber_pulse_micha_kumulierter_verbrauch",
+            "stat_cost": "sensor.tibber_pulse_micha_kumulierte_kosten",
+            "entity_energy_price": null,
+            "number_energy_price": null
+          }
+        ],
+        "flow_to": [
+          {
+            "stat_energy_to": "sensor.tibber_pulse_micha_kumulierte_produktion",
+            "stat_compensation": null,
+            "entity_energy_price": null,
+            "number_energy_price": 0.08
+          }
+        ],
+        "cost_adjustment_day": 0.0,
+        "power": [
+          {
+            "stat_rate": "sensor.tibber_pulse_micha_energie"
+          }
+        ]
+      },
+      {
+        "type": "solar",
+        "stat_energy_from": "sensor.solax_yield_total",
+        "config_entry_solar_forecast": [
+          "01JBHP7XS0D9Z0688RCY2K5476"
+        ],
+        "stat_rate": "sensor.solax_grid_power"
+      },
+      {
+        "type": "water",
+        "stat_energy_from": "sensor.judo_system_gesamtwassermenge",
+        "stat_cost": null,
+        "entity_energy_price": null,
+        "number_energy_price": null
+      }
+    ],
+    "device_consumption": [
+      {
+        "stat_consumption": "sensor.smart_switch_23111643379067510d0248e1e9e22e55_consumption",
+        "name": "Waschmaschine",
+        "included_in_stat": "sensor.shellypro3em_8813bfe23688_total_active_energy",
+        "stat_rate": "sensor.smart_switch_23111643379067510d0248e1e9e22e55_power"
+      },
+      {
+        "stat_consumption": "sensor.smart_switch_23111669739212510d0248e1e9e24660_consumption",
+        "name": "Trockner",
+        "included_in_stat": "sensor.shellypro3em_8813bfe23688_total_active_energy",
+        "stat_rate": "sensor.smart_switch_23111669739212510d0248e1e9e24660_power"
+      },
+      {
+        "stat_consumption": "sensor.smart_switch_24022178774544510d0248e1e9ed52b5_energy",
+        "name": "TK (Willi)",
+        "included_in_stat": "sensor.shellypro3em_8813bfe23688_total_active_energy",
+        "stat_rate": "sensor.smart_switch_24022178774544510d0248e1e9ed52b5_power"
+      },
+      {
+        "stat_consumption": "sensor.smart_switch_23111620195357510d0248e1e9e2683f_energy",
+        "name": "TK (Micha)",
+        "included_in_stat": "sensor.shellypro3em_8813bfe23688_total_active_energy",
+        "stat_rate": "sensor.smart_switch_23111620195357510d0248e1e9e2683f_power"
+      },
+      {
+        "stat_consumption": "sensor.smart_switch_24022171232470510d0248e1e9ed5564_energy",
+        "name": "Getränke Kühlschrank",
+        "included_in_stat": "sensor.shellypro3em_8813bfe23688_total_active_energy",
+        "stat_rate": "sensor.smart_switch_24022171232470510d0248e1e9ed5564_power"
+      },
+      {
+        "stat_consumption": "sensor.shellypro3em_a0dd6ca16768_total_active_energy",
+        "name": "Energie OG",
+        "stat_rate": "sensor.shellypro3em_a0dd6ca16768_total_active_power"
+      },
+      {
+        "stat_consumption": "sensor.shellypro3em_8813bfe23688_total_active_energy",
+        "name": "Energie EG",
+        "stat_rate": "sensor.shellypro3em_8813bfe23688_total_active_power"
+      },
+      {
+        "stat_consumption": "sensor.ac_thor_energy_workaround",
+        "name": "AC-Thor",
+        "stat_rate": "sensor.power_ac9"
+      },
+      {
+        "stat_consumption": "sensor.shelly_wp_innen_energie",
+        "name": "WP-Innen",
+        "stat_rate": "sensor.shelly_wp_innen_leistung"
+      },
+      {
+        "stat_consumption": "sensor.shelly_wp_aussen_energie",
+        "name": "WP-Aussen",
+        "stat_rate": "sensor.shelly_wp_aussen_leistung"
+      },
+      {
+        "stat_consumption": "sensor.evc_total_energy",
+        "name": "Wallbox",
+        "stat_rate": "sensor.wallbox_power"
+      }
+    ],
+    "device_consumption_water": []
+  }
+}

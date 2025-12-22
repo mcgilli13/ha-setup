@@ -1,0 +1,65 @@
+# Steuerung der Wallbox über die SolaX Cloud
+wallbox_set_mode:
+  url: "https://www.solaxcloud.com/proxyApp/proxy/api/pileCmd"
+  method: POST
+  headers:
+    Content-Type: "application/json"
+  payload: >
+    {
+      "tokenId": "!secret solax_token",
+      "rwType": "2",
+      "cmdType": "1",
+      "cmdValue": "{{ mode }}",
+      "sns": ["!secret solax_wallbox_sn"],
+      "callbackUrl": ""
+    }
+
+wallbox_start:
+  url: "https://www.solaxcloud.com/proxyApp/proxy/api/pileCmd"
+  method: POST
+  headers:
+    Content-Type: "application/json"
+  payload: >
+    {
+      "tokenId": "!secret solax_token",
+      "rwType": "2",
+      "cmdType": "1",
+      "cmdValue": "1",
+      "sns": ["!secret solax_wallbox_sn"],
+      "callbackUrl": ""
+    }
+
+wallbox_stop:
+  url: "https://www.solaxcloud.com/proxyApp/proxy/api/pileCmd"
+  method: POST
+  headers:
+    Content-Type: "application/json"
+  payload: >
+    {
+      "tokenId": "!secret solax_token",
+      "rwType": "2",
+      "cmdType": "1",
+      "cmdValue": "0",
+      "sns": ["!secret solax_wallbox_sn"],
+      "callbackUrl": ""
+    }
+
+# Steuerung des AC•THOR 9s über die my-PV Cloud API
+set_ac_thor_power:
+  url: "https://api.my-pv.com/api/v1/device/!secret mypv_serial/power"
+  method: POST
+  headers:
+    accept: "application/json"
+    Authorization: !secret mypv_token
+    Content-Type: "application/json"
+  payload: >
+    {
+      "validForMinutes": 5,
+      "power": {{ states('sensor.ac_thor_überschuss_watt') | float(0) | round(0) }},
+      "pidPower": null,
+      "timeBoostOverride": 0,
+      "timeBoostValue": 0,
+      "legionellaBoostBlock": 0,
+      "batteryDischargeBlock": 0
+    }
+

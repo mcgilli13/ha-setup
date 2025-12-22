@@ -1,0 +1,15 @@
+wallbox_mode:
+  name: Wallbox Modus
+  options:
+    - "Fast"
+    - "Eco"
+    - "Green"
+    - "Stop"
+  initial: "Stop"
+
+ev_auto_typ:
+  name: EV Auto
+  options:
+    - "Mercedes"  # 3-phasig
+    - "Cupra"     # 1-phasig
+  initial: "Cupra"

@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace",
+  "data": {
+    "config": {
+      "strategy": {
+        "type": "original-states",
+        "areas": {
+          "hidden": [
+            "dach"
+          ],
+          "order": [
+            "bad",
+            "bedroom",
+            "buro",
+            "esszimmer",
+            "kitchen",
+            "kuche",
+            "living_room",
+            "schlafzimmer",
+            "wohnzimmer"
+          ]
+        },
+        "hide_energy": true
+      }
+    }
+  }
+}

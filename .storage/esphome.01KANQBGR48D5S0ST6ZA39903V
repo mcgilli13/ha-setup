@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "esphome.01KANQBGR48D5S0ST6ZA39903V",
+  "data": {
+    "device_info": {
+      "uses_password": false,
+      "name": "ir-fireplace",
+      "friendly_name": "",
+      "mac_address": "94:54:C5:E9:20:DC",
+      "compilation_time": "Dec 13 2025, 13:00:01",
+      "model": "esp32dev",
+      "manufacturer": "Espressif",
+      "has_deep_sleep": false,
+      "esphome_version": "2025.11.5",
+      "project_name": "",
+      "project_version": "",
+      "webserver_port": 0,
+      "legacy_voice_assistant_version": 0,
+      "voice_assistant_feature_flags": 0,
+      "legacy_bluetooth_proxy_version": 0,
+      "bluetooth_proxy_feature_flags": 127,
+      "zwave_proxy_feature_flags": 0,
+      "zwave_home_id": 0,
+      "suggested_area": "",
+      "bluetooth_mac_address": "94:54:C5:E9:20:DE",
+      "api_encryption_supported": false,
+      "devices": [],
+      "areas": [],
+      "area": {
+        "area_id": 0,
+        "name": ""
+      }
+    },
+    "services": [],
+    "api_version": {
+      "major": 1,
+      "minor": 13
+    },
+    "update": [],
+    "button": [
+      {
+        "object_id": "ir_ein_aus",
+        "key": 2872651881,
+        "name": "IR Ein/Aus",
+        "disabled_by_default": false,
+        "icon": "",
+        "entity_category": 0,
+        "device_id": 0,
+        "device_class": ""
+      },
+      {
+        "object_id": "ir_licht",
+        "key": 2560465577,
+        "name": "IR Licht",
+        "disabled_by_default": false,
+        "icon": "",
+        "entity_category": 0,
+        "device_id": 0,
+        "device_class": ""
+      },
+      {
+        "object_id": "ir_feuer",
+        "key": 3676627592,
+        "name": "IR Feuer",
+        "disabled_by_default": false,
+        "icon": "",
+        "entity_category": 0,
+        "device_id": 0,
+        "device_class": ""
+      },
+      {
+        "object_id": "ir_wechsel",
+        "key": 441193558,
+        "name": "IR Wechsel",
+        "disabled_by_default": false,
+        "icon": "",
+        "entity_category": 0,
+        "device_id": 0,
+        "device_class": ""
+      }
+    ]
+  }
+}

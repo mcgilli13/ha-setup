@@ -1,0 +1,51 @@
+{
+  "title": "myPV",
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "dev_ip": "[%key:common::config_flow::data::dev_ip%]",
+          "update_interval": "[%key:common::options_flow::data::update_interval%]",
+          "min_ip": "[%key:common::config_flow::data::min_ip%]",
+          "max_ip": "[%key:common::config_flow::data::max_ip%]"
+        }
+      }
+    },
+    "error": {
+      "could_not_connect": "[%key:common::config_flow::error::min_ip%]",
+      "host_exists": "[%key:common::config_flow::error::min_ip%]",
+      "invalid_interval": "[%key:common::config_flow::error::invalid_interval%]",
+      "interval_too_short": "[%key:common::config_flow::error::interval_too_short%]",
+      "interval_too_long": "[%key:common::config_flow::error::interval_too_long%]",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "abort": {
+      "host_exists": "[%key:common::config_flow::abort::min_ip%]"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "dev_ip": "[%key:common::options_flow::data::dev_ip%]",
+          "update_interval": "[%key:common::options_flow::data::update_interval%]",
+          "min_ip": "[%key:common::options_flow::data::min_ip%]",
+          "max_ip": "[%key:common::options_flow::data::max_ip%]"
+        },
+        "title": "Setup communication"
+      }
+    },
+    "error": {
+      "could_not_connect": "[%key:common::options_flow::error::dev_ip%]",
+      "host_exists": "[%key:common::options_flow::error::dev_ip%]",
+      "invalid_interval": "[%key:common::config_flow::error::invalid_interval%]",
+      "interval_too_short": "[%key:common::config_flow::error::interval_too_short%]",
+      "interval_too_long": "[%key:common::config_flow::error::interval_too_long%]",
+      "unknown": "[%key:common::options_flow::error::unknown%]"
+    },
+    "abort": {
+      "already_configured": "[%key:common::options_flow::abort::already_configured_device%]",
+      "options_updated": "[%key:common::options_flow::abort::options_updated%]"
+    }
+  }
+}

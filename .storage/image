@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "image",
+  "data": {
+    "items": [
+      {
+        "id": "d39cb694466a550457c8b8ad3c2d7b17",
+        "filesize": 1597093,
+        "content_type": "image/jpeg",
+        "name": "IMG_9708.jpeg",
+        "uploaded_at": "2024-11-18T15:11:05.434297+00:00"
+      },
+      {
+        "id": "f3532fac69debb198150a10e2664eb76",
+        "filesize": 1894784,
+        "content_type": "image/jpeg",
+        "name": "IMG_9602.jpeg",
+        "uploaded_at": "2024-12-25T11:23:56.263105+00:00"
+      },
+      {
+        "id": "7c778f5bdec29722e0c67dda13cbf73a",
+        "filesize": 4939327,
+        "content_type": "image/jpeg",
+        "name": "IMG_9603.jpeg",
+        "uploaded_at": "2024-12-25T11:32:47.934886+00:00"
+      }
+    ]
+  }
+}

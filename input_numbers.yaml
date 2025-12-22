@@ -1,0 +1,8 @@
+ev_ladestrom:
+  name: "EV Ladestrom (Ampere)"
+  min: 6
+  max: 16
+  step: 1
+  unit_of_measurement: "A"
+  mode: slider
+  icon: mdi:current-dc

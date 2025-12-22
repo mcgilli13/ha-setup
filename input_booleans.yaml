@@ -1,0 +1,13 @@
+
+ev_force_charging:
+  name: "EV Zwangsladen"
+  icon: mdi:battery-charging-100
+
+ev_nachtladen:
+  name: "EV Nachtladung (2-6 Uhr)"
+  icon: mdi:weather-night
+
+ac_thor_steuerung:
+  name: AC•THOR Steuerung aktiv
+  icon: mdi:power
+    

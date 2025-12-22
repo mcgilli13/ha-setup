@@ -1,0 +1,68 @@
+# - platform: template
+#   switches:
+#     evc_ladefreigabe:
+#       friendly_name: "EVC Laden"
+#       icon_template: mdi:ev-station
+#       turn_on:
+#         - service: modbus.write_register
+#           data:
+#             hub: solax_evc
+#             unit: 1
+#             address: 1552  # StartChargeMode
+#             value: 2       # Start per App
+#         - delay: "00:00:01"
+#         - service: modbus.write_register
+#           data:
+#             hub: solax_evc
+#             unit: 1
+#             address: 1575  # control_comma
+#             value: 4       # Start Charging
+#       turn_off:
+#         - service: modbus.write_register
+#           data:
+#             hub: solax_evc
+#             unit: 1
+#             address: 1575  # control_comma
+#             value: 3       # Stop Charging
+#       value_template: >
+#         {{ states('sensor.evc_status_code') | int(0) == 2 }}
+
+- platform: template
+  switches:
+    evc_ladefreigabe:
+      friendly_name: "EVC Laden"
+      icon_template: mdi:ev-station
+
+      turn_on:
+        - service: modbus.write_register
+          data:
+            hub: solax_evc
+            unit: 1
+            # StartChargeMode
+            address: 1552
+            # Start per App
+            value: 2
+
+        - delay: "00:00:01"
+
+        - service: modbus.write_register
+          data:
+            hub: solax_evc
+            unit: 1
+            # control_comma
+            address: 1575
+            # Start Charging
+            value: 4
+
+      turn_off:
+        - service: modbus.write_register
+          data:
+            hub: solax_evc
+            unit: 1
+            # control_comma
+            address: 1575
+            # Stop Charging
+            value: 3
+
+      value_template: >
+        {{ states('sensor.evc_status_code') | int(0) == 2 }}

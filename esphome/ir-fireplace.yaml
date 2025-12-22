@@ -1,0 +1,82 @@
+esphome:
+  name: ir-fireplace
+
+wifi: !include secrets.yaml
+
+logger:
+api:
+ota:
+  platform: esphome
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Bluetooth Proxy aktivieren
+bluetooth_proxy:
+  active: true
+
+# IR Empfang (KY-022/CHQ1838 an IO23)
+remote_receiver:
+  pin: GPIO23
+  filter: 20us
+  idle: 5ms
+  tolerance: 60%
+  dump:
+    - nec
+    - sony
+    - samsung
+    - rc5
+    - rc6
+    - lg
+    - jvc
+    - panasonic
+    - pioneer
+    - pronto
+
+# IR Senden (Sender-Modul an IO4)
+remote_transmitter:
+  pin: GPIO4
+  carrier_duty_percent: 50%
+
+# Pronto-Codes als Variablen
+globals:
+  - id: pronto_power
+    type: std::string
+    initial_value: "\"0000 006D 0022 0000 0172 00AE 0019 0016 0019 0016 0019 0016 0019 0015 0019 0016 0019 0016 0019 0016 0019 0015 0019 003F 0019 003F 0019 003F 0019 003F 0019 003F 0018 0040 0019 003F 0019 003F 0019 0016 0018 0040 0019 003F 0019 0016 0019 0015 0019 0016 0019 003F 0019 0016 0019 003F 0019 0016 0019 0016 0019 003F 0019 003F 0019 003F 0019 0016 0019 003F 0019 0180\""
+  - id: pronto_light
+    type: std::string
+    initial_value: "\"0000 006D 0022 0000 0172 00AE 0019 0015 0019 0015 0019 0016 0019 0015 0019 0015 0019 0016 0019 0016 0019 0015 0019 003F 001A 003E 0019 003F 001A 003E 0019 003F 0019 003F 001A 003E 0019 003F 0019 003F 0019 0015 0019 0015 0019 003F 0019 0015 0019 0015 0019 0015 001A 0015 0019 0015 001A 003E 0019 003F 0019 0015 001A 003E 0019 003F 0019 003F 0019 003F 0019 0180\""
+  - id: pronto_fire
+    type: std::string
+    initial_value: "\"0000 006D 0022 0000 0173 00AC 0019 0015 001A 0014 001A 0014 001A 0014 0019 0015 001B 0013 0019 0015 001A 0014 001A 003E 0019 003F 001A 003E 0019 003F 001A 003E 0019 003F 001A 003E 0019 003F 001A 0014 001A 0014 001A 003E 0019 0015 001A 0014 001A 0014 0019 003F 0019 0015 001A 003E 001A 003E 001A 0014 0019 003F 001A 003E 001A 003E 001A 0014 0019 003F 001A 0180\""
+  - id: pronto_cycle
+    type: std::string
+    initial_value: "\"0000 006D 0022 0000 0174 00AC 001A 0014 0019 0015 0019 0016 0019 0015 001A 0014 0019 0016 001A 0014 001A 0014 001A 003E 001A 003E 001A 003E 001A 003E 001A 003E 001A 003E 001A 003E 001A 003E 001A 003E 001A 003E 001A 003E 001A 0014 0019 0016 001A 0014 0019 0015 001A 0014 001A 0014 0019 0015 001A 0014 001A 003E 001A 003E 001A 003E 001A 003E 001A 003E 001A 0180\""
+
+# Taster-Entities für Home Assistant – direktes Senden
+button:
+  - platform: template
+    name: "IR Ein/Aus"
+    on_press:
+      - remote_transmitter.transmit_pronto:
+          data: !lambda 'return id(pronto_power);'
+
+  - platform: template
+    name: "IR Licht"
+    on_press:
+      - remote_transmitter.transmit_pronto:
+          data: !lambda 'return id(pronto_light);'
+
+  - platform: template
+    name: "IR Feuer"
+    on_press:
+      - remote_transmitter.transmit_pronto:
+          data: !lambda 'return id(pronto_fire);'
+
+  - platform: template
+    name: "IR Wechsel"
+    on_press:
+      - remote_transmitter.transmit_pronto:
+          data: !lambda 'return id(pronto_cycle);'

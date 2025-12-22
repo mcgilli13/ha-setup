@@ -1,0 +1,304 @@
+- sensor:
+    # Exportleistung (Netzeinspeisung > 0)
+    - name: "SolaX Net Export"
+      unique_id: Solax_Export
+      icon: mdi:transmission-tower
+      unit_of_measurement: "W"
+      state: >
+        {% set v = states('sensor.solax_feed_in_power') | float(0) %}
+        {{ v if v > 0 else 0 }}
+
+    # Importleistung (Netzbezug > 0)
+    - name: "SolaX Net Import"
+      unique_id: Solax_Import
+      unit_of_measurement: "W"
+      icon: mdi:transmission-tower
+      state: >
+        {% set v = states('sensor.solax_feed_in_power') | float(0) %}
+        {{ (0 - v) if v < 0 else 0 }}
+
+    # Status des Wechselrichters (übersetzt von Statuscode)
+    - name: "Solax Status"
+      unique_id: Solax_Status
+      icon: mdi:solar-power-variant
+      state: >
+        {% set attr = states('sensor.solax_inverter_status') | int(0) + 100 %}
+        {% if attr == 100 %}Wait
+        {% elif attr == 101 %}Check
+        {% elif attr == 102 %}Normal
+        {% elif attr == 103 %}Fault
+        {% elif attr == 104 %}Permanent Fault
+        {% elif attr == 105 %}Update
+        {% elif attr == 106 %}EPS Check
+        {% elif attr == 107 %}EPS
+        {% elif attr == 108 %}Self-test
+        {% elif attr == 109 %}Idle
+        {% elif attr == 110 %}Standby
+        {% elif attr == 111 %}Pv Wake Up Bat
+        {% elif attr == 112 %}Gen Check
+        {% elif attr == 113 %}Gen Run
+        {% else %} Unknown {% endif %}
+
+    # AC Power aus Cloud
+    - name: "Solax Cloud AC Power"
+      unique_id: "Solax_Cloud_AC_Power"
+      unit_of_measurement: "W"
+      device_class: power
+      state: "{{ states.sensor.solax_cloud_api.attributes.result.acpower | default(0) }}"
+      availability: "{{ states('sensor.solax_cloud_api') == 'True' }}"
+
+    # Berechnung des aktuellen Hausverbrauchs
+    - name: "Hausverbrauch aktuell"
+      unique_id: "Hausverbrauch_aktuell"
+      device_class: power
+      state_class: measurement
+      unit_of_measurement: "W"
+      state: >
+        {{
+        states('sensor.tibber_pulse_micha_energie')| float(0) -
+        states('sensor.tibber_pulse_micha_stromerzeugung')| float(0)
+        }}
+
+    # Leistung von Waschmaschine + Trockner
+    - name: "Waschen & Trocknen"
+      unique_id: "Waschen_Trocknen"
+      device_class: power
+      state_class: measurement
+      unit_of_measurement: "W"
+      state: >
+        {{
+        states('sensor.smart_switch_23111643379067510d0248e1e9e22e55_power')| float(0) +
+        states('sensor.smart_switch_23111669739212510d0248e1e9e24660_power')| float(0)
+        }}
+
+    # Leistung von Waschmaschine & Trockner für Anzeige in FlowCard
+    - name: "Waschen & Trocknen (Anzeige)"
+      unique_id: "Waschen_Trocknen_Flow"
+      device_class: power
+      state_class: measurement
+      unit_of_measurement: "W"
+      state: >
+        {% set p = states('sensor.waschen_trocknen')| float(0) %}
+        {% if p < 50 %}
+          0
+        {% else %}
+          {{ p }}
+        {% endif %}
+
+    # Leistung Wärmepumpe (Anzeige)
+    - name: "WP (Anzeige)"
+      unique_id: "WP_Flow"
+      device_class: power
+      state_class: measurement
+      unit_of_measurement: "W"
+      state: >
+        {% set p = states('sensor.wp_gesamtleistung_w_v2') | float(0) %}
+        {% if p < 50 %}
+          0
+        {% else %}
+          {{ p }}
+        {% endif %}
+
+    # Leistung Abwasserpumpe (Anzeige)
+    - name: "Abwasser (Anzeige)"
+      unique_id: "Abwasser_Flow"
+      device_class: power
+      state_class: measurement
+      unit_of_measurement: "W"
+      state: >
+        {% set p = states('sensor.p_m_02_power')| float(0) %}
+        {% if p < 50 %}
+          0
+        {% else %}
+          {{ p }}
+        {% endif %}
+
+    # Energie Wallbox
+    - name: "Wallbox Energy"
+      unique_id: "Wallbox Energie"
+      device_class: energy
+      unit_of_measurement: "kWh"
+      state: "{{ state_attr('sensor.wallbox', 'chargeEnergy') }}"
+      icon: mdi:flash
+      state_class: total_increasing
+
+    # Ladeleistung Wallbox
+    - name: "Wallbox Power"
+      unique_id: "Wallbox Power"
+      device_class: power
+      unit_of_measurement: "W"
+      state: "{{ state_attr('sensor.wallbox', 'chargingPower') }}"
+      icon: mdi:flash
+      state_class: measurement
+
+    # EV Ladestrom Optimal
+    - name: "EV Ladestrom Optimal"
+      unique_id: "ev_ladestrom_optimal"
+      unit_of_measurement: "A"
+      state: >
+        {% set modbus = states('sensor.solax_ac_power') | float(0) %}
+        {% set cloud = states('sensor.solax_cloud_ac_power') | float(0) %}
+        {% set solar = modbus if (modbus > 0 and states('sensor.solax_ac_power') not in ['unavailable', 'unknown']) else cloud %}
+        
+        {% set og = states('sensor.shellypro3em_a0dd6ca16768_total_active_power') | float(0) %}
+        {% set eg = states('sensor.shellypro3em_8813bfe23688_total_active_power') | float(0) %}
+        {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
+        {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
+        {% set ac_pat = 500 if not is_state('climate.patrice', 'off') else 0 %}
+        {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
+        {% set ac_wohn = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
+        {% set ac_buro = 500 if not is_state('climate.buro', 'off') else 0 %}
+        {% set reserve = 500 %}
+        
+        {% set grundverbrauch = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + reserve %}
+        {% set ueberschuss = solar - grundverbrauch %}
+        
+        {% set spannung = 690 if is_state('input_select.ev_auto_typ', 'Mercedes') else 230 %}
+        {% set ampere = (ueberschuss / spannung) | round(1) %}
+        
+        {% if ampere < 6 %}
+          0
+        {% elif ampere > 16 %}
+          16  
+        {% else %}
+          {{ ampere | round(0) }}
+        {% endif %}
+
+    # AC-THOR Sollwert
+    - name: "AC•THOR Sollwert"
+      unique_id: ac_thor_sollwert
+      unit_of_measurement: "W"
+      state: >
+        {% set thor = states('number.ac_thor_9s_1_power_ac9') | float(0) %}
+        {% set modbus = states('sensor.solax_ac_power') | float(0) %}
+        {% set cloud = states('sensor.solax_cloud_ac_power') | float(0) %}
+        {% set solar = modbus if modbus > 0 else cloud %}
+        {% set og = states('sensor.shellypro3em_a0dd6ca16768_total_active_power') | float(0) %}
+        {% set eg = states('sensor.shellypro3em_8813bfe23688_total_active_power') | float(0) %}
+        {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
+        {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
+        {% set ac_pat = 500 if not is_state('climate.patrice', 'off') else 0 %}
+        {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
+        {% set ac_wohn = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
+        {% set ac_buro = 500 if not is_state('climate.buro', 'off') else 0 %}
+        {% set evc = states('sensor.evc_charging_power') | float(0) * 1000 %}
+        {% set reserve = 1000 %}
+        {% set last = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + evc + reserve %}
+        {% set u = solar - last %}
+
+        {% if u < 1000 %}
+          0
+        {% elif u > 9000 %}
+          9000
+        {% else %}
+          {{ u | round(-2) }}
+        {% endif %}
+
+    # Statusanzeige evc
+    - name: "EVC Status"
+      state: >
+        {% set code = states('sensor.evc_status_code') | int(0) %}
+        {% if code == 0 %}Available
+        {% elif code == 1 %}Preparing
+        {% elif code == 2 %}Charging
+        {% elif code == 3 %}Finished
+        {% elif code == 4 %}Faulted
+        {% elif code == 5 %}Unavailable
+        {% elif code == 6 %}Reserved
+        {% elif code == 7 %}Suspended EV
+        {% elif code == 8 %}Suspended EVSE
+        {% elif code == 9 %}Update
+        {% elif code == 10 %}Card Activation
+        {% elif code == 11 %}Start Delay
+        {% elif code == 12 %}Charge Paused
+        {% elif code == 13 %}Stopping
+        {% else %}Unknown ({{ code }}){% endif %}
+
+    # - name: "WP Gesamtleistung W v2"
+    #   unique_id: "wp_power_sum_w_v2"
+    #   unit_of_measurement: "W"
+    #   device_class: power
+    #   state_class: measurement
+    #   state: >
+    #     {% set p =
+    #       (states('sensor.zuhause_device_0_arotherm_current_power') | float(0)) +
+    #       (states('sensor.zuhause_device_1_hydraulic_station_current_power') | float(0))
+    #     %}
+    #     {% if p < 0 or p > 8000 %} 0 {% else %} {{ p }} {% endif %}
+  
+    - name: "WP Gesamtleistung W v2"
+      unique_id: "wp_power_sum_w_v2"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {% set p =
+          (states('sensor.shelly_wp_innen_leistung') | float(0)) +
+          (states('sensor.shelly_wp_aussen_leistung') | float(0))
+        %}
+        {% if p < 0  %} 0 {% else %} {{ p }} {% endif %}
+
+    # - name: "WP Energie integriert v2"
+    #   unique_id: "wp_energy_integrated_kwh_v2"
+    #   state: "{{ states('sensor.wp_energie_integriert_roh_v2') | float(0) }}"
+    #   unit_of_measurement: "kWh"
+    #   device_class: energy
+    #   state_class: total_increasing
+
+    # Wallbox Leistung in W
+    - name: "WB Leistung W"
+      state: "{{ (states('sensor.evc_charging_power') | float(0)) * 1000 }}"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+
+    # Weitergereichter Energie-Sensor
+    - name: "WB Energie integriert"
+      state: "{{ states('sensor.wb_energie_integriert_roh') | float(0) }}"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+
+    - name: "rollladen_oeffnen_zeit"
+      device_class: timestamp
+      state: >
+        {% set fixed = now().replace(hour=7, minute=15, second=0, microsecond=0) %}
+        {% set sun_raw = state_attr("sun.sun", "next_rising") %}
+        {% if sun_raw %}
+          {% set sun = as_datetime(sun_raw) | as_local - timedelta(minutes=30) %}
+          {{ [fixed, sun] | max }}
+        {% else %}
+          {{ fixed }}
+        {% endif %}
+
+# -----------------------------------------------------------
+# ↘️ HIER BEGINNT DER NEUE MODERNE TEMPLATE-SWITCH
+# -----------------------------------------------------------
+
+- switch:
+    - name: "EVC Laden"
+      unique_id: evc_ladefreigabe
+      icon: mdi:ev-station
+      state: "{{ states('sensor.evc_status_code') | int(0) == 2 }}"
+      turn_on:
+        - action: modbus.write_register
+          data:
+            hub: solax_evc
+            unit: 1
+            address: 1552
+            value: 2
+        - delay: "00:00:01"
+        - action: modbus.write_register
+          data:
+            hub: solax_evc
+            unit: 1
+            address: 1575
+            value: 4
+      turn_off:
+        - action: modbus.write_register
+          data:
+            hub: solax_evc
+            unit: 1
+            address: 1575
+            value: 3
+

@@ -1,0 +1,17 @@
+# Home Assistant secrets
+secrets.yaml
+
+# Database & Logs
+home-assistant_v2.db*
+*.log
+*.log.*
+*.db
+tts/*
+zwave_js_cache/*
+__pycache__/
+deps/
+storage/
+
+# Custom stuff
+.blueprint
+.cloud

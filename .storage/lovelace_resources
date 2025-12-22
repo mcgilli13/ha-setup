@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace_resources",
+  "data": {
+    "items": [
+      {
+        "id": "b05ea7d6700c43a4b092b9a082a0cbc4",
+        "url": "/hacsfiles/power-flow-card-plus/power-flow-card-plus.js?hacstag=618081815026",
+        "type": "module"
+      },
+      {
+        "id": "a53eb670cc5445c1b0241bdef567d953",
+        "url": "/hacsfiles/apexcharts-card/apexcharts-card.js?hacstag=331701152223",
+        "type": "module"
+      },
+      {
+        "id": "ece7d880a7004adea0c4bd148c1b8f0c",
+        "url": "/hacsfiles/better-miflora-card/better-miflora-card.js?hacstag=776846977111",
+        "type": "module"
+      },
+      {
+        "id": "8c1e7aa4cc5f49df95ae41037b707334",
+        "url": "/hacsfiles/better-moment-card/better-moment-card.js?hacstag=73702818820250111",
+        "type": "module"
+      },
+      {
+        "id": "ef2fd6ada08248d593546a5b6faf049a",
+        "url": "/hacsfiles/lovelace-flower-card/flower-card.js?hacstag=297423025202510",
+        "type": "module"
+      },
+      {
+        "id": "7acf74e10de24adf884c2fc2da27b9b8",
+        "url": "/hacsfiles/custom-sonos-card/custom-sonos-card.js?hacstag=449416816970",
+        "type": "module"
+      },
+      {
+        "id": "88f3c65c24294a448116d0f34e1db785",
+        "url": "/hacsfiles/vacuum-card/vacuum-card.js?hacstag=2612912952110",
+        "type": "module"
+      },
+      {
+        "id": "0b7a06da124b4a3c8aaa6dd02ec0604b",
+        "url": "/hacsfiles/lovelace-layout-card/layout-card.js?hacstag=156434866247",
+        "type": "module"
+      },
+      {
+        "id": "11cd08bd97fb4e95ab7fdd1830405421",
+        "url": "/hacsfiles/better-thermostat-ui-card/better-thermostat-ui-card.js?hacstag=439367892221",
+        "type": "module"
+      },
+      {
+        "id": "85504a53944840918806d3e0cdc4e2a5",
+        "url": "/hacsfiles/mini-graph-card/mini-graph-card-bundle.js?hacstag=1512800620130",
+        "type": "module"
+      }
+    ]
+  }
+}

@@ -1,0 +1,69 @@
+
+#### Wallbox
+  - platform: rest
+    resource: https://www.solaxcloud.com/proxyApp/proxy/api/getPileInfo?tokenId=!secret solax_token&pileSn=!secret solax_wallbox_sn
+    name: "Wallbox"
+    json_attributes_path: "$.result"
+    json_attributes:
+      - chargerStatus
+      - chargingMode
+      - chargingPower
+      - chargeEnergy
+    value_template: 'Active'  # dummy value, not used; avoids the "State max length is 255 characters" error
+
+#### Solax Cloud API v2 (Inverter Data)
+  - platform: rest
+    resource: !secret solax_api_url
+    method: POST
+    headers:
+      Content-Type: "application/json"
+      tokenId: !secret solax_token
+    payload: !secret solax_api_request_body
+    scan_interval: 60
+    value_template: "{{ value_json.success }}"
+    json_attributes:
+      - success
+      - exception
+      - result
+      - code
+    name: "Solax Cloud API"
+
+    ### Tibber
+  - platform: rest
+    name: Tibber prices
+    resource: https://api.tibber.com/v1-beta/gql
+    method: POST
+    scan_interval: 60
+    payload: '{ "query": "{ viewer { homes { currentSubscription { priceInfo { today { total startsAt } tomorrow { total startsAt }}}}}}" }'
+    json_attributes_path: "$.data.viewer.homes[0].currentSubscription.priceInfo"
+    json_attributes:
+      - today
+      - tomorrow
+    value_template: Ok
+    headers:
+      Authorization: !secret tibber_authorization
+      Content-Type: application/json
+      User-Agent: REST
+
+  - platform: integration
+    source: sensor.wp_gesamtleistung_w_v2
+    name: "WP Energie integriert roh v2"
+    unit_time: s
+    method: left
+    round: 3
+
+  # Integration der Wallbox-Leistung zu Energie
+  - platform: integration
+    source: sensor.wb_leistung_w
+    name: "WB Energie integriert roh"
+    unit_time: s
+    method: left
+    round: 3
+
+  - platform: integration
+    source: number.ac_thor_9s_1_power_ac9
+    name: ac_thor_energy_workaround
+    unit_prefix: k
+    method: left
+    unit_time: h
+    round: 3

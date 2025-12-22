@@ -1,0 +1,7 @@
+reset_energy_sensor:
+  name: Reset energy sensor
+  description: Resets the value of one my-PV energy sensor.
+  target:
+    entity:
+      domain: sensor
+      device_class: energy

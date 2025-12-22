@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "auth_provider.homeassistant",
+  "data": {
+    "users": [
+      {
+        "username": "migi68",
+        "password": "JDJiJDEyJFE2R053ZTJMMzcvcUFtQlhqT0N4V09SNzE2aFFyblVKdGdqWUlTc2prU3JZbVZJUVp0L1Mu"
+      },
+      {
+        "username": "kiosk",
+        "password": "JDJiJDEyJFEvdGQ3QktsUHg0N1ozTmlFNmt0UE9sS2IwMHR4dEY3aFBYS3hCRTYxR2hxZGZTWjBHODIu"
+      }
+    ]
+  }
+}

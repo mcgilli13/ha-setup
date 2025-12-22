@@ -1,0 +1,198 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "meross_lan.profile.3288180",
+  "data": {
+    "appId": "c73ef9d56f91c2d245fa23c263ee4964",
+    "token": "06127be3f12499c059c2740c202ae3287144545c853dfa07d90a3cf78c796aa8",
+    "deviceInfo": {
+      "23111620195357510d0248e1e9e2683f": {
+        "uuid": "23111620195357510d0248e1e9e2683f",
+        "onlineStatus": 1,
+        "devName": "TK (rechts)",
+        "devIconId": "device024",
+        "bindTime": 1722414505,
+        "deviceType": "mss210p",
+        "subType": "eu",
+        "channels": [
+          {}
+        ],
+        "region": "eu",
+        "fmwareVersion": "7.3.9",
+        "hdwareVersion": "7.0.0",
+        "userDevIcon": "",
+        "iconType": 1,
+        "domain": "mqtt-eu-4.meross.com",
+        "reservedDomain": "mqtt-eu-4.meross.com",
+        "hardwareCapabilities": []
+      },
+      "23111643379067510d0248e1e9e22e55": {
+        "uuid": "23111643379067510d0248e1e9e22e55",
+        "onlineStatus": 1,
+        "devName": "Waschmaschine",
+        "devIconId": "device024",
+        "bindTime": 1721585399,
+        "deviceType": "mss210p",
+        "subType": "eu",
+        "channels": [
+          {}
+        ],
+        "region": "eu",
+        "fmwareVersion": "7.3.9",
+        "hdwareVersion": "7.0.0",
+        "userDevIcon": "",
+        "iconType": 1,
+        "domain": "mqtt-eu-4.meross.com",
+        "reservedDomain": "mqtt-eu-4.meross.com",
+        "hardwareCapabilities": []
+      },
+      "2211019393553470080148e1e9aea999": {
+        "uuid": "2211019393553470080148e1e9aea999",
+        "onlineStatus": 1,
+        "devName": "Markise",
+        "devIconId": "device063_eu",
+        "bindTime": 1697630202,
+        "deviceType": "mrs100",
+        "subType": "eu",
+        "channels": [
+          {}
+        ],
+        "region": "eu",
+        "fmwareVersion": "7.6.19",
+        "hdwareVersion": "7.0.0",
+        "userDevIcon": "",
+        "iconType": 0,
+        "domain": "mqtt-eu-4.meross.com",
+        "reservedDomain": "mqtt-eu-4.meross.com",
+        "hardwareCapabilities": []
+      },
+      "23111669739212510d0248e1e9e24660": {
+        "uuid": "23111669739212510d0248e1e9e24660",
+        "onlineStatus": 1,
+        "devName": "Trockner",
+        "devIconId": "device024",
+        "bindTime": 1722496451,
+        "deviceType": "mss210p",
+        "subType": "eu",
+        "channels": [
+          {}
+        ],
+        "region": "eu",
+        "fmwareVersion": "7.3.9",
+        "hdwareVersion": "7.0.0",
+        "userDevIcon": "",
+        "iconType": 1,
+        "domain": "mqtt-eu-4.meross.com",
+        "reservedDomain": "mqtt-eu-4.meross.com",
+        "hardwareCapabilities": []
+      },
+      "24022178774544510d0248e1e9ed52b5": {
+        "uuid": "24022178774544510d0248e1e9ed52b5",
+        "onlineStatus": 1,
+        "devName": "TK (links)",
+        "devIconId": "device024",
+        "bindTime": 1739426450,
+        "deviceType": "mss210p",
+        "subType": "eu",
+        "channels": [
+          {}
+        ],
+        "region": "eu",
+        "fmwareVersion": "7.3.9",
+        "hdwareVersion": "7.0.0",
+        "userDevIcon": "",
+        "iconType": 1,
+        "domain": "mqtt-eu-4.meross.com",
+        "reservedDomain": "mqtt-eu-4.meross.com",
+        "hardwareCapabilities": []
+      },
+      "24022171232470510d0248e1e9ed5564": {
+        "uuid": "24022171232470510d0248e1e9ed5564",
+        "onlineStatus": 1,
+        "devName": "Getränke Kühlschrank",
+        "devIconId": "device024",
+        "bindTime": 1740135120,
+        "deviceType": "mss210p",
+        "subType": "eu",
+        "channels": [
+          {}
+        ],
+        "region": "eu",
+        "fmwareVersion": "7.3.9",
+        "hdwareVersion": "7.0.0",
+        "userDevIcon": "",
+        "iconType": 1,
+        "domain": "mqtt-eu-4.meross.com",
+        "reservedDomain": "mqtt-eu-4.meross.com",
+        "hardwareCapabilities": []
+      },
+      "24022100618577510d0248e1e9ed55d8": {
+        "uuid": "24022100618577510d0248e1e9ed55d8",
+        "onlineStatus": 1,
+        "devName": "Regenwasser Pumpen",
+        "devIconId": "device024",
+        "bindTime": 1741063571,
+        "deviceType": "mss210p",
+        "subType": "eu",
+        "channels": [
+          {}
+        ],
+        "region": "eu",
+        "fmwareVersion": "7.3.9",
+        "hdwareVersion": "7.0.0",
+        "userDevIcon": "",
+        "iconType": 1,
+        "domain": "mqtt-eu-4.meross.com",
+        "reservedDomain": "mqtt-eu-4.meross.com",
+        "hardwareCapabilities": []
+      },
+      "24121367616802510d03c4e7ae119e0a": {
+        "uuid": "24121367616802510d03c4e7ae119e0a",
+        "onlineStatus": 1,
+        "devName": "S-04",
+        "devIconId": "device024",
+        "bindTime": 1763889877,
+        "deviceType": "mss210p",
+        "subType": "eu",
+        "channels": [
+          {}
+        ],
+        "region": "eu",
+        "fmwareVersion": "7.3.9",
+        "hdwareVersion": "7.0.0",
+        "userDevIcon": "",
+        "iconType": 1,
+        "domain": "mqtt-eu-4.meross.com",
+        "reservedDomain": "mqtt-eu-4.meross.com",
+        "hardwareCapabilities": []
+      }
+    },
+    "deviceInfoTime": 1766396682.7527642,
+    "latestVersion": [
+      {
+        "type": "mss210p",
+        "subType": "eu",
+        "version": "7.3.9",
+        "url": "http://bucket-meross-static.meross.com/staticfile/firmware/2024/12/23/85e8c05f88e2fa004497f01d8fab2980.bin",
+        "md5": "db30bb38ecb8e1b05160fd402d41b724",
+        "description": "1. Optimized the device's network online stability.  \n2. Supported the Wi-Fi re-binding feature.  \n3. Fixed other known issues.",
+        "alias": "",
+        "mcu": [],
+        "upgradeType": "02"
+      },
+      {
+        "type": "mrs100",
+        "subType": "eu",
+        "version": "7.6.19",
+        "url": "http://bucket-meross-static.meross.com/staticfile/firmware/2024/12/30/576114d6f8be841cb04294a7c016dbe7.bin",
+        "md5": "97549209dea00adc57658f15c5f9e193",
+        "description": "Fixed a critical time synchronization issue.",
+        "alias": "",
+        "mcu": [],
+        "upgradeType": "02"
+      }
+    ],
+    "latestVersionTime": 1765878282.7468288,
+    "tokenRequestTime": 0.0
+  }
+}
