@@ -1,17 +1,22 @@
-# Home Assistant secrets
+# Ignore everything
+/*
+
+# Allow .gitignore itself
+!.gitignore
+
+# Allow ONLY these YAML config files
+!configuration.yaml
+!automations.yaml
+!scripts.yaml
+!scenes.yaml
+!sensors.yaml
+!switches.yaml
+!templates.yaml
+!input_booleans.yaml
+!input_numbers.yaml
+!input_selects.yaml
+!modbuses.yaml
+!rest_commands.yaml
+
+# NEVER track secrets
 secrets.yaml
-
-# Database & Logs
-home-assistant_v2.db*
-*.log
-*.log.*
-*.db
-tts/*
-zwave_js_cache/*
-__pycache__/
-deps/
-storage/
-
-# Custom stuff
-.blueprint
-.cloud
