@@ -1,4 +1,4 @@
-#modbus:
+# modbus:
 - name: solax
   type: tcp
   host: !secret solax_modbus_ip
