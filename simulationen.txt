@@ -1,0 +1,83 @@
+#################################################
+## Für den Template Editor                     ##
+##                                             ##
+#################################################
+
+## Ladestrom und AC-Thor - Simulation: ##
+#########################################
+
+{# --- Eingabewerte für die Simulation --- #}
+
+{% set solar = 12000 %}
+{% set og = 800 %}
+{% set eg = 600 %}
+{% set wp1 = 700 %}
+{% set wp2 = 500 %}
+{% set ac_pat = 500 %}
+{% set ac_schlaf = 0 %}
+{% set ac_wohn = 500 %}
+{% set ac_buro = 0 %}
+{% set reserve = 400 %}
+{% set spannung = 690 %}   {# Mercedes = 690V, Cupra = 230V #}
+{% set grid = 0 %}         {# Netzbezug, >1000 W = Thor off #}
+
+{# --- Anfang der Berechnungen --- #}
+
+{# 1. Hauslast ohne EV + ohne AC-THOR #}
+{% set hauslast = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + reserve %}
+
+{# 2. PV-Überschuss (nur fürs EV-Template) #}
+{% set u = solar - hauslast %}
+
+{# 3. EV Ladestrom berechnen #}
+{% set amp = (u / spannung) %}
+{% if amp < 6 %}
+    {% set ev_amp_soll = 0 %}
+{% elif amp > 16 %}
+    {% set ev_amp_soll = 16 %}
+{% else %}
+    {% set ev_amp_soll = amp | round(0) %}
+{% endif %}
+
+{# EV Last in Watt #}
+{% set ev_last = ev_amp_soll * spannung %}
+
+{# 4. AC-THOR Berechnung #}
+
+{# Thor IST simulieren (0 für Test) #}
+{% set thor_ist = 0 %}
+
+{# Gesamtlast inkl. EV #}
+{% set last_total = hauslast + ev_last %}
+
+{# echter Rest-Überschuss für AC-THOR #}
+{% set u2 = solar - last_total %}
+
+{# AC-THOR Regelung #}
+{% if grid > 1000 %}
+    {% set thor_soll = 0 %}
+{% else %}
+    {% if u2 < 500 %}
+        {% set thor_soll = 0 %}
+    {% elif ev_amp_soll < 16 %}
+        {% set thor_soll = u2 | round(-2) %}
+    {% elif ev_amp_soll == 16 and u2 > 1200 %}
+        {% set thor_soll = (u2 - 1200) | round(-2) %}
+    {% else %}
+        {% set thor_soll = 0 %}
+    {% endif %}
+{% endif %}
+
+{# Begrenzen auf AC-THOR Maximum #}
+{% if thor_soll > 9000 %}
+    {% set thor_soll = 9000 %}
+{% endif %}
+
+{# --- Ausgabe --- #}
+
+Hauslast: {{ hauslast }} W
+PV: {{ solar }} W
+EV Ampere Soll: {{ ev_amp_soll }} A
+EV Last: {{ ev_last }} W
+AC-THOR Sollwert: {{ thor_soll }} W
+Netto-Überschuss nach EV: {{ u2 }} W
