@@ -17,6 +17,7 @@
     data:
       message: Waschmaschine fertig
   mode: single
+
 - id: '1735909372625'
   alias: Trockner fertig
   description: sendet eine Nachricht wenn ...
@@ -36,6 +37,7 @@
     data:
       message: Trockner fertig
   mode: single
+  
 - id: '1739168879557'
   alias: Brunnen einschalten
   description: ''
@@ -201,26 +203,24 @@
         - 00e63e1e5cd28ba2d8037972784925fb
         - e68e5dbe137b8c4611e12d07342da6ac
       button_left_short: []
-- id: 16108d049fc54851a1a449775201c261
-  alias: AC•THOR dynamisch steuern
-  triggers:
-  - seconds: /10
-    trigger: time_pattern
-  conditions:
+
+- alias: AC•THOR dynamisch steuern
+  id: 16108d049fc54851a1a449775201c261
+  mode: single
+  trigger:
+  - platform: time_pattern
+    seconds: "/10"
+  condition:
   - condition: state
     entity_id: input_boolean.ac_thor_steuerung
-    state: 'on'
-  - condition: sun
-    after: sunrise
-    before: sunset
-  actions:
-  - delay: 00:00:01
-  - target:
+    state: "on"
+  action:
+  - service: number.set_value
+    target:
       entity_id: number.ac_thor_9s_1_power_ac9
     data:
-      value: '{{ states(''sensor.ac_thor_sollwert'') | float(0) }}'
-    action: number.set_value
-  mode: single
+      value: "{{ states('sensor.ac_thor_sollwert') | float(0) }}"
+
 - alias: EVC Ladestrom dynamisch setzen
   trigger:
   - platform: state
