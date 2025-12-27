@@ -137,8 +137,8 @@
       unit_of_measurement: "A"
       state: >
         {% set solar = states('sensor.solax_ac_power') | float(0) %}
-        {% set og = states('sensor.shellypro3em_a0dd6ca16768_total_active_power') | float(0) %}
-        {% set eg = states('sensor.shellypro3em_8813bfe23688_total_active_power') | float(0) %}
+        {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
+        {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
         {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
         {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
 
@@ -182,8 +182,8 @@
       unit_of_measurement: "W"
       state: >
         {% set solar = states('sensor.solax_ac_power') | float(0) %}
-        {% set og = states('sensor.shellypro3em_a0dd6ca16768_total_active_power') | float(0) %}
-        {% set eg = states('sensor.shellypro3em_8813bfe23688_total_active_power') | float(0) %}
+        {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
+        {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
         {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
         {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
 
