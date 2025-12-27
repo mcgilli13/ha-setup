@@ -253,18 +253,7 @@
         {% elif code == 13 %}Stopping
         {% else %}Unknown ({{ code }}){% endif %}
 
-    # - name: "WP Gesamtleistung W v2"
-    #   unique_id: "wp_power_sum_w_v2"
-    #   unit_of_measurement: "W"
-    #   device_class: power
-    #   state_class: measurement
-    #   state: >
-    #     {% set p =
-    #       (states('sensor.zuhause_device_0_arotherm_current_power') | float(0)) +
-    #       (states('sensor.zuhause_device_1_hydraulic_station_current_power') | float(0))
-    #     %}
-    #     {% if p < 0 or p > 8000 %} 0 {% else %} {{ p }} {% endif %}
-  
+   # Gesamtleistung Wärmepumpe in W v2 
     - name: "WP Gesamtleistung W v2"
       unique_id: "wp_power_sum_w_v2"
       unit_of_measurement: "W"
@@ -276,13 +265,6 @@
           (states('sensor.shelly_wp_aussen_leistung') | float(0))
         %}
         {% if p < 0  %} 0 {% else %} {{ p }} {% endif %}
-
-    # - name: "WP Energie integriert v2"
-    #   unique_id: "wp_energy_integrated_kwh_v2"
-    #   state: "{{ states('sensor.wp_energie_integriert_roh_v2') | float(0) }}"
-    #   unit_of_measurement: "kWh"
-    #   device_class: energy
-    #   state_class: total_increasing
 
     # Wallbox Leistung in W
     - name: "WB Leistung W"
