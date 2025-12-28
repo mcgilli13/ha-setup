@@ -208,7 +208,7 @@
         {% set reserve = 400 %}
 
         {# Last ohne AC-THOR #}
-        {% set last = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + ev_last + reserve %}
+        {% set last = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + reserve %}
 
         {# KORREKTER Überschuss #}
         {% set u = solar - last - grid %}
