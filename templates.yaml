@@ -206,17 +206,17 @@
         {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
 
         {# Klimaanlagen #}
-        {% set ac_pat = 500 if not is_state('climate.patrice', 'off') else 0 %}
+        {% set ac_pat   = 500 if not is_state('climate.patrice', 'off') else 0 %}
         {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
-        {% set ac_wohn = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
-        {% set ac_buro = 500 if not is_state('climate.buro', 'off') else 0 %}
+        {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
+        {% set ac_buro   = 500 if not is_state('climate.buro', 'off') else 0 %}
 
         {# EV Soll + Ist #}
         {% set spannung = 690 if is_state('input_select.ev_auto_typ', 'Mercedes') else 230 %}
-        {% set  ev_amp= states('input_number.ev_ladestrom') | float(0) %}
+        {% set ev_amp = states('input_number.ev_ladestrom') | float(0) %}
         {% set ev_last = states('sensor.wb_leistung_w') | float(0) %}
 
-        {# Grid #}
+        {# Tibber Grid (Netzbezug > 0, Einspeisung < 0) #}
         {% set grid = states('sensor.Hausverbrauch_aktuell') | float(0) %}
 
         {# Reserve #}
@@ -225,24 +225,25 @@
         {# Last ohne AC-THOR #}
         {% set last = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + reserve + ev_last %}
 
-        {# KORREKTER Überschuss #}
+        {# Überschuss (PV minus echte Last) #}
         {% set u = solar - last %}
 
+        {# EV Status + Verzögerung #}
         {% set ev_ladet = (states('sensor.evc_status_code') == '2') %}
         {% set t = (now() - states.sensor.evc_status_code.last_changed).total_seconds() %}
 
         {# Logik #}
-        {% if grid > 0 %}
-          {% set result = 0 %}      {# Niemals bei Netzbezug #}
+        {% if grid > 500 %}
+          {% set result = 0 %}  {# Niemals bei Netzbezug (500W-Hysterese) #}
 
         {% elif ev_amp < 16 %}
-          {% set result = 0 %}      {# EV bekommt alles zuerst #}
+          {% set result = 0 %}  {# EV hat Vorrang #}
 
         {% elif not ev_ladet %}
-          {% set result = 0 %}      {# EV lädt nicht #}
+          {% set result = 0 %}  {# EV lädt nicht (Status!=2) #}
 
         {% elif t < 30 %}
-          {% set result = 0 %}      {# Thor erst 30s nach EV‑Start #}
+          {% set result = 0 %}  {# 30s Verzögerung nach EV Start #}
 
         {% elif u > 1200 %}
           {% set result = (u - 1200) | round(-2) %}
