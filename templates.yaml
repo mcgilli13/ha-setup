@@ -190,51 +190,47 @@
         {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
         {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
 
-        {# Klimaanlagen 500 W wenn an #}
+        {# Klimaanlagen #}
         {% set ac_pat = 500 if not is_state('climate.patrice', 'off') else 0 %}
         {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
         {% set ac_wohn = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
         {% set ac_buro = 500 if not is_state('climate.buro', 'off') else 0 %}
 
-        {# EV SOLL Last in Watt #}
+        {# EV Soll + Ist #}
         {% set spannung = 690 if is_state('input_select.ev_auto_typ', 'Mercedes') else 230 %}
         {% set ev_amp_soll = states('input_number.ev_ladestrom') | float(0) %}
         {% set ev_last = states('sensor.wb_leistung_w') | float(0) %}
 
-        {# Tibber Netzbezug #}
+        {# Grid #}
         {% set grid = states('sensor.Hausverbrauch_aktuell') | float(0) %}
 
         {# Reserve #}
         {% set reserve = 400 %}
 
-        {# Gesamtverbrauch #}
+        {# Last ohne AC-THOR #}
         {% set last = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + ev_last + reserve %}
 
-        {# Überschuss #}
-        {% set u = solar - last %}
+        {# KORREKTER Überschuss #}
+        {% set u = solar - last - grid %}
 
-        {# Ergebnis berechnen #}
+        {# Logik #}
         {% if grid > 1000 %}
           {% set result = 0 %}
+        {% elif u < 500 %}
+          {% set result = 0 %}
+        {% elif ev_amp_soll < 16 %}
+          {% set result = 0 %}
+        {% elif ev_amp_soll == 16 and u > 1200 %}
+          {% set result = (u - 1200) | round(-2) %}
         {% else %}
-          {% if u < 500 %}
-            {% set result = 0 %}
-          {% elif ev_amp_soll < 16 %}
-            {% set result = 0 %}
-          {% elif ev_amp_soll == 16 and u > 1200 %}
-            {% set result = (u - 1200) | round(-2) %}
-          {% else %}
-            {% set result = 0 %}
-          {% endif %}
+          {% set result = 0 %}
         {% endif %}
 
-        {# AC‑THOR Maximum limitieren (9000 W) #}
         {% if result > 9000 %}
           9000
         {% else %}
           {{ result }}
         {% endif %}
-
 
     # Statusanzeige evc
     - name: "EVC Status"
