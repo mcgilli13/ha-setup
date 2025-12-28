@@ -47,17 +47,33 @@
       state: "{{ states.sensor.solax_cloud_api.attributes.result.acpower | default(0) }}"
       availability: "{{ states('sensor.solax_cloud_api') == 'True' }}"
 
-    # Berechnung des aktuellen Hausverbrauchs
+    # Stabiler Hausverbrauch / Grid-Sensor
     - name: "Hausverbrauch aktuell"
       unique_id: "Hausverbrauch_aktuell"
       device_class: power
       state_class: measurement
       unit_of_measurement: "W"
       state: >
-        {{
-        states('sensor.tibber_pulse_micha_energie')| float(0) -
-        states('sensor.tibber_pulse_micha_stromerzeugung')| float(0)
-        }}
+        {% set bezug = states('sensor.tibber_pulse_micha_energie') | float(0) %}
+        {% set eins = states('sensor.tibber_pulse_micha_stromerzeugung') | float(0) %}
+
+        {# Wenn beide > 0, entscheide nach der dominanten Richtung #}
+        {% if bezug > 0 and eins > 0 %}
+          {% if bezug > eins %}
+            {{ bezug - eins }}      {# Netto Richtung Bezug #}
+          {% else %}
+            {{ eins - bezug | float * -1 }}   {# Netto Richtung Einspeisung #}
+          {% endif %}
+
+        {# Normalfall #}
+        {% elif bezug > 0 %}
+          {{ bezug }}
+        {% elif eins > 0 %}
+          {{ -eins }}
+        {% else %}
+          0
+        {% endif %}
+
 
     # Leistung von Waschmaschine + Trockner
     - name: "Waschen & Trocknen"
