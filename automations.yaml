@@ -289,26 +289,26 @@
       state: "off"
 
   action:
-    # Schritt 1: Minimalstrom 6 A setzen
+    # 1) Direkt auf Optimal setzen (kein 6A!)
     - service: input_number.set_value
       target:
         entity_id: input_number.ev_ladestrom
       data:
-        value: 6
+        value: "{{ states('sensor.ev_ladestrom_optimal') | float(8) }}"
 
     - delay: "00:00:01"
 
-    # Schritt 2: Startstrom senden
+    # 2) Optimal an die Wallbox senden
     - service: modbus.write_register
       data:
         hub: solax_evc
         unit: 1
         address: 1576
-        value: 600
+        value: "{{ (states('sensor.ev_ladestrom_optimal') | float * 100) | int }}"
 
-    - delay: "00:00:02"
+    - delay: "00:00:01"
 
-    # Schritt 3: Startfreigabe
+    # 3) START wie beim Zwangsladen
     - service: modbus.write_register
       data:
         hub: solax_evc
@@ -316,21 +316,6 @@
         address: 1575
         value: 4
 
-    # Schritt 4: Direkt auf Optimal gehen
-    - delay: "00:00:03"
-    - service: input_number.set_value
-      target:
-        entity_id: input_number.ev_ladestrom
-      data:
-        value: "{{ states('sensor.ev_ladestrom_optimal') | float(6) }}"
-
-    - delay: "00:00:01"
-    - service: modbus.write_register
-      data:
-        hub: solax_evc
-        unit: 1
-        address: 1576
-        value: "{{ (states('sensor.ev_ladestrom_optimal') | float * 100) | int }}"
 
 - alias: EV Ladestrom dynamisch anpassen
   id: ev_ladestrom_dynamisch
