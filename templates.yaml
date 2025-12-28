@@ -220,7 +220,7 @@
           {% if u < 500 %}
             {% set result = 0 %}
           {% elif ev_amp_soll < 16 %}
-            {% set result = u | round(-2) %}
+            {% set result = 0 %}
           {% elif ev_amp_soll == 16 and u > 1200 %}
             {% set result = (u - 1200) | round(-2) %}
           {% else %}
