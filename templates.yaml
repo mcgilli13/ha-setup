@@ -153,8 +153,10 @@
 
         {# EV SOLL (Ampere → Watt) #}
         {% set spannung = 690 if is_state('input_select.ev_auto_typ', 'Mercedes') else 230 %}
-        {% set ev_amp_soll = states('sensor.ev_ladestrom_optimal') | float(0) %}
-        {% set ev_last = ev_amp_soll * spannung %}
+        {# % set ev_amp_soll = states('sensor.ev_ladestrom_optimal') | float(0) % #}
+        {# % set ev_last = ev_amp_soll * spannung % #}
+        {# EV IST-Leistung #} 
+        {% set ev_last = states('sensor.wb_leistung_w') | float(0) %}
 
         {# Reserve gegen Schwankungen #}
         {% set reserve = 400 %}
@@ -193,10 +195,10 @@
         {% set ac_wohn = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
         {% set ac_buro = 500 if not is_state('climate.buro', 'off') else 0 %}
 
-        {# EV SOLL Last #}
+        {# EV SOLL Last in Watt #}
         {% set spannung = 690 if is_state('input_select.ev_auto_typ', 'Mercedes') else 230 %}
-        {% set ev_amp_soll = states('sensor.ev_ladestrom_optimal') | float(0) %}
-        {% set ev_last = ev_amp_soll * spannung %}
+        {% set ev_amp_soll = states('input_number.ev_ladestrom') | float(0) %}
+        {% set ev_last = states('sensor.wb_leistung_w') | float(0) %}
 
         {# Tibber Netzbezug #}
         {% set grid = states('sensor.Hausverbrauch_aktuell') | float(0) %}
