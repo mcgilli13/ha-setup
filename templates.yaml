@@ -199,7 +199,7 @@
         {% set ev_last = ev_amp_soll * spannung %}
 
         {# Tibber Netzbezug #}
-        {% set grid = states('sensor.tibber_pulse_micha_energie') | float(0) %}
+        {% set grid = states('sensor.Hausverbrauch_aktuell') | float(0) %}
 
         {# Reserve #}
         {% set reserve = 400 %}

@@ -37,7 +37,7 @@
     data:
       message: Trockner fertig
   mode: single
-  
+
 - id: '1739168879557'
   alias: Brunnen einschalten
   description: ''
@@ -424,6 +424,7 @@
       unit: 1
       address: 1575
       value: 3
+      
 - alias: Bewegung Flur
   id: '1756050517961'
   description: ''
