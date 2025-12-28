@@ -175,7 +175,7 @@
         {% set ev_last = states('sensor.wb_leistung_w') | float(0) %}
 
         {# Reserve gegen Schwankungen #}
-        {% set reserve = 400 %}
+        {% set reserve = 1000 %}
 
         {# Gesamtverbrauch #}
         {% set hauslast = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + ev_last + reserve %}
@@ -220,32 +220,38 @@
         {% set grid = states('sensor.Hausverbrauch_aktuell') | float(0) %}
 
         {# Reserve #}
-        {% set reserve = 400 %}
+        {% set reserve = 1000 %}
 
         {# Last ohne AC-THOR #}
-        {% set last = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + reserve %}
+        {% set last = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + reserve + ev_last %}
 
         {# KORREKTER Überschuss #}
         {% set u = solar - last %}
 
+        {% set ev_ladet = (states('sensor.evc_status_code') == '2') %}
+        {% set t = (now() - states.sensor.evc_status_code.last_changed).total_seconds() %}
+
         {# Logik #}
-        {% if grid > 1000 %}
-          {% set result = 0 %}
-        {% elif u < 500 %}
-          {% set result = 0 %}
-        {% elif states('sensor.evc_status_code') != '2' %}
-          {% set result = 0 %}
-        {% elif ev_amp_soll == 16 and u > 1200 %}
+        {% if grid > 0 %}
+          {% set result = 0 %}      {# Niemals bei Netzbezug #}
+
+        {% elif ev_amp < 16 %}
+          {% set result = 0 %}      {# EV bekommt alles zuerst #}
+
+        {% elif not ev_ladet %}
+          {% set result = 0 %}      {# EV lädt nicht #}
+
+        {% elif t < 30 %}
+          {% set result = 0 %}      {# Thor erst 30s nach EV‑Start #}
+
+        {% elif u > 1200 %}
           {% set result = (u - 1200) | round(-2) %}
         {% else %}
           {% set result = 0 %}
         {% endif %}
 
-        {% if result > 9000 %}
-          9000
-        {% else %}
-          {{ result }}
-        {% endif %}
+        {{ [result,9000] | min }}
+
 
     # Statusanzeige evc
     - name: "EVC Status"
