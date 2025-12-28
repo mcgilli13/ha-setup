@@ -213,7 +213,7 @@
 
         {# EV Soll + Ist #}
         {% set spannung = 690 if is_state('input_select.ev_auto_typ', 'Mercedes') else 230 %}
-        {% set ev_amp_soll = states('input_number.ev_ladestrom') | float(0) %}
+        {% set  ev_amp= states('input_number.ev_ladestrom') | float(0) %}
         {% set ev_last = states('sensor.wb_leistung_w') | float(0) %}
 
         {# Grid #}
