@@ -366,6 +366,31 @@
                     16
                   {% endif %}
 
+- alias: EV Minimalstrom Timeout
+  id: ev_minimal_timeout
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.ev_ladestrom_optimal
+      below: 6.1
+      for: "00:03:00"      # 3 Minuten -> anpassbar
+  condition:
+    - condition: state
+      entity_id: sensor.evc_status_code
+      state: "2"           # nur wenn das Auto wirklich im Ladezustand war
+  action:
+    - service: modbus.write_register
+      data:
+        hub: solax_evc
+        unit: 1
+        address: 1575      # Stop
+        value: 3
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.ev_ladestrom
+      data:
+        value: 0
+
+
 - alias: EV Nachtladen Auto-Start
   id: ev_nachtladen_auto_start
   mode: single

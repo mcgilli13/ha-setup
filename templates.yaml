@@ -157,7 +157,6 @@
         {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
         {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
         {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
-        {% set grid = states('sensor.Hausverbrauch_aktuell') | float(0) %}
 
         {# Klimaanlagen, 500 W pro Gerät wenn an #}
         {% set ac_pat = 500 if not is_state('climate.patrice', 'off') else 0 %}
@@ -188,7 +187,7 @@
         {% set amp = (u / spannung) | float(0) %}
 
         {% if amp < 6 %}
-          0
+          6
         {% elif amp > 16 %}
           16
         {% else %}
