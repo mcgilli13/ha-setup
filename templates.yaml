@@ -186,8 +186,16 @@
         {% set amp = (u / spannung) | float %}
 
         {# Minimal 6A für Mercedes/Cupra Precharge #}
-        {% if amp < 6 %}
-          6
+        {% set status = states('sensor.evc_status_code') %}
+
+        {% if amp <= 0 %}
+          0
+        {% elif amp < 6 %}
+          {% if status == '2' %}
+            6
+          {% else %}
+            0
+          {% endif %}
         {% elif amp > 16 %}
           16
         {% else %}
