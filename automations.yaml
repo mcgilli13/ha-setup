@@ -550,7 +550,10 @@
     - platform: numeric_state
       entity_id: sensor.ev_ladestrom_optimal
       below: 6.1
-      for: "00:03:00"
+      for:
+        hours: 0
+        minutes: 3
+        seconds: 0
 
   condition:
     # Nur wenn EV lädt
