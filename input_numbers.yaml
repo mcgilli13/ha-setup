@@ -1,6 +1,6 @@
 ev_ladestrom:
   name: "EV Ladestrom (Ampere)"
-  min: 6
+  min: 0
   max: 16
   step: 1
   unit_of_measurement: "A"
