@@ -203,64 +203,46 @@
         {% endif %}
 
     # AC-THOR Sollwert
-    - name: "AC•THOR Sollwert"
-      unique_id: ac_thor_sollwert
+    - name: "AC-THOR Sollwert"
+      unique_id: "ac_thor_sollwert"
       unit_of_measurement: "W"
       state: >
-        {% set solar = states('sensor.solax_ac_power') | float(0) %}
+        {% set pv = states('sensor.solax_ac_power') | float(0) %}
         {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
         {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
         {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
         {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
+        {% set ev_w = states('sensor.wb_leistung_w') | float(0) %}
 
-        {# Klima #}
-        {% set ac_pat   = 500 if not is_state('climate.patrice','off') else 0 %}
-        {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer','off') else 0 %}
-        {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer','off') else 0 %}
-        {% set ac_buro   = 500 if not is_state('climate.buro','off') else 0 %}
-
-        {# EV Soll + Ist #}
-        {% set ev_amp = states('input_number.ev_ladestrom') | float(0) %}
-        {% set ev_last = states('sensor.wb_leistung_w') | float(0) %}
-
-        {# Tibber Grid #}
-        {% set grid = states('sensor.Hausverbrauch_aktuell') | float(0) %}
+        {# Klima-Offsets #}
+        {% set ac_pat   = 500 if not is_state('climate.patrice', 'off') else 0 %}
+        {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
+        {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
+        {% set ac_buro   = 500 if not is_state('climate.buro', 'off') else 0 %}
 
         {# Reserve #}
         {% set reserve = 1000 %}
 
-        {# Last ohne Thor #}
-        {% set last = og + eg + wp1 + wp2 +
-                      ac_pat + ac_schlaf + ac_wohn + ac_buro +
-                      reserve + ev_last %}
+        {# Hauslast ohne Thor #}
+        {% set haus = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + ev_w + reserve %}
 
-        {# PV-Überschuss #}
-        {% set u = solar - last %}
+        {# Überschuss u #}
+        {% set u = pv - haus %}
 
-        {# EV Status + Verzögerung #}
-        {% set ev_ladet = (states('sensor.evc_status_code') == '2') %}
-        {% set t = (now() - states.sensor.evc_status_code.last_changed).total_seconds() %}
+        {# EV-First nur wenn EV wirklich lädt (Status 2) #}
+        {% set ev_status = states('sensor.evc_status_code') %}
+        {% set ev_laedt = ev_status == '2' %}
+        {% set ev_opt_a = states('sensor.ev_ladestrom_optimal') | float(0) %}
 
-        {# Thor Logik #}
-        {% if grid > 1000 %}
-          {% set result = 0 %}
-
-        {% elif ev_amp < 16 %}
-          {% set result = 0 %}
-
-        {% elif not ev_ladet %}
-          {% set result = 0 %}
-
-        {% elif t < 30 %}
-          {% set result = 0 %}
-
-        {% elif u > 1200 %}
-          {% set result = (u - 1200) | round(-2) %}
+        {% if ev_laedt and ev_opt_a < 16 %}
+          0
         {% else %}
-          {% set result = 0 %}
+          {# Mindestschwelle und Deckelung für Thor #}
+          {% set out = [u, 0] | max %}
+          {% set thor_min = 1200 %}
+          {% set thor_max = 3000 %}
+          {{ [ (out if out >= thor_min else 0), thor_max ] | min | round(0) }}
         {% endif %}
-
-        {{ [result,9000] | min }}
 
     # Statusanzeige evc
     - name: "EVC Status"
