@@ -92,7 +92,6 @@
     - name: "EVC Charging Power"
       slave: 1
       address: 11
-      count: 20       # Blockread 20 Register auf einmal
       input_type: input
       data_type: uint16
       scale: 0.001    # -> teilt durch 1000
