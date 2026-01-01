@@ -10,7 +10,6 @@
     - name: "SolaX AC Power"
       slave: 1
       address: 1038  # 0x40E
-      count: 10    # Blockread 10 Register auf einmal
       input_type: input
       data_type: uint16
       scale: 1
@@ -43,7 +42,6 @@
     - name: "SolaX Yield Total"
       slave: 1
       address: 1059
-      count: 30  # Blockread 30 Register auf einmal
       input_type: input
       data_type: uint32
       scale: 0.1
