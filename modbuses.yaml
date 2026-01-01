@@ -3,19 +3,26 @@
   type: tcp
   host: !secret solax_modbus_ip
   port: 502
-  delay: 0.5
+  delay: 2
   message_wait_milliseconds: 250
   timeout: 3
   sensors:
     - name: "SolaX AC Power"
       slave: 1
       address: 1038  # 0x40E
+      count: 10    # Blockread 10 Register auf einmal
       input_type: input
       data_type: uint16
       scale: 1
       precision: 0
       unit_of_measurement: W
       device_class: power 
+
+    - name: "Solax Inverter Status"
+      slave: 1
+      address: 1039
+      input_type: input
+      data_type: uint16
 
     - name: "SolaX PV String 1"
       slave: 1
@@ -32,6 +39,19 @@
       data_type: uint16
       unit_of_measurement: W
       device_class: power
+
+    - name: "SolaX Yield Total"
+      slave: 1
+      address: 1059
+      count: 30  # Blockread 30 Register auf einmal
+      input_type: input
+      data_type: uint32
+      scale: 0.1
+      unit_of_measurement: kWh
+      precision: 1
+      swap: word
+      device_class: energy
+      state_class: total
 
     - name: "SolaX Feed-in Power"
       slave: 1
@@ -63,23 +83,6 @@
       device_class: energy
       state_class: total
 
-    - name: "SolaX Yield Total"
-      slave: 1
-      address: 1059
-      input_type: input
-      data_type: uint32
-      scale: 0.1
-      unit_of_measurement: kWh
-      precision: 1
-      swap: word
-      device_class: energy
-      state_class: total
-
-    - name: "Solax Inverter Status"
-      slave: 1
-      address: 1039
-      input_type: input
-      data_type: uint16
 
 - name: solax_evc
   type: tcp
@@ -88,20 +91,21 @@
   delay: 1
   timeout: 3
   sensors:
+    - name: "EVC Charging Power"
+      slave: 1
+      address: 11
+      count: 20       # Blockread 20 Register auf einmal
+      input_type: input
+      data_type: uint16
+      scale: 0.001    # -> teilt durch 1000
+      precision: 1    # -> z.B. 3.2kW
+      unit_of_measurement: kW
     - name: "EVC Status Code"
       slave: 1
       address: 29  # 0x001D
       input_type: input
       data_type: uint16
       unit_of_measurement: code
-    - name: "EVC Charging Power"
-      slave: 1
-      address: 11
-      input_type: input
-      data_type: uint16
-      scale: 0.001    # -> teilt durch 1000
-      precision: 1    # -> z.B. 3.2kW
-      unit_of_measurement: kW
     - name: "EVC Max Ladestrom"
       slave: 1
       address: 1640  # 0x0668
