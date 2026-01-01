@@ -538,38 +538,21 @@
         value: 4
 
 - alias: EV Stop
-  id: ev_stop_minimal
+  id: ev_stop
   mode: single
-
   trigger:
-    # PV weg
-    - platform: state
-      entity_id: sensor.ev_ladestrom_optimal
-
-    # Optional Timeout
     - platform: numeric_state
-      entity_id: sensor.ev_ladestrom_optimal
-      below: 6.1
+      entity_id: sensor.ev_ampere_ohne
+      below: 6.0
       for:
-        hours: 0
         minutes: 3
-        seconds: 0
-
   condition:
-    # Nur wenn EV lädt
     - condition: state
-      entity_id:  sensor.evc_status_code
+      entity_id: sensor.evc_status_code
       state: "2"
-
-    # Kein Zwang
     - condition: state
       entity_id: input_boolean.ev_force_charging
       state: "off"
-
-    # Kein PV mehr
-    - condition: template
-      value_template: "{{ states('sensor.ev_ladestrom_optimal') | float(0) == 0 }}"
-      
   action:
     - service: modbus.write_register
       data:
@@ -577,7 +560,6 @@
         unit: 1
         address: 1575
         value: 3
-
     - service: input_number.set_value
       target:
         entity_id: input_number.ev_ladestrom

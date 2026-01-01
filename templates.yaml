@@ -147,9 +147,8 @@
       icon: mdi:flash
       state_class: measurement
 
-    # EV Ladestrom Optimal
-    - name: "EV Ladestrom Optimal"
-      unique_id: "ev_ladestrom_optimal"
+    - name: "EV Ampere Ohne"
+      unique_id: "ev_ampere_ohne"
       unit_of_measurement: "A"
       state: >
         {% set solar = states('sensor.solax_ac_power') | float(0) %}
@@ -157,38 +156,47 @@
         {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
         {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
         {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
-
-        {# Klima-Offsets #}
         {% set ac_pat   = 500 if not is_state('climate.patrice', 'off') else 0 %}
         {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
         {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
         {% set ac_buro   = 500 if not is_state('climate.buro', 'off') else 0 %}
-
-        {# EV IST #}
-        {% set ev_status = states('sensor.evc_status_code') %}
-        {% set ev_ist_w = states('sensor.wb_leistung_w') | float(0) %}
-        {% set ev_laedt = ev_status == '2' %}
-
-        {# Spannung #}
-        {% set spannung = 690 if is_state('input_select.ev_auto_typ','Mercedes') else 230 %}
-
-        {# Reserve #}
         {% set reserve = 1000 %}
-
-        {# Hauslast OHNE EV #}
-        {% set haus_ohne = og + eg + wp1 + wp2 +
-                          ac_pat + ac_schlaf + ac_wohn + ac_buro +
-                          reserve %}
-
-        {# Hauslast MIT EV (nur wenn real am Laden) #}
-        {% set haus_mit = haus_ohne + (ev_ist_w if ev_laedt else 0) %}
-
-        {# Überschüsse und Ampere #}
+        {% set haus_ohne = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + reserve %}
         {% set u_ohne = solar - haus_ohne %}
-        {% set u_mit  = solar - haus_mit %}
-        {% set amp_ohne = (u_ohne / spannung) | float %}
-        {% set amp_mit  = (u_mit  / spannung) | float %}
+        {% set spannung = 690 if is_state('input_select.ev_auto_typ','Mercedes') else 230 %}
+        {{ (u_ohne / spannung) | round(2) }}
 
+    - name: "EV Ampere Mit"
+      unique_id: "ev_ampere_mit"
+      unit_of_measurement: "A"
+      state: >
+        {% set solar = states('sensor.solax_ac_power') | float(0) %}
+        {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
+        {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
+        {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
+        {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
+        {% set ac_pat   = 500 if not is_state('climate.patrice', 'off') else 0 %}
+        {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
+        {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
+        {% set ac_buro   = 500 if not is_state('climate.buro', 'off') else 0 %}
+        {% set reserve = 1000 %}
+        {% set ev_status = states('sensor.evc_status_code') %}
+        {% set ev_laedt = ev_status == '2' %}
+        {% set ev_ist_w = states('sensor.wb_leistung_w') | float(0) %}
+        {% set haus_ohne = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + reserve %}
+        {% set haus_mit = haus_ohne + (ev_ist_w if ev_laedt else 0) %}
+        {% set u_mit = solar - haus_mit %}
+        {% set spannung = 690 if is_state('input_select.ev_auto_typ','Mercedes') else 230 %}
+        {{ (u_mit / spannung) | round(2) }}
+
+    # EV Ladestrom Optimal
+    - name: "EV Ladestrom Optimal"
+      unique_id: "ev_ladestrom_optimal"
+      unit_of_measurement: "A"
+      state: >
+        {% set amp_mit = states('sensor.ev_ampere_mit') | float(0) %}
+        {% set amp_ohne = states('sensor.ev_ampere_ohne') | float(0) %}
+        
         {# Entscheidungslogik #}
         {% if amp_mit <= 0 %}
           0
