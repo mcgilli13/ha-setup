@@ -179,7 +179,7 @@
         {# Lastberechnung #}
         {% set hauslast = og + eg + wp1 + wp2 +
                           ac_pat + ac_schlaf + ac_wohn + ac_buro +
-                          ev_last + thor + reserve %}
+                          ev_last + reserve %}
 
         {# PV-Überschuss #}
         {% set u = solar - hauslast %}
