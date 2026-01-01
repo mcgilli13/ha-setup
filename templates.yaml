@@ -158,17 +158,16 @@
         {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
         {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
 
-        {# Klima (500 W pro Gerät wenn nicht off) #}
+        {# Klima-Offsets #}
         {% set ac_pat   = 500 if not is_state('climate.patrice', 'off') else 0 %}
         {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
         {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
         {% set ac_buro   = 500 if not is_state('climate.buro', 'off') else 0 %}
 
         {# EV IST #}
-        {% set ev_last = states('sensor.wb_leistung_w') | float(0) %}
-
-        {# AC-THOR IST #}
-        {% set thor = states('number.ac_thor_9s_1_power_ac9') | float(0) %}
+        {% set ev_status = states('sensor.evc_status_code') %}
+        {% set ev_ist_w = states('sensor.wb_leistung_w') | float(0) %}
+        {% set ev_laedt = ev_status == '2' %}
 
         {# Spannung #}
         {% set spannung = 690 if is_state('input_select.ev_auto_typ','Mercedes') else 230 %}
@@ -176,31 +175,36 @@
         {# Reserve #}
         {% set reserve = 1000 %}
 
-        {# Lastberechnung #}
-        {% set hauslast = og + eg + wp1 + wp2 +
+        {# Hauslast OHNE EV #}
+        {% set haus_ohne = og + eg + wp1 + wp2 +
                           ac_pat + ac_schlaf + ac_wohn + ac_buro +
-                          ev_last + reserve %}
+                          reserve %}
 
-        {# PV-Überschuss #}
-        {% set u = solar - hauslast %}
-        {% set amp = (u / spannung) | float %}
+        {# Hauslast MIT EV (nur wenn real am Laden) #}
+        {% set haus_mit = haus_ohne + (ev_ist_w if ev_laedt else 0) %}
 
-        {# Minimal 6A für Mercedes/Cupra Precharge #}
-        {% set status = states('sensor.evc_status_code') %}
+        {# Überschüsse und Ampere #}
+        {% set u_ohne = solar - haus_ohne %}
+        {% set u_mit  = solar - haus_mit %}
+        {% set amp_ohne = (u_ohne / spannung) | float %}
+        {% set amp_mit  = (u_mit  / spannung) | float %}
 
-        {% if amp <= 0 %}
+        {# Entscheidungslogik #}
+        {% if amp_mit <= 0 %}
           0
-        {% elif amp < 6 %}
-          {% if status == '2' %}
+        {% elif amp_mit >= 16 %}
+          16
+        {% elif amp_mit < 6 %}
+          {# Unter 6 A: nur halten, wenn ohne EV >= 6 A (echter knapper Überschuss durch EV) #}
+          {% if amp_ohne >= 6 %}
             6
           {% else %}
             0
           {% endif %}
-        {% elif amp > 16 %}
-          16
         {% else %}
-          {{ amp | round(0) }}
+          {{ amp_mit | round(0) }}
         {% endif %}
+
 
     # AC-THOR Sollwert
     - name: "AC-THOR Sollwert"
