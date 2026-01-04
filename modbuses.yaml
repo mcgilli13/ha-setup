@@ -132,3 +132,16 @@
       unit_of_measurement: kWh
       device_class: energy
       state_class: total_increasing
+
+  registers:
+    - name: "EVC Charging Command"
+      slave: 1
+      address: 1575
+      input_type: holding
+      data_type: uint16
+
+    - name: "EVC Charging Current Setpoint"
+      slave: 1
+      address: 1576
+      input_type: holding
+      data_type: uint16
