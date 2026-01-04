@@ -291,7 +291,7 @@
 
     # Wallbox Leistung in W
     - name: "WB Leistung W"
-      state: "{{ (states('sensor.evc_charging_power') | float(0)) * 1000 }}"
+      state: "{{ (states('sensor.evc_charging_power') | float(0)) * 1000 | int}}"
       unit_of_measurement: "W"
       device_class: power
       state_class: measurement
