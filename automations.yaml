@@ -611,7 +611,7 @@
             {% set z = aktuell %}
 
             {# --- UPSCALE: PV‑Überschuss --- #}
-            {% if netz < -800 %}
+            {% if netz < -900 %}
               {% set z = z + step %}
             {% endif %}
 
