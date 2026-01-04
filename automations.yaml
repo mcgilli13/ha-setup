@@ -540,12 +540,14 @@
 - alias: EV Stop
   id: ev_stop
   mode: single
+
   trigger:
     - platform: numeric_state
-      entity_id: sensor.ev_ampere_ohne
-      below: 6.0
+      entity_id: sensor.hausverbrauch_aktuell
+      above: 5000   # Netzbezug > 5 kW
       for:
-        minutes: 3
+        seconds: 45
+
   condition:
     - condition: state
       entity_id: sensor.evc_status_code
@@ -553,6 +555,7 @@
     - condition: state
       entity_id: input_boolean.ev_force_charging
       state: "off"
+
   action:
     - service: modbus.write_register
       data:
@@ -560,6 +563,7 @@
         unit: 1
         address: 1575
         value: 3
+
     - service: input_number.set_value
       target:
         entity_id: input_number.ev_ladestrom
