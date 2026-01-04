@@ -604,7 +604,7 @@
           {% if zwang %}
             {{ max_a }}
           {% else %}
-            {% set z = optimal %}
+            {% set z = aktuell %}
 
             {# --- UPSCALE: Überschuss nutzen --- #}
             {% if netz < -3000 %}
