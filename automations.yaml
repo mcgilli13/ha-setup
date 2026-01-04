@@ -589,7 +589,7 @@
         # Basiswerte
         optimal: "{{ states('sensor.ev_ladestrom_optimal') | float(0) }}"
         aktuell: "{{ states('input_number.ev_ladestrom') | float(0) }}"
-        netz: "{{ states('sensor.netz') | float(0) }}"
+        netz: "{{ states('sensor.Hausverbrauch_aktuell') | float(0) }}"
         zwang: "{{ is_state('input_boolean.ev_force_charging','on') }}"
 
         # Grenzen
