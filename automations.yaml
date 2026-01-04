@@ -566,8 +566,8 @@
       data:
         value: 0
 
-- alias: EV Ladestrom Dynamik Minimal
-  id: ev_dynamik_minimal
+- alias: EV Ladestrom Dynamik Komplett
+  id: ev_dynamik_komplett
   mode: single
 
   trigger:
@@ -575,7 +575,7 @@
       seconds: "/30"
 
   condition:
-    # Auto lädt aktiv
+    # Auto lädt oder ist startbereit
     - condition: template
       value_template: "{{ states('sensor.evc_status_code') in ['1','2'] }}"
 
@@ -586,27 +586,60 @@
 
   action:
     - variables:
+        # Basiswerte
         optimal: "{{ states('sensor.ev_ladestrom_optimal') | float(0) }}"
         aktuell: "{{ states('input_number.ev_ladestrom') | float(0) }}"
+        netz: "{{ states('sensor.netz') | float(0) }}"
         zwang: "{{ is_state('input_boolean.ev_force_charging','on') }}"
+
+        # Grenzen
+        min_a: 6
+        max_a: 16
+
+        # Schrittweite
+        step: 1
+
+        # Berechnung Zielwert
         ziel: >
           {% if zwang %}
-            16
+            {{ max_a }}
           {% else %}
-            {{ optimal }}
+            {% set z = optimal %}
+
+            {# --- UPSCALE: Überschuss nutzen --- #}
+            {% if netz < -3000 %}
+              {% set z = aktuell + step %}
+            {% endif %}
+
+            {# --- DOWNSCALE: Sicherheit / Untergrenze --- #}
+            {% if z < optimal %}
+              {% set z = optimal %}
+            {% endif %}
+
+            {# --- Grenzen einhalten --- #}
+            {% if z < min_a %}
+              {{ min_a }}
+            {% elif z > max_a %}
+              {{ max_a }}
+            {% else %}
+              {{ z | round(0) }}
+            {% endif %}
           {% endif %}
+
         diff: "{{ (ziel - aktuell) | abs }}"
 
-    # Hysterese 0.5A
+    # Hysterese 0.5 A
     - condition: template
       value_template: "{{ diff > 0.5 }}"
 
+    # EV Sollwert setzen
     - service: input_number.set_value
       target:
         entity_id: input_number.ev_ladestrom
       data:
         value: "{{ ziel }}"
 
+    # Wallbox schreiben
     - service: modbus.write_register
       data:
         hub: solax_evc
