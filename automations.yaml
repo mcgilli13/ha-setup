@@ -544,9 +544,9 @@
   trigger:
     - platform: numeric_state
       entity_id: sensor.hausverbrauch_aktuell
-      above: 5000   # Netzbezug > 5 kW
+      above: 2000   # Netzbezug > 5 kW
       for:
-        seconds: 45
+        seconds: 90
 
   condition:
     - condition: state
