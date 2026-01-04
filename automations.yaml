@@ -616,7 +616,7 @@
             {% endif %}
 
             {# --- DOWNSCALE: Netzbezug vermeiden --- #}
-            {% if netz > 300 %}
+            {% if netz > 200 %}
               {% set z = z - step %}
             {% endif %}
 
