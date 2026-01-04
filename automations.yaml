@@ -606,12 +606,17 @@
           {% else %}
             {% set z = aktuell %}
 
-            {# --- UPSCALE: PV-Überschuss --- #}
+            {# --- UPSCALE: PV‑Überschuss --- #}
             {% if netz < -800 %}
               {% set z = z + step %}
             {% endif %}
 
-            {# --- DOWNSCALE: niemals unter optimal --- #}
+            {# --- DOWNSCALE: Netzbezug vermeiden --- #}
+            {% if netz > 300 %}
+              {% set z = z - step %}
+            {% endif %}
+
+            {# --- DOWNSCALE nicht unter optimal --- #}
             {% if z < optimal %}
               {% set z = optimal %}
             {% endif %}
@@ -625,6 +630,7 @@
               {{ z | round(0) }}
             {% endif %}
           {% endif %}
+
 
         diff: "{{ (ziel - aktuell) | abs }}"
 
