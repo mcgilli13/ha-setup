@@ -607,7 +607,7 @@
             {% set z = aktuell %}
 
             {# --- UPSCALE: Überschuss nutzen --- #}
-            {% if netz < -3000 %}
+            {% if netz < -800 %}
               {% set z = aktuell + step %}
             {% endif %}
 
