@@ -576,7 +576,7 @@
 
   trigger:
     - platform: time_pattern
-      seconds: "/30"
+      seconds: "/10"
 
   condition:
     # Auto lädt oder ist startbereit
