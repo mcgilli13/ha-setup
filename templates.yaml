@@ -47,17 +47,33 @@
       state: "{{ states.sensor.solax_cloud_api.attributes.result.acpower | default(0) }}"
       availability: "{{ states('sensor.solax_cloud_api') == 'True' }}"
 
-    # Berechnung des aktuellen Hausverbrauchs
+    # Stabiler Hausverbrauch / Grid-Sensor
     - name: "Hausverbrauch aktuell"
       unique_id: "Hausverbrauch_aktuell"
       device_class: power
       state_class: measurement
       unit_of_measurement: "W"
       state: >
-        {{
-        states('sensor.tibber_pulse_micha_energie')| float(0) -
-        states('sensor.tibber_pulse_micha_stromerzeugung')| float(0)
-        }}
+        {% set bezug = states('sensor.tibber_pulse_micha_energie') | float(0) %}
+        {% set eins = states('sensor.tibber_pulse_micha_stromerzeugung') | float(0) %}
+
+        {# Wenn beide > 0, entscheide nach der dominanten Richtung #}
+        {% if bezug > 0 and eins > 0 %}
+          {% if bezug > eins %}
+            {{ bezug - eins }}      {# Netto Richtung Bezug #}
+          {% else %}
+            {{ eins - bezug | float * -1 }}   {# Netto Richtung Einspeisung #}
+          {% endif %}
+
+        {# Normalfall #}
+        {% elif bezug > 0 %}
+          {{ bezug }}
+        {% elif eins > 0 %}
+          {{ -eins }}
+        {% else %}
+          0
+        {% endif %}
+
 
     # Leistung von Waschmaschine + Trockner
     - name: "Waschen & Trocknen"
@@ -131,67 +147,113 @@
       icon: mdi:flash
       state_class: measurement
 
+    - name: "EV Ampere Ohne"
+      unique_id: "ev_ampere_ohne"
+      unit_of_measurement: "A"
+      state: >
+        {% set solar = states('sensor.solax_ac_power') | float(0) %}
+        {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
+        {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
+        {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
+        {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
+        {% set ac_pat   = 500 if not is_state('climate.patrice', 'off') else 0 %}
+        {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
+        {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
+        {% set ac_buro   = 500 if not is_state('climate.buro', 'off') else 0 %}
+        {% set reserve = 1000 %}
+        {% set haus_ohne = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + reserve %}
+        {% set u_ohne = solar - haus_ohne %}
+        {% set spannung = 690 if is_state('input_select.ev_auto_typ','Mercedes') else 230 %}
+        {{ (u_ohne / spannung) | round(2) }}
+
+    - name: "EV Ampere Mit"
+      unique_id: "ev_ampere_mit"
+      unit_of_measurement: "A"
+      state: >
+        {% set solar = states('sensor.solax_ac_power') | float(0) %}
+        {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
+        {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
+        {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
+        {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
+        {% set ac_pat   = 500 if not is_state('climate.patrice', 'off') else 0 %}
+        {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
+        {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
+        {% set ac_buro   = 500 if not is_state('climate.buro', 'off') else 0 %}
+        {% set reserve = 1000 %}
+        {% set ev_status = states('sensor.evc_status_code') %}
+        {% set ev_laedt = ev_status == '2' %}
+        {% set ev_ist_w = states('sensor.wb_leistung_w') | float(0) %}
+        {% set haus_ohne = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + reserve %}
+        {% set haus_mit = haus_ohne + (ev_ist_w if ev_laedt else 0) %}
+        {% set u_mit = solar - haus_mit %}
+        {% set spannung = 690 if is_state('input_select.ev_auto_typ','Mercedes') else 230 %}
+        {{ (u_mit / spannung) | round(2) }}
+
     # EV Ladestrom Optimal
     - name: "EV Ladestrom Optimal"
       unique_id: "ev_ladestrom_optimal"
       unit_of_measurement: "A"
       state: >
-        {% set modbus = states('sensor.solax_ac_power') | float(0) %}
-        {% set cloud = states('sensor.solax_cloud_ac_power') | float(0) %}
-        {% set solar = modbus if (modbus > 0 and states('sensor.solax_ac_power') not in ['unavailable', 'unknown']) else cloud %}
+        {% set amp_mit = states('sensor.ev_ampere_mit') | float(0) %}
+        {% set amp_ohne = states('sensor.ev_ampere_ohne') | float(0) %}
         
-        {% set og = states('sensor.shellypro3em_a0dd6ca16768_total_active_power') | float(0) %}
-        {% set eg = states('sensor.shellypro3em_8813bfe23688_total_active_power') | float(0) %}
-        {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
-        {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
-        {% set ac_pat = 500 if not is_state('climate.patrice', 'off') else 0 %}
-        {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
-        {% set ac_wohn = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
-        {% set ac_buro = 500 if not is_state('climate.buro', 'off') else 0 %}
-        {% set reserve = 500 %}
-        
-        {% set grundverbrauch = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + reserve %}
-        {% set ueberschuss = solar - grundverbrauch %}
-        
-        {% set spannung = 690 if is_state('input_select.ev_auto_typ', 'Mercedes') else 230 %}
-        {% set ampere = (ueberschuss / spannung) | round(1) %}
-        
-        {% if ampere < 6 %}
+        {# Entscheidungslogik #}
+        {% if amp_mit <= 0 %}
           0
-        {% elif ampere > 16 %}
-          16  
+        {% elif amp_mit >= 16 %}
+          16
+        {% elif amp_mit < 6 %}
+          {# Unter 6 A: nur halten, wenn ohne EV >= 6 A (echter knapper Überschuss durch EV) #}
+          {% if amp_ohne >= 6 %}
+            6
+          {% else %}
+            0
+          {% endif %}
         {% else %}
-          {{ ampere | round(0) }}
+          {{ amp_mit | round(0) }}
         {% endif %}
 
+
     # AC-THOR Sollwert
-    - name: "AC•THOR Sollwert"
-      unique_id: ac_thor_sollwert
+    - name: "AC-THOR Sollwert"
+      unique_id: "ac_thor_sollwert"
       unit_of_measurement: "W"
       state: >
-        {% set thor = states('number.ac_thor_9s_1_power_ac9') | float(0) %}
-        {% set modbus = states('sensor.solax_ac_power') | float(0) %}
-        {% set cloud = states('sensor.solax_cloud_ac_power') | float(0) %}
-        {% set solar = modbus if modbus > 0 else cloud %}
-        {% set og = states('sensor.shellypro3em_a0dd6ca16768_total_active_power') | float(0) %}
-        {% set eg = states('sensor.shellypro3em_8813bfe23688_total_active_power') | float(0) %}
+        {% set pv = states('sensor.solax_ac_power') | float(0) %}
+        {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
+        {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
         {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
         {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
-        {% set ac_pat = 500 if not is_state('climate.patrice', 'off') else 0 %}
-        {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
-        {% set ac_wohn = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
-        {% set ac_buro = 500 if not is_state('climate.buro', 'off') else 0 %}
-        {% set evc = states('sensor.evc_charging_power') | float(0) * 1000 %}
-        {% set reserve = 1000 %}
-        {% set last = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + evc + reserve %}
-        {% set u = solar - last %}
+        {% set ev_w = states('sensor.wb_leistung_w') | float(0) %}
 
-        {% if u < 1000 %}
+        {# Klima-Offsets #}
+        {% set ac_pat   = 500 if not is_state('climate.patrice', 'off') else 0 %}
+        {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
+        {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
+        {% set ac_buro   = 500 if not is_state('climate.buro', 'off') else 0 %}
+
+        {# Reserve #}
+        {% set reserve = 1000 %}
+
+        {# Hauslast ohne Thor #}
+        {% set haus = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + ev_w + reserve %}
+
+        {# Überschuss u #}
+        {% set u = pv - haus %}
+
+        {# EV-First nur wenn EV wirklich lädt (Status 2) #}
+        {% set ev_status = states('sensor.evc_status_code') %}
+        {% set ev_laedt = ev_status == '2' %}
+        {% set ev_opt_a = states('sensor.ev_ladestrom_optimal') | float(0) %}
+
+        {% if ev_laedt and ev_opt_a < 16 %}
           0
-        {% elif u > 9000 %}
-          9000
         {% else %}
-          {{ u | round(-2) }}
+          {# Mindestschwelle und Deckelung für Thor #}
+          {% set out = [u, 0] | max %}
+          {% set thor_min = 1200 %}
+          {% set thor_max = 3000 %}
+          {{ [ (out if out >= thor_min else 0), thor_max ] | min | round(0) }}
         {% endif %}
 
     # Statusanzeige evc
@@ -214,18 +276,7 @@
         {% elif code == 13 %}Stopping
         {% else %}Unknown ({{ code }}){% endif %}
 
-    # - name: "WP Gesamtleistung W v2"
-    #   unique_id: "wp_power_sum_w_v2"
-    #   unit_of_measurement: "W"
-    #   device_class: power
-    #   state_class: measurement
-    #   state: >
-    #     {% set p =
-    #       (states('sensor.zuhause_device_0_arotherm_current_power') | float(0)) +
-    #       (states('sensor.zuhause_device_1_hydraulic_station_current_power') | float(0))
-    #     %}
-    #     {% if p < 0 or p > 8000 %} 0 {% else %} {{ p }} {% endif %}
-  
+   # Gesamtleistung Wärmepumpe in W v2 
     - name: "WP Gesamtleistung W v2"
       unique_id: "wp_power_sum_w_v2"
       unit_of_measurement: "W"
@@ -238,16 +289,9 @@
         %}
         {% if p < 0  %} 0 {% else %} {{ p }} {% endif %}
 
-    # - name: "WP Energie integriert v2"
-    #   unique_id: "wp_energy_integrated_kwh_v2"
-    #   state: "{{ states('sensor.wp_energie_integriert_roh_v2') | float(0) }}"
-    #   unit_of_measurement: "kWh"
-    #   device_class: energy
-    #   state_class: total_increasing
-
     # Wallbox Leistung in W
     - name: "WB Leistung W"
-      state: "{{ (states('sensor.evc_charging_power') | float(0)) * 1000 }}"
+      state: "{{ (states('sensor.evc_charging_power') | float(0)) * 1000 | int}}"
       unit_of_measurement: "W"
       device_class: power
       state_class: measurement
@@ -265,11 +309,16 @@
         {% set fixed = now().replace(hour=7, minute=15, second=0, microsecond=0) %}
         {% set sun_raw = state_attr("sun.sun", "next_rising") %}
         {% if sun_raw %}
-          {% set sun = as_datetime(sun_raw) | as_local - timedelta(minutes=30) %}
+          {% set sun = as_datetime(sun_raw) | as_local - timedelta(minutes=15) %}
           {{ [fixed, sun] | max }}
         {% else %}
           {{ fixed }}
         {% endif %}
+
+    - name: "Sonnenaufgang Zeit"
+      state: "{{ as_timestamp(state_attr('sun.sun', 'next_rising')) | timestamp_custom('%H:%M') }}"
+    - name: "Sonnenuntergang Zeit"
+      state: "{{ as_timestamp(state_attr('sun.sun', 'next_setting')) | timestamp_custom('%H:%M') }}"
 
 # -----------------------------------------------------------
 # ↘️ HIER BEGINNT DER NEUE MODERNE TEMPLATE-SWITCH
