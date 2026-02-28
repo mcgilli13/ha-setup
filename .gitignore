@@ -17,6 +17,7 @@
 !input_selects.yaml
 !modbuses.yaml
 !rest_commands.yaml
+!simulationen.txt
 
 # NEVER track secrets
 secrets.yaml
