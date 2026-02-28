@@ -307,7 +307,7 @@
       device_class: timestamp
       state: >
         {% set fixed = now().replace(hour=7, minute=15, second=0, microsecond=0) %}
-        {% set sun_raw = state_attr("sun.sun", "next_rising") %}
+        {% set sun_raw = state_attr('sun.sun', 'next_rising') %}
         {% if sun_raw %}
           {% set sun = as_datetime(sun_raw) | as_local - timedelta(minutes=15) %}
           {{ [fixed, sun] | max }}
