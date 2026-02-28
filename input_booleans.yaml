@@ -1,13 +1,14 @@
+# EV-Laden Erzwingen - Sofortiges Laden des Elektrofahrzeugs unabhängig von Solarertrag
+ ev_force_charging:
+   name: "EV Zwangsladen"
+   icon: mdi:battery-charging-100
 
-ev_force_charging:
-  name: "EV Zwangsladen"
-  icon: mdi:battery-charging-100
-
+# EV Nachtladung - Automatisches Laden des Elektrofahrzeugs zwischen 2:00 und 6:00 Uhr
 ev_nachtladen:
-  name: "EV Nachtladung (2-6 Uhr)"
-  icon: mdi:weather-night
+   name: "EV Nachtladung (2-6 Uhr)"
+   icon: mdi:weather-night
 
+# AC•THOR Steuerung - Aktiviert den Heizstab zur Nutzung überschüssiger Solarenergie
 ac_thor_steuerung:
-  name: AC•THOR Steuerung aktiv
-  icon: mdi:power
-    
+   name: AC•THOR Steuerung aktiv
+   icon: mdi:power
