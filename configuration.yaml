@@ -38,7 +38,8 @@ homeassistant:
       state_class: total_increasing
       unit_of_measurement: kWh
 
-automation: !include automations.yaml
+# automation: !include automations.yaml
+automation: !include_dir_merge_list automations/
 modbus: !include modbuses.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml

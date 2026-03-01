@@ -6,7 +6,8 @@
 
 # Allow ONLY these YAML config files
 !configuration.yaml
-!automations.yaml
+!automations/
+!automations/*.yaml
 !scripts.yaml
 !scenes.yaml
 !sensors.yaml
