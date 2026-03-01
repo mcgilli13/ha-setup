@@ -20,3 +20,16 @@ jobs:
         uses: frenck/action-home-assistant@v1
         with:
           path: "."
+        env:
+          solax_api_url: "dummy"
+          solax_token: "dummy"
+          solax_sn: "dummy"
+          solax_api_request_body: "dummy"
+          solax_wallbox_sn: "dummy"
+          mypv_token: "dummy"
+          mypv_serial: "dummy"
+          tibber_authorization: "dummy"
+          solax_modbus_ip: "dummy"
+          influxdb_user: "dummy"
+          influxdb_password: "dummy"
+          
