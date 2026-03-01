@@ -303,18 +303,22 @@
       device_class: energy
       state_class: total_increasing
 
+    # Rollladen automation 
     - name: "rollladen_oeffnen_zeit"
       device_class: timestamp
       state: >
         {% set fixed = now().replace(hour=7, minute=15, second=0, microsecond=0) %}
         {% set sun_raw = state_attr('sun.sun', 'next_rising') %}
         {% if sun_raw %}
-          {% set sun = as_datetime(sun_raw) | as_local - timedelta(minutes=15) %}
+          {% set sun = as_datetime(sun_raw) | as_local %}
+          {% if sun.date() != now().date() %}
+            {% set sun = sun - timedelta(days=1) %}
+          {% endif %}
           {{ [fixed, sun] | max }}
         {% else %}
           {{ fixed }}
         {% endif %}
-
+        
     - name: "Sonnenaufgang Zeit"
       state: "{{ as_timestamp(state_attr('sun.sun', 'next_rising')) | timestamp_custom('%H:%M') }}"
     - name: "Sonnenuntergang Zeit"
