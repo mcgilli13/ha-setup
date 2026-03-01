@@ -1,0 +1,22 @@
+name: Home Assistant Config Check
+
+on:
+  push:
+    branches:
+      - '**'          # alle Branches prüfen
+  pull_request:
+    branches:
+      - main          # PRs auf main prüfen
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Home Assistant Config Check
+        uses: frenck/action-home-assistant@v1
+        with:
+          path: "."

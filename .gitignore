@@ -1,6 +1,11 @@
 # Ignore everything
 /*
 
+# Allow GitHub Actions
+!.github/
+!.github/workflows/
+!.github/workflows/*.yaml
+
 # Allow .gitignore itself
 !.gitignore
 
