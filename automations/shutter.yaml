@@ -1,0 +1,64 @@
+############################################################
+# 🏠 ROLLLÄDEN & MARKISEN
+############################################################
+
+- alias: Markisen auf
+  id: '1758290669736'
+  description: ''
+  triggers:
+  - trigger: sun
+    event: sunset
+    offset: 0
+  conditions: []
+  actions:
+  - device_id: c4b9c460e409765844ae25259ec00d41
+    domain: cover
+    entity_id: 8a480a885b00a1d8f5d61fc9bbf58f28
+    type: open
+  - device_id: dddcec644796ce97cb91f77225e1b213
+    domain: cover
+    entity_id: aff254e0e7acaf6fd20c6125cd4f1428
+    type: open
+  mode: single
+
+- alias: Rollladen öffnen
+  trigger:
+  - platform: time
+    at: sensor.rollladen_oeffnen_zeit
+  actions:
+  - device_id: 6292478dedaf6af78476135a40409940
+    domain: cover
+    entity_id: b6ff0e930094e5e6b916b9e5e571060e
+    type: open
+  - device_id: f64bbc5534da3e5fa56aaa13b7f4fc09
+    domain: cover
+    entity_id: c2cbac813cee5c5337a20f7bad855323
+    type: set_position
+    position: 100
+  mode: single
+
+- id: '1762190324543'
+  alias: Rollladen schließen
+  description: ''
+  triggers:
+  - trigger: sun
+    event: sunset
+    offset: 0:30:00
+  conditions: []
+  actions:
+  - device_id: 6292478dedaf6af78476135a40409940
+    domain: cover
+    entity_id: b6ff0e930094e5e6b916b9e5e571060e
+    type: set_position
+    position: 10
+  - device_id: 79552510108851acfccfa1f033ede223
+    domain: cover
+    entity_id: 5cdfd2f6ffcf34ecb0926c06695619ce
+    type: set_position
+    position: 25
+  - device_id: f64bbc5534da3e5fa56aaa13b7f4fc09
+    domain: cover
+    entity_id: c2cbac813cee5c5337a20f7bad855323
+    type: set_position
+    position: 0
+  mode: single

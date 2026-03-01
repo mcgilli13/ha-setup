@@ -1,0 +1,103 @@
+############################################################
+# 💡 BELEUCHTUNG 
+############################################################
+
+- id: '1739976743596'
+  alias: Vitrine an
+  description: ''
+  triggers:
+  - trigger: sun
+    event: sunset
+    offset: 0
+  conditions:
+  - condition: time
+    before: '20:59:00'
+  actions:
+  - type: turn_on
+    device_id: ffd364b8be46e2ecfec4d940ba9cf284
+    entity_id: 54f1d26580fc0bc7a4eb59a040e3060d
+    domain: switch
+  mode: single
+
+
+- id: '1739976866576'
+  alias: Vitrine aus
+  description: ''
+  triggers:
+  - trigger: time
+    at: '21:00:00'
+  conditions: []
+  actions:
+  - type: turn_off
+    device_id: ffd364b8be46e2ecfec4d940ba9cf284
+    entity_id: 54f1d26580fc0bc7a4eb59a040e3060d
+    domain: switch
+    metadata:
+      secondary: false
+  mode: single
+
+
+- id: '1739982698159'
+  alias: Palme aus
+  description: ''
+  triggers:
+  - trigger: sun
+    event: sunset
+    offset: 0
+  conditions: []
+  actions:
+  - type: turn_off
+    device_id: 7abe87e99ac577867ce57d002e0bf983
+    entity_id: 5409464bb3bae96c83d3e8af1d15b33c
+    domain: switch
+  - type: turn_off
+    device_id: ffd364b8be46e2ecfec4d940ba9cf284
+    entity_id: 54f1d26580fc0bc7a4eb59a040e3060d
+    domain: switch
+  mode: single
+
+
+- id: '1739982725174'
+  alias: Palme an
+  description: ''
+  triggers:
+  - trigger: sun
+    event: sunrise
+    offset: 0
+  conditions: []
+  actions:
+  - type: turn_on
+    device_id: 7abe87e99ac577867ce57d002e0bf983
+    entity_id: 5409464bb3bae96c83d3e8af1d15b33c
+    domain: switch
+  - type: turn_on
+    device_id: ffd364b8be46e2ecfec4d940ba9cf284
+    entity_id: 54f1d26580fc0bc7a4eb59a040e3060d
+    domain: switch
+  mode: single
+
+- id: '1741589399919'
+  alias: WZ Wand Leuchten
+  description: ''
+  use_blueprint:
+    path: Malte/zha-ikea-four-button-remote-styrbar-for-lights-e2001-e2002.yaml
+    input:
+      remote: cbc623342a5b1fea40e48c6a53297812
+      light:
+        device_id:
+        - a08087681aa33ff20e580c6bf520181b
+        - 532787dcbe228ef29751d5456197fb3b
+        - 00e63e1e5cd28ba2d8037972784925fb
+        - e68e5dbe137b8c4611e12d07342da6ac
+      button_left_short: []
+
+- alias: Bewegung Flur
+  id: '1756050517961'
+  description: ''
+  use_blueprint:
+    path: homeassistant/motion_light.yaml
+    input:
+      motion_entity: binary_sensor.motion_flur_bewegung
+      light_target:
+        device_id: a94f5e8f087af98b5be381a79a0a66b7
+      no_motion_wait: 60

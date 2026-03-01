@@ -1,0 +1,48 @@
+############################################################
+# 🌬️ LUFTREINIGER
+############################################################
+
+- id: '1740465029372'
+  alias: Luftreiniger an
+  description: ''
+  triggers:
+  - trigger: time
+    at: '12:00:00'
+  conditions: []
+  actions:
+  - type: turn_on
+    device_id: 910a5e338cb5b960716c57474dfcefd8
+    entity_id: 9e9da4322cb689c8910cd0f62a1d1d0f
+    domain: fan
+  - type: turn_on
+    device_id: 49275697ccdee6329de8cdde4fec76f3
+    entity_id: cedf5d61ffae12ce047d0596b3c9bce8
+    domain: fan
+  - type: turn_on
+    device_id: 649edb0aed4cb8ea340883d6ddd7d6a8
+    entity_id: bd7557fddf0a5707060741d78f39bc58
+    domain: fan
+  mode: single
+
+
+- id: '1740465173744'
+  alias: Luftreiniger aus
+  description: ''
+  triggers:
+  - trigger: time
+    at: '16:05:00'
+  conditions: []
+  actions:
+  - type: turn_off
+    device_id: 910a5e338cb5b960716c57474dfcefd8
+    entity_id: 9e9da4322cb689c8910cd0f62a1d1d0f
+    domain: fan
+  - type: turn_off
+    device_id: 49275697ccdee6329de8cdde4fec76f3
+    entity_id: cedf5d61ffae12ce047d0596b3c9bce8
+    domain: fan
+  - type: turn_off
+    device_id: 649edb0aed4cb8ea340883d6ddd7d6a8
+    entity_id: bd7557fddf0a5707060741d78f39bc58
+    domain: fan
+  mode: single
