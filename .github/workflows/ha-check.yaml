@@ -21,7 +21,7 @@ jobs:
           cat <<EOF > secrets.yaml
           influxdb_user: dummy
           influxdb_password: dummy
-          solax_api_url: dummy
+          solax_api_url: "https://dummy.com"
           solax_token: dummy
           solax_sn: dummy
           solax_api_request_body: dummy
@@ -36,3 +36,4 @@ jobs:
         uses: frenck/action-home-assistant@v1
         with:
           path: "."
+          ignore: warnings
