@@ -85,8 +85,10 @@
   type: tcp
   host: 192.168.178.186
   port: 502
-  delay: 1
-  timeout: 3
+  delay: 2
+  message_wait_milliseconds: 500
+  timeout: 5
+  scan_interval: 10
   sensors:
     - name: "EVC Charging Power"
       slave: 1
