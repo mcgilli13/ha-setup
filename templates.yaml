@@ -54,8 +54,8 @@
       state_class: measurement
       unit_of_measurement: "W"
       state: >
-        {% set bezug = states('sensor.tibber_pulse_micha_energie') | float(0) %}
-        {% set eins = states('sensor.tibber_pulse_micha_stromerzeugung') | float(0) %}
+        {% set bezug = states('sensor.tibber_leistung') | float(0) %}
+        {% set eins = states('sensor.tibber_einspeiseleistung') | float(0) %}
 
         {# Wenn beide > 0, entscheide nach der dominanten Richtung #}
         {% if bezug > 0 and eins > 0 %}
