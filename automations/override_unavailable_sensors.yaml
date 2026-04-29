@@ -1,0 +1,72 @@
+---
+# Automation: Öffne Ventile, wenn Temperatur-Sensor 'unavailable' wird
+# Erklärung:
+# - Trigger: einer der Aqara-Temperatursensoren wird 'unavailable'.
+# - Aktion: korrespondierender Shelly-Switch 'switch.shelly_<raum>' wird eingeschaltet (Ventil auf).
+# - Die Zuordnung wird automatisch aus dem Entity-Namen abgeleitet:
+#   sensor.temperatur_<raum>_temperatur -> switch.shelly_<raum>
+# Hinweise:
+# - Diese Automation öffnet nur die Ventile; automatisches Schließen beim Wiederkehren
+#   des Sensors ist aus Sicherheitsgründen auskommentiert (kann bei Bedarf aktiviert
+#   oder verfeinert werden, z. B. nur wenn unser Script das Ventil geöffnet hatte).
+
+- id: 'override_unavailable_sensors_open_vents'
+  alias: 'Override: Ventile öffnen wenn Sensor unavailable'
+  description: >-
+    Wenn ein Aqara-Temperatursensor auf 'unavailable' geht, schaltet diese
+    Automation das zugeordnete Shelly-Switch ein (Ventil öffnen). Die Zuordnung
+    wird aus dem Sensor-Entity-Namen abgeleitet: sensor.temperatur_<raum>_temperatur
+    -> switch.shelly_<raum>.
+  trigger:
+    - platform: state
+      entity_id:
+        - sensor.temperatur_bad_temperatur
+        - sensor.temperatur_buro_temperatur
+        - sensor.temperatur_esszimmer_temperatur
+        - sensor.temperatur_flur_temperatur
+        - sensor.temperatur_kuche_temperatur
+        - sensor.temperatur_patrice_temperatur
+        - sensor.temperatur_wohnzimmer_temperatur
+        - sensor.temperatur_schlafzimmer_temperatur
+      to: 'unavailable'
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: >-
+          {{ 'switch.shelly_' ~ (trigger.entity_id.split('_')[1]) }}
+    - service: system_log.write
+      data:
+        message: >-
+          Override: opened {{ 'switch.shelly_' ~ (trigger.entity_id.split('_')[1]) }} because {{ trigger.entity_id }} became unavailable
+        level: info
+  mode: single
+
+# Automation: Schließe Ventile wenn Sensor wieder verfügbar
+# Wenn ein Sensor wieder 'available' wird, schaltet diese Automation das
+# korrespondierende Shelly-Switch aus (Ventil schließen), sodass das
+# Generic Thermostat wieder die Kontrolle übernehmen kann.
+- id: 'override_unavailable_sensors_close_vents'
+  alias: 'Override: Ventile schließen wenn Sensor wieder verfügbar'
+  trigger:
+    - platform: state
+      entity_id:
+        - sensor.temperatur_bad_temperatur
+        - sensor.temperatur_buro_temperatur
+        - sensor.temperatur_esszimmer_temperatur
+        - sensor.temperatur_flur_temperatur
+        - sensor.temperatur_kuche_temperatur
+        - sensor.temperatur_patrice_temperatur
+        - sensor.temperatur_wohnzimmer_temperatur
+        - sensor.temperatur_schlafzimmer_temperatur
+      to: 'available'
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: >-
+          {{ 'switch.shelly_' ~ (trigger.entity_id.split('_')[1]) }}
+    - service: system_log.write
+      data:
+        message: >-
+          Override: closed {{ 'switch.shelly_' ~ (trigger.entity_id.split('_')[1]) }} because {{ trigger.entity_id }} became available
+        level: info
+  mode: single
