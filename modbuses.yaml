@@ -83,7 +83,7 @@
 
 - name: solax_evc
   type: tcp
-  host: 192.168.178.186
+  host: !secret solax_evc_ip
   port: 502
   delay: 2
   message_wait_milliseconds: 500
