@@ -1,12 +1,15 @@
 name: Home Assistant Config Check
 
+env:
+  HA_VERSION: "2026.5.0"
+
 on:
   push:
     branches:
-      - '**'          # alle Branches prüfen
+      - '**'
   pull_request:
     branches:
-      - main          # PRs auf main prüfen
+      - main
 
 jobs:
   check:
@@ -16,24 +19,31 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Create dummy secrets.yaml
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Create dummy secrets.yaml from GitHub Secrets
         run: |
           cat <<EOF > secrets.yaml
-          influxdb_user: dummy
-          influxdb_password: dummy
-          solax_api_url: "https://dummy.com"
-          solax_token: dummy
-          solax_sn: dummy
-          solax_api_request_body: dummy
-          solax_wallbox_sn: dummy
-          mypv_token: dummy
-          mypv_serial: dummy
-          tibber_authorization: dummy
-          solax_modbus_ip: dummy
+          influxdb_user: ${{ secrets.INFLUXDB_USER }}
+          influxdb_password: ${{ secrets.INFLUXDB_PASSWORD }}
+          solax_api_url: "${{ secrets.SOLAX_API_URL }}"
+          solax_token: ${{ secrets.SOLAX_TOKEN }}
+          solax_sn: ${{ secrets.SOLAX_SN }}
+          solax_api_request_body: ${{ secrets.SOLAX_API_REQUEST_BODY }}
+          solax_wallbox_sn: ${{ secrets.SOLAX_WALLBOX_SN }}
+          mypv_token: ${{ secrets.MYPV_TOKEN }}
+          mypv_serial: ${{ secrets.MYPV_SERIAL }}
+          tibber_authorization: ${{ secrets.TIBBER_AUTHORIZATION }}
+          solax_modbus_ip: ${{ secrets.SOLAX_MODBUS_IP }}
           EOF
 
       - name: Home Assistant Config Check
         uses: frenck/action-home-assistant@v1
+        with:
+          path: "."
         with:
           path: "."
 
