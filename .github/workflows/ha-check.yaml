@@ -2,7 +2,6 @@ name: Home Assistant Config Check
 
 env:
   HA_VERSION: "2026.5.0"
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
   push:
@@ -17,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Create dummy secrets.yaml
         run: |
@@ -37,6 +36,6 @@ jobs:
           EOF
 
       - name: Home Assistant Config Check
-        uses: uses: home-assistant/actions@latest
+        uses: home-assistant/actions@latest
         with:
           path: "."
