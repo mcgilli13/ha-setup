@@ -23,20 +23,20 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Create secrets.yaml from GitHub Secrets
+      - name: Create dummy secrets.yaml
         run: |
           cat > secrets.yaml << 'EOF'
-          influxdb_user: ${{ secrets.INFLUXDB_USER }}
-          influxdb_password: ${{ secrets.INFLUXDB_PASSWORD }}
-          solax_api_url: "${{ secrets.SOLAX_API_URL }}"
-          solax_token: ${{ secrets.SOLAX_TOKEN }}
-          solax_sn: ${{ secrets.SOLAX_SN }}
-          solax_api_request_body: ${{ secrets.SOLAX_API_REQUEST_BODY }}
-          solax_wallbox_sn: ${{ secrets.SOLAX_WALLBOX_SN }}
-          mypv_token: ${{ secrets.MYPV_TOKEN }}
-          mypv_serial: ${{ secrets.MYPV_SERIAL }}
-          tibber_authorization: ${{ secrets.TIBBER_AUTHORIZATION }}
-          solax_modbus_ip: ${{ secrets.SOLAX_MODBUS_IP }}
+          influxdb_user: dummy
+          influxdb_password: dummy
+          solax_api_url: "https://dummy.com"
+          solax_token: dummy
+          solax_sn: dummy
+          solax_api_request_body: dummy
+          solax_wallbox_sn: dummy
+          mypv_token: dummy
+          mypv_serial: dummy
+          tibber_authorization: dummy
+          solax_modbus_ip: dummy
           EOF
 
       - name: Home Assistant Config Check
