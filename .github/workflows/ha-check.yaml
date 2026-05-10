@@ -44,6 +44,3 @@ jobs:
         uses: frenck/action-home-assistant@v1
         with:
           path: "."
-        with:
-          path: "."
-
