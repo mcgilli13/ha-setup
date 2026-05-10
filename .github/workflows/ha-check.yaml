@@ -39,12 +39,3 @@ jobs:
         uses: frenck/action-home-assistant@v1
         with:
           path: "."
-          mypv_serial: dummy
-          tibber_authorization: dummy
-          solax_modbus_ip: dummy
-          EOF
-
-      - name: Home Assistant Config Check
-        uses: frenck/action-home-assistant@v1
-        with:
-          path: "."
