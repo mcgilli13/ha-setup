@@ -36,6 +36,6 @@ jobs:
           EOF
 
       - name: Home Assistant Config Check
-        uses: home-assistant/actions@latest
+        uses: frenck/action-home-assistant@v1
         with:
           path: "."
