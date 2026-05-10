@@ -2,6 +2,7 @@ name: Home Assistant Config Check
 
 env:
   HA_VERSION: "2026.5.0"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
   push:
@@ -16,12 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
+        uses: actions/checkout@v5
 
       - name: Create dummy secrets.yaml
         run: |
@@ -34,6 +30,15 @@ jobs:
           solax_api_request_body: dummy
           solax_wallbox_sn: dummy
           mypv_token: dummy
+          mypv_serial: dummy
+          tibber_authorization: dummy
+          solax_modbus_ip: dummy
+          EOF
+
+      - name: Home Assistant Config Check
+        uses: frenck/action-home-assistant@v1
+        with:
+          path: "."
           mypv_serial: dummy
           tibber_authorization: dummy
           solax_modbus_ip: dummy
