@@ -29,6 +29,7 @@ jobs:
           solax_sn: dummy
           solax_api_request_body: dummy
           solax_wallbox_sn: dummy
+          solax_evc_ip: "192.168.1.1"
           mypv_token: dummy
           mypv_serial: dummy
           tibber_authorization: dummy
