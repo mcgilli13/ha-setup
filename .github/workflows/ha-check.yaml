@@ -14,7 +14,6 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -24,9 +23,9 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Create dummy secrets.yaml from GitHub Secrets
+      - name: Create secrets.yaml from GitHub Secrets
         run: |
-          cat <<EOF > secrets.yaml
+          cat > secrets.yaml << 'EOF'
           influxdb_user: ${{ secrets.INFLUXDB_USER }}
           influxdb_password: ${{ secrets.INFLUXDB_PASSWORD }}
           solax_api_url: "${{ secrets.SOLAX_API_URL }}"
