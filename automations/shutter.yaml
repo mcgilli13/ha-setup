@@ -51,11 +51,11 @@
     entity_id: b6ff0e930094e5e6b916b9e5e571060e
     type: set_position
     position: 10
-  - device_id: 79552510108851acfccfa1f033ede223
-    domain: cover
-    entity_id: 5cdfd2f6ffcf34ecb0926c06695619ce
-    type: set_position
-    position: 25
+  - action: cover.set_cover_position
+    target:
+      entity_id: cover.rollladen_patrice_shutter
+    data:
+      position: 25
   - device_id: f64bbc5534da3e5fa56aaa13b7f4fc09
     domain: cover
     entity_id: c2cbac813cee5c5337a20f7bad855323
