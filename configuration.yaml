@@ -8,8 +8,8 @@ frontend:
 
 # Influx DB parameter
 influxdb:
-  username: !secret influxdb_user
-  password: !secret influxdb_password
+#  username: !secret influxdb_user
+#  password: !secret influxdb_password
   tags:
     source: HA
   tags_attributes:
