@@ -252,7 +252,7 @@
           {# Mindestschwelle und Deckelung für Thor #}
           {% set out = [u, 0] | max %}
           {% set thor_min = 1000 %}
-          {% set thor_max = 9000 %}
+          {% set thor_max = 10000 %}
           {{ [ (out if out >= thor_min else 0), thor_max ] | min | round(0) }}
         {% endif %}
 
