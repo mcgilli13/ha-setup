@@ -91,13 +91,24 @@
         - e68e5dbe137b8c4611e12d07342da6ac
       button_left_short: []
 
-- alias: Bewegung Flur
-  id: '1756050517961'
+- id: '1784613521881'
+  alias: Bewegung Flur
   description: ''
   use_blueprint:
     path: homeassistant/motion_light.yaml
     input:
-      motion_entity: binary_sensor.motion_flur_bewegung
+      motion_entity: binary_sensor.motion_flur_belegung
       light_target:
         device_id: a94f5e8f087af98b5be381a79a0a66b7
-      no_motion_wait: 60
+      no_motion_wait: 45
+      
+#- alias: Bewegung Flur
+#  id: '1756050517961'
+#  description: ''
+#  use_blueprint:
+#    path: homeassistant/motion_light.yaml
+#    input:
+#      motion_entity: binary_sensor.motion_flur_bewegung
+#      light_target:
+#        device_id: a94f5e8f087af98b5be381a79a0a66b7
+#      no_motion_wait: 60
