@@ -74,7 +74,7 @@
         address: 1576
         value: "{{ (strom * 100) | int }}"
 
-    - delay: "00:00:01"
+    - delay: "00:00:02"
 
     - service: modbus.write_register
       data:
