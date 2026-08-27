@@ -1,61 +1,77 @@
-alias: "Warmwasser: PV-Überschuss Boost"
-description: >
-  Erhöht die Warmwasser-Solltemperatur auf 55°C bei anhaltendem PV-Überschuss
-  (Hausverbrauch < -3.5 kW, also Einspeisung, für 20 Min). Senkt sie zurück auf
-  40°C, wenn der Netzbezug länger als 1 Stunde über 1 kW liegt, sofort bei
-  Netzbezug > 5 kW, oder spätestens ab 17 Uhr.
-mode: single
-triggers:
-  - trigger: numeric_state
-    entity_id: sensor.hausverbrauch_aktuell
-    below: -3500
-    for:
-      minutes: 20
-    id: ueberschuss
-    note: "Einspeisung > 3.5 kW für 20 Min -> Warmwasser auf 55°C hochfahren"
+- id: "WP-PV-Ueberschuss"
+  alias: "Warmwasser: PV-Überschuss Boost"
+  description: >
+    Erhöht die Warmwasser-Solltemperatur auf 55°C bei anhaltendem PV-Überschuss
+    (Hausverbrauch < -3.5 kW, also Einspeisung, für 20 Min). Senkt sie zurück auf
+    40°C, wenn der Netzbezug länger als 1 Stunde über 1 kW liegt, sofort bei
+    Netzbezug > 5 kW, oder spätestens ab 17 Uhr.
+  mode: single
+  triggers:
+    - trigger: numeric_state
+      entity_id: sensor.hausverbrauch_aktuell
+      below: -3500
+      for:
+        minutes: 20
+      id: ueberschuss
+      note: "Einspeisung > 3.5 kW für 20 Min -> Warmwasser auf 55°C hochfahren"
+    - trigger: numeric_state
+      entity_id: sensor.hausverbrauch_aktuell
+      above: 1000
+      for:
+        hours: 1
+      id: netzbezug_verzoegert
+      note: "Netzbezug > 1 kW für 1 Stunde -> zurück auf 40°C (Hysterese)"
+    - trigger: numeric_state
+      entity_id: sensor.hausverbrauch_aktuell
+      above: 5000
+      id: netzbezug_sofort
+      note: "Netzbezug > 5 kW -> sofort zurück auf 40°C, keine Wartezeit"
+    - trigger: time
+      at: "17:00:00"
+      id: abend
+      note: "Spätestens ab 17 Uhr immer zurück auf 40°C"
+  conditions: []
+  actions:
+    - choose:
+        - conditions:
+            - condition: trigger
+              id: ueberschuss
+          sequence:
+            - action: water_heater.set_temperature
+              target:
+                entity_id: water_heater.zuhause_domestic_hot_water_0
+              data:
+                temperature: 55
+        - conditions:
+            - condition: trigger
+              id:
+                - netzbezug_verzoegert
+                - netzbezug_sofort
+                - abend
+          sequence:
+            - action: water_heater.set_temperature
+              target:
+                entity_id: water_heater.zuhause_domestic_hot_water_0
+              data:
+                temperature: 40
 
+- id: low_water_pressure
+  alias: Wenig Wasser (Heizung)
+  description: sendet eine Nachricht wenn ...
+  triggers:
   - trigger: numeric_state
-    entity_id: sensor.hausverbrauch_aktuell
-    above: 1000
+    entity_id:
+    - sensor.zuhause_water_pressure
     for:
       hours: 1
-    id: netzbezug_verzoegert
-    note: "Netzbezug > 1 kW für 1 Stunde -> zurück auf 40°C (Hysterese)"
+      minutes: 0
+      seconds: 0
+    below: 1.2
+  conditions: []
+  actions:
+  - action: notify.mobile_app_mgiphone
+    metadata: {}
+    data:
+      message: Wasserdruck Heizung zu gering
+  mode: single
 
-  - trigger: numeric_state
-    entity_id: sensor.hausverbrauch_aktuell
-    above: 5000
-    id: netzbezug_sofort
-    note: "Netzbezug > 5 kW -> sofort zurück auf 40°C, keine Wartezeit"
-
-  - trigger: time
-    at: "17:00:00"
-    id: abend
-    note: "Spätestens ab 17 Uhr immer zurück auf 40°C"
-
-conditions: []
-
-actions:
-  - choose:
-      - conditions:
-          - condition: trigger
-            id: ueberschuss
-        sequence:
-          - action: water_heater.set_temperature
-            target:
-              entity_id: water_heater.zuhause_domestic_hot_water_0
-            data:
-              temperature: 55
-
-      - conditions:
-          - condition: trigger
-            id:
-              - netzbezug_verzoegert
-              - netzbezug_sofort
-              - abend
-        sequence:
-          - action: water_heater.set_temperature
-            target:
-              entity_id: water_heater.zuhause_domestic_hot_water_0
-            data:
-              temperature: 40
