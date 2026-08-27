@@ -36,6 +36,9 @@
         - conditions:
             - condition: trigger
               id: ueberschuss
+            - condition: time
+              after: "06:00:00"
+              before: "17:00:00"
           sequence:
             - action: water_heater.set_temperature
               target:
@@ -54,7 +57,7 @@
                 entity_id: water_heater.zuhause_domestic_hot_water_0
               data:
                 temperature: 40
-
+                
 - id: low_water_pressure
   alias: Wenig Wasser (Heizung)
   description: sendet eine Nachricht wenn ...
