@@ -16,53 +16,53 @@
           0
         {% endif %}          
         
-    # Exportleistung (Netzeinspeisung > 0)
-    - name: "SolaX Net Export"
-      unique_id: Solax_Export
-      icon: mdi:transmission-tower
-      unit_of_measurement: "W"
-      state: >
-        {% set v = states('sensor.solax_feed_in_power') | float(0) %}
-        {{ v if v > 0 else 0 }}
+#    # Exportleistung (Netzeinspeisung > 0)
+#    - name: "SolaX Net Export"
+#      unique_id: Solax_Export
+#      icon: mdi:transmission-tower
+#      unit_of_measurement: "W"
+#      state: >
+#        {% set v = states('sensor.solax_feed_in_power') | float(0) %}
+#        {{ v if v > 0 else 0 }}
 
-    # Importleistung (Netzbezug > 0)
-    - name: "SolaX Net Import"
-      unique_id: Solax_Import
-      unit_of_measurement: "W"
-      icon: mdi:transmission-tower
-      state: >
-        {% set v = states('sensor.solax_feed_in_power') | float(0) %}
-        {{ (0 - v) if v < 0 else 0 }}
+#    # Importleistung (Netzbezug > 0)
+#    - name: "SolaX Net Import"
+#      unique_id: Solax_Import
+#      unit_of_measurement: "W"
+#      icon: mdi:transmission-tower
+#      state: >
+#        {% set v = states('sensor.solax_feed_in_power') | float(0) %}
+#        {{ (0 - v) if v < 0 else 0 }}
 
-    # Status des Wechselrichters (übersetzt von Statuscode)
-    - name: "Solax Status"
-      unique_id: Solax_Status
-      icon: mdi:solar-power-variant
-      state: >
-        {% set attr = states('sensor.solax_inverter_status') | int(0) + 100 %}
-        {% if attr == 100 %}Wait
-        {% elif attr == 101 %}Check
-        {% elif attr == 102 %}Normal
-        {% elif attr == 103 %}Fault
-        {% elif attr == 104 %}Permanent Fault
-        {% elif attr == 105 %}Update
-        {% elif attr == 106 %}EPS Check
-        {% elif attr == 107 %}EPS
-        {% elif attr == 108 %}Self-test
-        {% elif attr == 109 %}Idle
-        {% elif attr == 110 %}Standby
-        {% elif attr == 111 %}Pv Wake Up Bat
-        {% elif attr == 112 %}Gen Check
-        {% elif attr == 113 %}Gen Run
-        {% else %} Unknown {% endif %}
+#    # Status des Wechselrichters (übersetzt von Statuscode)
+#    - name: "Solax Status"
+#      unique_id: Solax_Status
+#      icon: mdi:solar-power-variant
+#      state: >
+#        {% set attr = states('sensor.solax_inverter_status') | int(0) + 100 %}
+#        {% if attr == 100 %}Wait
+#        {% elif attr == 101 %}Check
+#        {% elif attr == 102 %}Normal
+#        {% elif attr == 103 %}Fault
+#        {% elif attr == 104 %}Permanent Fault
+#        {% elif attr == 105 %}Update
+#        {% elif attr == 106 %}EPS Check
+#        {% elif attr == 107 %}EPS
+#        {% elif attr == 108 %}Self-test
+#        {% elif attr == 109 %}Idle
+#        {% elif attr == 110 %}Standby
+#        {% elif attr == 111 %}Pv Wake Up Bat
+#        {% elif attr == 112 %}Gen Check
+#        {% elif attr == 113 %}Gen Run
+#        {% else %} Unknown {% endif %}
 
-    # AC Power aus Cloud
-    - name: "Solax Cloud AC Power"
-      unique_id: "Solax_Cloud_AC_Power"
-      unit_of_measurement: "W"
-      device_class: power
-      state: "{{ states.sensor.solax_cloud_api.attributes.result.acpower | default(0) }}"
-      availability: "{{ states('sensor.solax_cloud_api') == 'True' }}"
+#    # AC Power aus Cloud
+#    - name: "Solax Cloud AC Power"
+#      unique_id: "Solax_Cloud_AC_Power"
+#      unit_of_measurement: "W"
+#      device_class: power
+#      state: "{{ states.sensor.solax_cloud_api.attributes.result.acpower | default(0) }}"
+#      availability: "{{ states('sensor.solax_cloud_api') == 'True' }}"
 
     # Stabiler Hausverbrauch / Grid-Sensor
     - name: "Hausverbrauch aktuell"
