@@ -1,4 +1,21 @@
 - sensor:
+    - name: "SolaX Batterie Leistung Dashboard"
+      unique_id: solax_battery_power_dashboard
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {% set power = states('sensor.solax_total_battery_power_charge') | float(0) | abs %}
+        {% set status = states('sensor.solax_inverter_bdc_status') | lower | trim %}
+        
+        {% if status == 'charge' or status == 'charging' %}
+          {{ power * -1 }}
+        {% elif status == 'discharge' or status == 'discharging' %}
+          {{ power }}
+        {% else %}
+          0
+        {% endif %}          
+        
     # Exportleistung (Netzeinspeisung > 0)
     - name: "SolaX Net Export"
       unique_id: Solax_Export
