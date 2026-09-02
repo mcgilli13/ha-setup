@@ -16,18 +16,25 @@
   trigger:
     - platform: numeric_state
       entity_id: sensor.ev_ladestrom_optimal
-      above: 5.5
+      above: 6.5
+      for: "00:00:45"
 
     - platform: state
       entity_id: input_boolean.ev_force_charging
+      to: "on"
 
   condition:
     - condition: or
       conditions:
-        # PV vorhanden
-        - condition: template
-          value_template: "{{ states('sensor.ev_ladestrom_optimal') | float(0) > 0 }}"
-        # Zwangsladen aktiv
+        # Solar-Start: PV-Überschuss laut Schätzung UND kein Netzbezug laut echter Messung
+        - condition: and
+          conditions:
+            - condition: numeric_state
+              entity_id: sensor.ev_ladestrom_optimal
+              above: 0
+            - condition: template
+              value_template: "{{ states('sensor.hausverbrauch_aktuell') | float(0) <= 0 }}"
+        # Zwangsladen: immer, egal woher der Strom kommt
         - condition: state
           entity_id: input_boolean.ev_force_charging
           state: "on"
