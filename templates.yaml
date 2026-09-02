@@ -240,11 +240,13 @@
       unique_id: "ac_thor_sollwert"
       unit_of_measurement: "W"
       state: >
-        {% set pv = states('sensor.solax_ac_power') | float(0) %}
+        {% set pv = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
         {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
         {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
-        {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
-        {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
+        {% set wp1 = 0 %}
+        {% set wp2 = 0 %}
+        {# set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) #}
+        {# set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) #}
         {% set ev_w = states('sensor.wb_leistung_w') | float(0) %}
 
         {# Klima-Offsets #}
