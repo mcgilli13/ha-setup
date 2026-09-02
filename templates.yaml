@@ -173,8 +173,8 @@
         {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
         {% set wp1 = 0 %}
         {% set wp2 = 0 %}
-#        {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
-#        {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
+        {# set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) #}
+        {# set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) #}
         {% set ac_pat   = 500 if not is_state('climate.patrice', 'off') else 0 %}
         {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
         {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
@@ -194,8 +194,8 @@
         {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
         {% set wp1 = 0 %}
         {% set wp2 = 0 %}
-#        {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
-#        {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
+        {# set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) #}
+        {# set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) #}
         {% set ac_pat   = 500 if not is_state('climate.patrice', 'off') else 0 %}
         {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
         {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
