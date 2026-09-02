@@ -168,11 +168,13 @@
       unique_id: "ev_ampere_ohne"
       unit_of_measurement: "A"
       state: >
-        {% set solar = states('sensor.solax_ac_power') | float(0) %}
+        {% set solar = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
         {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
         {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
-        {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
-        {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
+        {% set wp1 = 0 %}
+        {% set wp2 = 0 %}
+#        {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
+#        {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
         {% set ac_pat   = 500 if not is_state('climate.patrice', 'off') else 0 %}
         {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
         {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
@@ -187,11 +189,13 @@
       unique_id: "ev_ampere_mit"
       unit_of_measurement: "A"
       state: >
-        {% set solar = states('sensor.solax_ac_power') | float(0) %}
+        {% set solar = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
         {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
         {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
-        {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
-        {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
+        {% set wp1 = 0 %}
+        {% set wp2 = 0 %}
+#        {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
+#        {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
         {% set ac_pat   = 500 if not is_state('climate.patrice', 'off') else 0 %}
         {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
         {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
