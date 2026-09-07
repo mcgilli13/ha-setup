@@ -39,7 +39,7 @@
         message: >-
           Override: opened {{ 'switch.shelly_' ~ (trigger.entity_id.split('_')[1]) }} because {{ trigger.entity_id }} became unavailable
         level: info
-  mode: single
+  mode: parallel
 
 # Automation: Schließe Ventile wenn Sensor wieder verfügbar
 # Wenn ein Sensor wieder 'available' wird, schaltet diese Automation das
@@ -69,4 +69,4 @@
         message: >-
           Override: closed {{ 'switch.shelly_' ~ (trigger.entity_id.split('_')[1]) }} because {{ trigger.entity_id }} became available
         level: info
-  mode: single
+  mode: parallel
