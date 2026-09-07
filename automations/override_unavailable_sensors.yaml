@@ -20,14 +20,14 @@
   trigger:
     - platform: state
       entity_id:
-        - sensor.temperatur_bad_temperatur
-        - sensor.temperatur_buro_temperatur
-        - sensor.temperatur_esszimmer_temperatur
-        - sensor.temperatur_flur_temperatur
-        - sensor.temperatur_kuche_temperatur
-        - sensor.temperatur_patrice_temperatur
-        - sensor.temperatur_wohnzimmer_temperatur
-        - sensor.temperatur_schlafzimmer_temperatur
+        - sensor.bad_klimasensor_temperature
+        - sensor.buero_klimasensor_temperature
+        - sensor.esszimmer_klimasensor_temperature
+        - sensor.flur_klimasensor_temperature
+        - sensor.kuche_klimasensor_temperature
+        - sensor.patrice_klimasensor_temperature
+        - sensor.wohnzimmer_klimasensor_temperature
+        - sensor.schlafzimmer_klimasensor_temperature
       to: 'unavailable'
   action:
     - service: switch.turn_on
@@ -50,14 +50,14 @@
   trigger:
     - platform: state
       entity_id:
-        - sensor.temperatur_bad_temperatur
-        - sensor.temperatur_buro_temperatur
-        - sensor.temperatur_esszimmer_temperatur
-        - sensor.temperatur_flur_temperatur
-        - sensor.temperatur_kuche_temperatur
-        - sensor.temperatur_patrice_temperatur
-        - sensor.temperatur_wohnzimmer_temperatur
-        - sensor.temperatur_schlafzimmer_temperatur
+        - sensor.bad_klimasensor_temperature
+        - sensor.buero_klimasensor_temperature
+        - sensor.esszimmer_klimasensor_temperature
+        - sensor.flur_klimasensor_temperature
+        - sensor.kuche_klimasensor_temperature
+        - sensor.patrice_klimasensor_temperature
+        - sensor.wohnzimmer_klimasensor_temperature
+        - sensor.schlafzimmer_klimasensor_temperature
       to: 'available'
   action:
     - service: switch.turn_off
