@@ -38,48 +38,78 @@
       message: Trockner fertig
   mode: single
 
+#- id: '1739168879557'
+#  alias: Brunnen einschalten
+#  description: ''
+#  triggers:
+#  - trigger: time
+#    at: 08:00:00
+#  conditions: []
+#  actions:
+#  - type: turn_on
+#    device_id: 62cd3166c7ee0ba342a1292dfc9ae74c
+#    entity_id: 7b60ab1832b1f9117b29cf8f7047d4b0
+#    domain: switch
+#  - type: turn_on
+#    device_id: 3640de001a8383537f6c4a6b2c155273
+#    entity_id: e8272f0b87df4d048793a23cc8475b95
+#    domain: switch
+#  - type: turn_on
+#    device_id: 0fc2d3db86757af7d11ee4603a5032ee
+#    entity_id: 9f58a9c7d1c804acd19d99008b4cf0ec
+#    domain: switch
+#  mode: single
+
+#- id: '1739168967583'
+#  alias: Brunnen ausschalten
+#  description: ''
+#  triggers:
+#  - trigger: time
+#    at: '19:00:00'
+#  conditions: []
+#  actions:
+#  - type: turn_off
+#    device_id: 62cd3166c7ee0ba342a1292dfc9ae74c
+#    entity_id: 7b60ab1832b1f9117b29cf8f7047d4b0
+#    domain: switch
+#  - type: turn_off
+#    device_id: 3640de001a8383537f6c4a6b2c155273
+#    entity_id: e8272f0b87df4d048793a23cc8475b95
+#    domain: switch
+#  - type: turn_off
+#    device_id: 0fc2d3db86757af7d11ee4603a5032ee
+#    entity_id: 9f58a9c7d1c804acd19d99008b4cf0ec
+#    domain: switch
+#  mode: single
+
 - id: '1739168879557'
   alias: Brunnen einschalten
   description: ''
   triggers:
-  - trigger: time
-    at: 08:00:00
+    - trigger: time
+      at: 08:00:00
   conditions: []
   actions:
-  - type: turn_on
-    device_id: 62cd3166c7ee0ba342a1292dfc9ae74c
-    entity_id: 7b60ab1832b1f9117b29cf8f7047d4b0
-    domain: switch
-  - type: turn_on
-    device_id: 3640de001a8383537f6c4a6b2c155273
-    entity_id: e8272f0b87df4d048793a23cc8475b95
-    domain: switch
-  - type: turn_on
-    device_id: 0fc2d3db86757af7d11ee4603a5032ee
-    entity_id: 9f58a9c7d1c804acd19d99008b4cf0ec
-    domain: switch
+    - action: switch.turn_on
+      target:
+        entity_id:
+          - switch.s1_01
+          - switch.s1_02
   mode: single
 
 - id: '1739168967583'
   alias: Brunnen ausschalten
   description: ''
   triggers:
-  - trigger: time
-    at: '19:00:00'
+    - trigger: time
+      at: 19:00:00
   conditions: []
   actions:
-  - type: turn_off
-    device_id: 62cd3166c7ee0ba342a1292dfc9ae74c
-    entity_id: 7b60ab1832b1f9117b29cf8f7047d4b0
-    domain: switch
-  - type: turn_off
-    device_id: 3640de001a8383537f6c4a6b2c155273
-    entity_id: e8272f0b87df4d048793a23cc8475b95
-    domain: switch
-  - type: turn_off
-    device_id: 0fc2d3db86757af7d11ee4603a5032ee
-    entity_id: 9f58a9c7d1c804acd19d99008b4cf0ec
-    domain: switch
+    - action: switch.turn_off
+      target:
+        entity_id:
+          - switch.s1_01
+          - switch.s1_02
   mode: single
 
 - alias: AC•THOR dynamisch steuern
