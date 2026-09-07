@@ -1,10 +1,10 @@
 ---
 # Automation: Öffne Ventile, wenn Temperatur-Sensor 'unavailable' wird
 # Erklärung:
-# - Trigger: einer der Aqara-Temperatursensoren wird 'unavailable'.
-# - Aktion: korrespondierender Shelly-Switch 'switch.shelly_<raum>' wird eingeschaltet (Ventil auf).
-# - Die Zuordnung wird automatisch aus dem Entity-Namen abgeleitet:
-#   sensor.temperatur_<raum>_temperatur -> switch.shelly_<raum>
+# - Trigger: einer der Aqara-Klimasensoren wird 'unavailable'.
+# - Aktion: der Shelly-Switch in DERSELBEN AREA wie der Sensor wird eingeschaltet (Ventil auf).
+# - Die Zuordnung läuft über die HA-Area, nicht über den Entity-Namen — dadurch
+#   unempfindlich gegenüber künftigen Umbenennungen (z.B. Zigbee2MQTT-Migration).
 # Hinweise:
 # - Diese Automation öffnet nur die Ventile; automatisches Schließen beim Wiederkehren
 #   des Sensors ist aus Sicherheitsgründen auskommentiert (kann bei Bedarf aktiviert
@@ -13,10 +13,8 @@
 - id: 'override_unavailable_sensors_open_vents'
   alias: 'Override: Ventile öffnen wenn Sensor unavailable'
   description: >-
-    Wenn ein Aqara-Temperatursensor auf 'unavailable' geht, schaltet diese
-    Automation das zugeordnete Shelly-Switch ein (Ventil öffnen). Die Zuordnung
-    wird aus dem Sensor-Entity-Namen abgeleitet: sensor.temperatur_<raum>_temperatur
-    -> switch.shelly_<raum>.
+    Wenn ein Aqara-Klimasensor auf 'unavailable' geht, schaltet diese
+    Automation den Shelly-Switch in derselben Area ein (Ventil öffnen).
   trigger:
     - platform: state
       entity_id:
@@ -29,21 +27,23 @@
         - sensor.wohnzimmer_klimasensor_temperature
         - sensor.schlafzimmer_klimasensor_temperature
       to: 'unavailable'
+  variables:
+    ziel_switch: >-
+      {{ area_entities(area_id(trigger.entity_id)) | select('match', '^switch\.shelly_') | first }}
   action:
     - service: switch.turn_on
       target:
-        entity_id: >-
-          {{ 'switch.shelly_' ~ (trigger.entity_id.split('_')[1]) }}
+        entity_id: "{{ ziel_switch }}"
     - service: system_log.write
       data:
         message: >-
-          Override: opened {{ 'switch.shelly_' ~ (trigger.entity_id.split('_')[1]) }} because {{ trigger.entity_id }} became unavailable
+          Override: opened {{ ziel_switch }} because {{ trigger.entity_id }} became unavailable
         level: info
   mode: parallel
 
 # Automation: Schließe Ventile wenn Sensor wieder verfügbar
-# Wenn ein Sensor wieder 'available' wird, schaltet diese Automation das
-# korrespondierende Shelly-Switch aus (Ventil schließen), sodass das
+# Wenn ein Sensor wieder 'available' wird, schaltet diese Automation den
+# korrespondierenden Shelly-Switch aus (Ventil schließen), sodass das
 # Generic Thermostat wieder die Kontrolle übernehmen kann.
 - id: 'override_unavailable_sensors_close_vents'
   alias: 'Override: Ventile schließen wenn Sensor wieder verfügbar'
@@ -59,17 +59,20 @@
         - sensor.wohnzimmer_klimasensor_temperature
         - sensor.schlafzimmer_klimasensor_temperature
       to: 'available'
+  variables:
+    ziel_switch: >-
+      {{ area_entities(area_id(trigger.entity_id)) | select('match', '^switch\.shelly_') | first }}
   action:
     - service: switch.turn_off
       target:
-        entity_id: >-
-          {{ 'switch.shelly_' ~ (trigger.entity_id.split('_')[1]) }}
+        entity_id: "{{ ziel_switch }}"
     - service: system_log.write
       data:
         message: >-
-          Override: closed {{ 'switch.shelly_' ~ (trigger.entity_id.split('_')[1]) }} because {{ trigger.entity_id }} became available
+          Override: closed {{ ziel_switch }} because {{ trigger.entity_id }} became available
         level: info
   mode: parallel
+  
 ---
 - id: 'monthly_cycle_ventile'
   alias: 'Monatlich: Ventile durchfahren'
