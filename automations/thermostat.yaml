@@ -1,4 +1,3 @@
----
 # Automation: Öffne Ventile, wenn Temperatur-Sensor 'unavailable' wird
 # Erklärung:
 # - Trigger: einer der Aqara-Klimasensoren wird 'unavailable'.
