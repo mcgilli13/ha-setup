@@ -72,7 +72,6 @@
         level: info
   mode: parallel
   
----
 - id: 'monthly_cycle_ventile'
   alias: 'Monatlich: Ventile durchfahren'
   description: >-
