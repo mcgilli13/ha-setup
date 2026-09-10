@@ -171,11 +171,11 @@
         {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
         {% set ac_buro   = 500 if not is_state('climate.buro', 'off') else 0 %}
         {% set reserve = 1000 %}
-        {% set ev_status = states('sensor.evc_status_code') %}
-        {% set ev_laedt = ev_status == '2' %}
+        {# % set ev_status = states('sensor.evc_status_code') % #}
+        {# % set ev_laedt = ev_status == '2' % #}
         {% set ev_ist_w = states('sensor.solax_ev_charger_charge_power_total') | float(0) %}
         {% set haus_ohne = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + reserve %}
-        {% set haus_mit = haus_ohne + (ev_ist_w if ev_laedt else 0) %}
+        {% set haus_mit = haus_ohne + ev_ist_w %}
         {% set u_mit = solar - haus_mit %}
         {% set spannung = 690 if is_state('input_select.ev_auto_typ','Mercedes') else 230 %}
         {{ (u_mit / spannung) | round(2) }}
