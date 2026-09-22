@@ -288,7 +288,9 @@
     - name: "rollladen_oeffnen_zeit"
       device_class: timestamp
       state: >
-        {% set fixed = now().replace(hour=7, minute=15, second=0, microsecond=0) %}
+        {% set fixed_time = states('input_datetime.rollladen_oeffnen_fruehestens') %}
+        {% set fixed = today_at(fixed_time) %}
+        # {% set fixed = now().replace(hour=7, minute=15, second=0, microsecond=0) %}
         {% set sun_raw = state_attr('sun.sun', 'next_rising') %}
         {% if sun_raw %}
           {% set sun = as_datetime(sun_raw) | as_local %}
