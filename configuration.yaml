@@ -6,30 +6,6 @@ default_config:
 frontend:
   themes: !include_dir_merge_named themes
 
-# Influx DB parameter
-# influxdb:
-#  username: !secret influxdb_user
-#  password: !secret influxdb_password
-#  tags:
-#    source: HA
-#  tags_attributes:
-#    - friendly_name
-#  default_measurement: state
-#  exclude:
-#    entities:
-#      - zone.home
-#    domains:
-#      - persistent_notification
-#      - person
-#  include:
-#    domains:
-#      - sensor
-#      - binary_sensor
-#      - sun
-#      - light
-#      - cover
-#    entities:
-#      - weather.home
 
 homeassistant:
   customize:
@@ -48,6 +24,7 @@ switch: !include switches.yaml
 input_boolean: !include input_booleans.yaml
 input_number: !include input_numbers.yaml
 input_select: !include input_selects.yaml
+input_datetime: !include input_datetimes.yaml
 rest_command: !include rest_commands.yaml
 template: !include templates.yaml
 powercalc:
