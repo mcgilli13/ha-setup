@@ -3,8 +3,7 @@
 ############################################################
 
 - alias: Markisen auf
-  unique_id: markisen_auf
-  id: '1758290669736'
+  id: markisen_auf
   description: ''
   triggers:
   - trigger: sun
@@ -23,7 +22,7 @@
   mode: single
 
 - alias: Rollladen öffnen
-  unique_id: rollladen_offnen
+  id: rollladen_offnen
   trigger:
   - platform: time
     at: sensor.rollladen_oeffnen_zeit
@@ -39,8 +38,7 @@
     position: 100
   mode: single
 
-- id: '1762190324543'
-  unique_id: rolladen_schliessen
+- id: rolladen_schliessen
   alias: Rollladen schließen
   description: ''
   triggers:
