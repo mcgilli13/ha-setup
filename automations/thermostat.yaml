@@ -1,0 +1,114 @@
+# Automation: Öffne Ventile, wenn Temperatur-Sensor 'unavailable' wird
+# Erklärung:
+# - Trigger: einer der Aqara-Klimasensoren wird 'unavailable'.
+# - Aktion: der Shelly-Switch in DERSELBEN AREA wie der Sensor wird eingeschaltet (Ventil auf).
+# - Die Zuordnung läuft über die HA-Area, nicht über den Entity-Namen — dadurch
+#   unempfindlich gegenüber künftigen Umbenennungen (z.B. Zigbee2MQTT-Migration).
+# Hinweise:
+# - Diese Automation öffnet nur die Ventile; automatisches Schließen beim Wiederkehren
+#   des Sensors ist aus Sicherheitsgründen auskommentiert (kann bei Bedarf aktiviert
+#   oder verfeinert werden, z. B. nur wenn unser Script das Ventil geöffnet hatte).
+
+- id: 'override_unavailable_sensors_open_vents'
+  alias: 'Override: Ventile öffnen wenn Sensor unavailable'
+  description: >-
+    Wenn ein Aqara-Klimasensor auf 'unavailable' geht, schaltet diese
+    Automation den Shelly-Switch in derselben Area ein (Ventil öffnen).
+  trigger:
+    - platform: state
+      entity_id:
+        - sensor.bad_klimasensor_temperature
+        - sensor.buero_klimasensor_temperature
+        - sensor.esszimmer_klimasensor_temperature
+        - sensor.flur_klimasensor_temperature
+        - sensor.kuche_klimasensor_temperature
+        - sensor.patrice_klimasensor_temperature
+        - sensor.wohnzimmer_klimasensor_temperature
+        - sensor.schlafzimmer_klimasensor_temperature
+      to: 'unavailable'
+  variables:
+    ziel_switch: >-
+      {{ area_entities(area_id(trigger.entity_id)) | select('match', '^switch\.shelly_') | first }}
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: "{{ ziel_switch }}"
+    - service: system_log.write
+      data:
+        message: >-
+          Override: opened {{ ziel_switch }} because {{ trigger.entity_id }} became unavailable
+        level: info
+  mode: parallel
+
+# Automation: Schließe Ventile wenn Sensor wieder verfügbar
+# Wenn ein Sensor wieder 'available' wird, schaltet diese Automation den
+# korrespondierenden Shelly-Switch aus (Ventil schließen), sodass das
+# Generic Thermostat wieder die Kontrolle übernehmen kann.
+- id: 'override_unavailable_sensors_close_vents'
+  alias: 'Override: Ventile schließen wenn Sensor wieder verfügbar'
+  trigger:
+    - platform: state
+      entity_id:
+        - sensor.bad_klimasensor_temperature
+        - sensor.buero_klimasensor_temperature
+        - sensor.esszimmer_klimasensor_temperature
+        - sensor.flur_klimasensor_temperature
+        - sensor.kuche_klimasensor_temperature
+        - sensor.patrice_klimasensor_temperature
+        - sensor.wohnzimmer_klimasensor_temperature
+        - sensor.schlafzimmer_klimasensor_temperature
+      to: 'available'
+  variables:
+    ziel_switch: >-
+      {{ area_entities(area_id(trigger.entity_id)) | select('match', '^switch\.shelly_') | first }}
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: "{{ ziel_switch }}"
+    - service: system_log.write
+      data:
+        message: >-
+          Override: closed {{ ziel_switch }} because {{ trigger.entity_id }} became available
+        level: info
+  mode: parallel
+  
+- id: 'monthly_cycle_ventile'
+  alias: 'Monatlich: Ventile durchfahren'
+  description: >-
+    Am 1. jedes Monats um 03:00 Uhr werden nacheinander alle Shelly-Ventile
+    geöffnet, 10 Minuten gehalten und wieder geschlossen, damit sie sich nicht
+    festsetzen.
+  trigger:
+    - platform: time
+      at: '03:00:00'
+  condition:
+    - condition: template
+      value_template: "{{ now().day == 1 }}"
+  action:
+    - repeat:
+        for_each:
+          - switch.shelly_bad
+          - switch.shelly_buro
+          - switch.shelly_esszimmer
+          - switch.shelly_flur
+          - switch.shelly_kuche
+          - switch.shelly_patrice
+          - switch.shelly_wohnzimmer
+          - switch.shelly_schlafzimmer
+        sequence:
+          - service: switch.turn_on
+            target:
+              entity_id: "{{ repeat.item }}"
+          - service: system_log.write
+            data:
+              message: "Monthly cycle: opened {{ repeat.item }}"
+              level: info
+          - delay: '00:10:00'
+          - service: switch.turn_off
+            target:
+              entity_id: "{{ repeat.item }}"
+          - service: system_log.write
+            data:
+              message: "Monthly cycle: closed {{ repeat.item }}"
+              level: info
+  mode: single

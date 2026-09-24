@@ -84,71 +84,71 @@
 #       state_class: total
 # =====================================================
 
-- name: solax_evc
-  type: tcp
-  host: !secret solax_evc_ip
-  port: 502
-  delay: 2
-  message_wait_milliseconds: 500
-  timeout: 5
-  scan_interval: 10
-  sensors:
-    - name: "EVC Charging Power"
-      slave: 1
-      address: 11
-      input_type: input
-      data_type: uint16
-      scale: 0.001    # -> teilt durch 1000
-      precision: 1    # -> z.B. 3.2kW
-      unit_of_measurement: kW
-      state_class: measurement
-      device_class: power
-    - name: "EVC Status Code"
-      slave: 1
-      address: 29  # 0x001D
-      input_type: input
-      data_type: uint16
-      unit_of_measurement: code
-    - name: "EVC Max Ladestrom"
-      slave: 1
-      address: 1640  # 0x0668
-      input_type: holding
-      data_type: uint16
-      scale: 0.01
-      precision: 2
-      unit_of_measurement: "A"
-    # Session-Energie (Einzelladung), Einheit 0.1 kWh
-    - name: "EVC Session Energy"
-      slave: 1
-      address: 15         # 0x000F
-      input_type: input
-      data_type: uint32
-      swap: word
-      scale: 0.1
-      unit_of_measurement: kWh
-      device_class: energy
-      state_class: total
+#- name: solax_evc
+#  type: tcp
+#  host: !secret solax_evc_ip
+#  port: 502
+#  delay: 2
+#  message_wait_milliseconds: 500
+#  timeout: 5
+#  scan_interval: 10
+#  sensors:
+#    - name: "EVC Charging Power"
+#      slave: 1
+#      address: 11
+#      input_type: input
+#      data_type: uint16
+#      scale: 0.001    # -> teilt durch 1000
+#      precision: 1    # -> z.B. 3.2kW
+#      unit_of_measurement: kW
+#      state_class: measurement
+#      device_class: power
+#    - name: "EVC Status Code"
+#      slave: 1
+#      address: 29  # 0x001D
+#      input_type: input
+#      data_type: uint16
+#      unit_of_measurement: code
+#    - name: "EVC Max Ladestrom"
+#      slave: 1
+#      address: 1640  # 0x0668
+#      input_type: holding
+#      data_type: uint16
+#      scale: 0.01
+#      precision: 2
+#      unit_of_measurement: "A"
+#    # Session-Energie (Einzelladung), Einheit 0.1 kWh
+#    - name: "EVC Session Energy"
+#      slave: 1
+#      address: 15         # 0x000F
+#      input_type: input
+#      data_type: uint32
+#      swap: word
+#      scale: 0.1
+#      unit_of_measurement: kWh
+#      device_class: energy
+#      state_class: total
 
-    # Kumulierte Gesamt-Energie (ideal fürs Energy Dashboard)
-    - name: "EVC Total Energy"
-      slave: 1
-      address: 16         # 0x0010
-      input_type: input
-      data_type: uint32
-      scale: 0.1
-      unit_of_measurement: kWh
-      device_class: energy
-      state_class: total_increasing
+#    # Kumulierte Gesamt-Energie (ideal fürs Energy Dashboard)
+#    - name: "EVC Total Energy"
+#      slave: 1
+#      address: 16         # 0x0010
+#      input_type: input
+#      data_type: uint32
+#      scale: 0.1
+#      unit_of_measurement: kWh
+#      device_class: energy
+#      state_class: total_increasing
 
-  registers:
-    - name: "EVC Charging Command"
-      slave: 1
-      address: 1575
-      input_type: holding
-      data_type: uint16
+#  registers:
+#    - name: "EVC Charging Command"
+#      slave: 1
+#      address: 1575
+#      input_type: holding
+#      data_type: uint16
 
-    - name: "EVC Charging Current Setpoint"
-      slave: 1
-      address: 1576
-      input_type: holding
-      data_type: uint16
+#    - name: "EVC Charging Current Setpoint"
+#      slave: 1
+#      address: 1576
+#      input_type: holding
+#      data_type: uint16

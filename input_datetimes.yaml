@@ -1,0 +1,5 @@
+rollladen_oeffnen_fruehestens:
+  name: "Rollladen öffnen frühestens"
+  has_time: true
+  has_date: false
+  initial: "07:15:00"

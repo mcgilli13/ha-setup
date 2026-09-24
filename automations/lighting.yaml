@@ -97,10 +97,10 @@
   use_blueprint:
     path: homeassistant/motion_light.yaml
     input:
-      motion_entity: binary_sensor.motion_flur_belegung
+      motion_entity: binary_sensor.flur_bewegungssensor_presence
       light_target:
-        device_id: a94f5e8f087af98b5be381a79a0a66b7
-      no_motion_wait: 45
+        entity_id: light.flur_lampe_klein
+      no_motion_wait: 60
       
 #- alias: Bewegung Flur
 #  id: '1756050517961'
