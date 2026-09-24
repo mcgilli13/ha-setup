@@ -320,11 +320,40 @@
       device_class: energy
       state_class: total_increasing
 
-    # Rollladen automation 
+ #   # Rollladen automation 
+ #   - name: "rollladen_oeffnen_zeit"
+ #     device_class: timestamp
+ #     state: >
+ #       {% set fixed = now().replace(hour=6, minute=45, second=0, microsecond=0) %}
+ #       {% set sun_raw = state_attr('sun.sun', 'next_rising') %}
+ #       {% if sun_raw %}
+#          {% set sun = as_datetime(sun_raw) | as_local %}
+#          {% if sun.date() != now().date() %}
+#            {% set sun = sun - timedelta(days=1) %}
+#          {% endif %}
+#          {{ [fixed, sun] | max }}
+#        {% else %}
+#          {{ fixed }}
+#        {% endif %}
+        
+    - name: "Sonnenaufgang Zeit"
+      state: "{{ as_timestamp(state_attr('sun.sun', 'next_rising')) | timestamp_custom('%H:%M') }}"
+    - name: "Sonnenuntergang Zeit"
+      state: "{{ as_timestamp(state_attr('sun.sun', 'next_setting')) | timestamp_custom('%H:%M') }}"
+
+- trigger:
+    - trigger: time_pattern
+      minutes: "/5"
+    - trigger: state
+      entity_id: input_datetime.rollladen_oeffnen_fruehestens
+    - trigger: state
+      entity_id: sun.sun
+  sensor:
     - name: "rollladen_oeffnen_zeit"
       device_class: timestamp
       state: >
-        {% set fixed = now().replace(hour=6, minute=45, second=0, microsecond=0) %}
+        {% set fixed_time = states('input_datetime.rollladen_oeffnen_fruehestens') %}
+        {% set fixed = today_at(fixed_time) %}
         {% set sun_raw = state_attr('sun.sun', 'next_rising') %}
         {% if sun_raw %}
           {% set sun = as_datetime(sun_raw) | as_local %}
@@ -335,15 +364,6 @@
         {% else %}
           {{ fixed }}
         {% endif %}
-        
-    - name: "Sonnenaufgang Zeit"
-      state: "{{ as_timestamp(state_attr('sun.sun', 'next_rising')) | timestamp_custom('%H:%M') }}"
-    - name: "Sonnenuntergang Zeit"
-      state: "{{ as_timestamp(state_attr('sun.sun', 'next_setting')) | timestamp_custom('%H:%M') }}"
-
-# -----------------------------------------------------------
-# ↘️ HIER BEGINNT DER NEUE MODERNE TEMPLATE-SWITCH
-# -----------------------------------------------------------
 
 - switch:
     - name: "EVC Laden"
