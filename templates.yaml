@@ -229,23 +229,26 @@
       state: >
         {% set amp_mit = states('sensor.ev_ampere_mit') | float(0) %}
         {% set amp_ohne = states('sensor.ev_ampere_ohne') | float(0) %}
-        
-        {# Entscheidungslogik #}
-        {% if amp_mit <= 0 %}
-          0
-        {% elif amp_mit >= 16 %}
-          16
-        {% elif amp_mit < 6 %}
-          {# Unter 6 A: nur halten, wenn ohne EV >= 6 A (echter knapper Überschuss durch EV) #}
-          {% if amp_ohne >= 6 %}
-            6
+        {% set max_a = 16 %}
+        {% set min_a = 6 %}
+
+        {# amp_ohne = das eigentliche Ziel: wie viel Strom stünde zur
+           Verfügung, wenn das EV genau so viel zieht #}
+        {% set ziel = [amp_ohne, max_a] | min %}
+
+        {% if amp_mit < 0 %}
+          {# Echtes Defizit: aktuell wird trotz Ladung bereits Netzstrom
+             bezogen -> zurückregeln #}
+          {% if amp_ohne >= min_a %}
+            {{ min_a }}
           {% else %}
             0
           {% endif %}
+        {% elif ziel < min_a %}
+          0
         {% else %}
-          {{ amp_mit | round(0) }}
+          {{ ziel | round(0) }}
         {% endif %}
-
 
     # AC-THOR Sollwert
     - name: "AC-THOR Sollwert"
