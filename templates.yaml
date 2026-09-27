@@ -164,11 +164,24 @@
       icon: mdi:flash
       state_class: measurement
 
+
+#######################################################################
+#
+# EV Ladeleistung und Stromberechnung
+# EV Ampere Ohne: Berechnet den verfügbaren Strom für das EV
+#                 ohne Berücksichtigung der aktuellen EV-Ladeleistung.
+# EV Ampere Mit: Berechnet den verfügbaren Strom für das EV 
+#  unter Berücksichtigung der aktuellen EV-Ladeleistung.
+#
+#######################################################################
+
+
     - name: "EV Ampere Ohne"
       unique_id: "ev_ampere_ohne"
       unit_of_measurement: "A"
       state: >
-        {% set solar = states('sensor.solax_ac_power') | float(0) %}
+        {# set solar = states('sensor.solax_ac_power') | float(0) #}
+        {% set solar = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
         {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
         {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
         {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
@@ -187,7 +200,8 @@
       unique_id: "ev_ampere_mit"
       unit_of_measurement: "A"
       state: >
-        {% set solar = states('sensor.solax_ac_power') | float(0) %}
+        {# set solar = states('sensor.solax_ac_power') | float(0) #}
+        {% set solar = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
         {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
         {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
         {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
@@ -197,9 +211,11 @@
         {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
         {% set ac_buro   = 500 if not is_state('climate.buro', 'off') else 0 %}
         {% set reserve = 1000 %}
-        {% set ev_status = states('sensor.evc_status_code') %}
-        {% set ev_laedt = ev_status == '2' %}
-        {% set ev_ist_w = states('sensor.wb_leistung_w') | float(0) %}
+        {# set ev_status = states('sensor.evc_status_code') #}
+        {# set ev_laedt = ev_status == '2' #}
+        {# set ev_ist_w = states('sensor.wb_leistung_w') | float(0) #}
+        {% set ev_laedt = is_state('select.solax_ev_charger_charger_use_mode', 'Fast') %}
+        {% set ev_ist_w = states('sensor.solax_ev_charger_charge_power_total') | float(0) %}
         {% set haus_ohne = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + reserve %}
         {% set haus_mit = haus_ohne + (ev_ist_w if ev_laedt else 0) %}
         {% set u_mit = solar - haus_mit %}
@@ -236,12 +252,12 @@
       unique_id: "ac_thor_sollwert"
       unit_of_measurement: "W"
       state: >
-        {% set pv = states('sensor.solax_ac_power') | float(0) %}
+        {% set solar = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
         {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
         {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
         {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
         {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
-        {% set ev_w = states('sensor.wb_leistung_w') | float(0) %}
+        {% set ev_w = states('sensor.solax_ev_charger_charge_power_total') | float(0) %}
 
         {# Klima-Offsets #}
         {% set ac_pat   = 500 if not is_state('climate.patrice', 'off') else 0 %}
@@ -256,11 +272,10 @@
         {% set haus = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + ev_w + reserve %}
 
         {# Überschuss u #}
-        {% set u = pv - haus %}
+        {% set u = solar - haus %}
 
-        {# EV-First nur wenn EV wirklich lädt (Status 2) #}
-        {% set ev_status = states('sensor.evc_status_code') %}
-        {% set ev_laedt = ev_status == '2' %}
+        {# EV-First nur wenn EV wirklich lädt #}
+        {% set ev_laedt = is_state('select.solax_ev_charger_charger_use_mode', 'Fast') %}
         {% set ev_opt_a = states('sensor.ev_ladestrom_optimal') | float(0) %}
 
         {% if ev_laedt and ev_opt_a < 16 %}
@@ -319,25 +334,10 @@
       unit_of_measurement: "kWh"
       device_class: energy
       state_class: total_increasing
-
- #   # Rollladen automation 
- #   - name: "rollladen_oeffnen_zeit"
- #     device_class: timestamp
- #     state: >
- #       {% set fixed = now().replace(hour=6, minute=45, second=0, microsecond=0) %}
- #       {% set sun_raw = state_attr('sun.sun', 'next_rising') %}
- #       {% if sun_raw %}
-#          {% set sun = as_datetime(sun_raw) | as_local %}
-#          {% if sun.date() != now().date() %}
-#            {% set sun = sun - timedelta(days=1) %}
-#          {% endif %}
-#          {{ [fixed, sun] | max }}
-#        {% else %}
-#          {{ fixed }}
-#        {% endif %}
         
     - name: "Sonnenaufgang Zeit"
       state: "{{ as_timestamp(state_attr('sun.sun', 'next_rising')) | timestamp_custom('%H:%M') }}"
+
     - name: "Sonnenuntergang Zeit"
       state: "{{ as_timestamp(state_attr('sun.sun', 'next_setting')) | timestamp_custom('%H:%M') }}"
 
@@ -365,30 +365,30 @@
           {{ fixed }}
         {% endif %}
 
-- switch:
-    - name: "EVC Laden"
-      unique_id: evc_ladefreigabe
-      icon: mdi:ev-station
-      state: "{{ states('sensor.evc_status_code') | int(0) == 2 }}"
-      turn_on:
-        - action: modbus.write_register
-          data:
-            hub: solax_evc
-            unit: 1
-            address: 1552
-            value: 2
-        - delay: "00:00:01"
-        - action: modbus.write_register
-          data:
-            hub: solax_evc
-            unit: 1
-            address: 1575
-            value: 4
-      turn_off:
-        - action: modbus.write_register
-          data:
-            hub: solax_evc
-            unit: 1
-            address: 1575
-            value: 3
+#- switch:
+#    - name: "EVC Laden"
+#      unique_id: evc_ladefreigabe
+#      icon: mdi:ev-station
+#      state: "{{ states('sensor.evc_status_code') | int(0) == 2 }}"
+#      turn_on:
+#        - action: modbus.write_register
+#          data:
+#            hub: solax_evc
+#            unit: 1
+#            address: 1552
+#            value: 2
+#        - delay: "00:00:01"
+#        - action: modbus.write_register
+#          data:
+#            hub: solax_evc
+#            unit: 1
+#            address: 1575
+#            value: 4
+#      turn_off:
+#        - action: modbus.write_register
+#          data:
+#            hub: solax_evc
+#            unit: 1
+#            address: 1575
+#            value: 3
 
