@@ -147,22 +147,22 @@
         {% endif %}
 
     # Energie Wallbox
-    - name: "Wallbox Energy"
-      unique_id: "Wallbox Energie"
-      device_class: energy
-      unit_of_measurement: "kWh"
-      state: "{{ state_attr('sensor.wallbox', 'chargeEnergy') }}"
-      icon: mdi:flash
-      state_class: total_increasing
+    # - name: "Wallbox Energy"
+    #   unique_id: "Wallbox Energie"
+    #   device_class: energy
+    #   unit_of_measurement: "kWh"
+    #   state: "{{ state_attr('sensor.wallbox', 'chargeEnergy') }}"
+    #   icon: mdi:flash
+    #   state_class: total_increasing
 
     # Ladeleistung Wallbox
-    - name: "Wallbox Power"
-      unique_id: "Wallbox Power"
-      device_class: power
-      unit_of_measurement: "W"
-      state: "{{ state_attr('sensor.wallbox', 'chargingPower') }}"
-      icon: mdi:flash
-      state_class: measurement
+    # - name: "Wallbox Power"
+    #   unique_id: "Wallbox Power"
+    #   device_class: power
+    #   unit_of_measurement: "W"
+    #   state: "{{ state_attr('sensor.wallbox', 'chargingPower') }}"
+    #   icon: mdi:flash
+    #   state_class: measurement
 
 
 #######################################################################
@@ -292,24 +292,24 @@
         {% endif %}
 
     # Statusanzeige evc
-    - name: "EVC Status"
-      state: >
-        {% set code = states('sensor.evc_status_code') | int(0) %}
-        {% if code == 0 %}Available
-        {% elif code == 1 %}Preparing
-        {% elif code == 2 %}Charging
-        {% elif code == 3 %}Finished
-        {% elif code == 4 %}Faulted
-        {% elif code == 5 %}Unavailable
-        {% elif code == 6 %}Reserved
-        {% elif code == 7 %}Suspended EV
-        {% elif code == 8 %}Suspended EVSE
-        {% elif code == 9 %}Update
-        {% elif code == 10 %}Card Activation
-        {% elif code == 11 %}Start Delay
-        {% elif code == 12 %}Charge Paused
-        {% elif code == 13 %}Stopping
-        {% else %}Unknown ({{ code }}){% endif %}
+    # - name: "EVC Status"
+    #   state: >
+    #     {% set code = states('sensor.evc_status_code') | int(0) %}
+    #     {% if code == 0 %}Available
+    #     {% elif code == 1 %}Preparing
+    #     {% elif code == 2 %}Charging
+    #     {% elif code == 3 %}Finished
+    #     {% elif code == 4 %}Faulted
+    #     {% elif code == 5 %}Unavailable
+    #     {% elif code == 6 %}Reserved
+    #     {% elif code == 7 %}Suspended EV
+    #     {% elif code == 8 %}Suspended EVSE
+    #     {% elif code == 9 %}Update
+    #     {% elif code == 10 %}Card Activation
+    #     {% elif code == 11 %}Start Delay
+    #     {% elif code == 12 %}Charge Paused
+    #     {% elif code == 13 %}Stopping
+    #     {% else %}Unknown ({{ code }}){% endif %}
 
    # Gesamtleistung Wärmepumpe in W v2 
     - name: "WP Gesamtleistung W v2"
@@ -325,18 +325,18 @@
         {% if p < 0  %} 0 {% else %} {{ p }} {% endif %}
 
     # Wallbox Leistung in W
-    - name: "WB Leistung W"
-      state: "{{ (states('sensor.evc_charging_power') | float(0)) * 1000 | int}}"
-      unit_of_measurement: "W"
-      device_class: power
-      state_class: measurement
+    # - name: "WB Leistung W"
+    #   state: "{{ (states('sensor.evc_charging_power') | float(0)) * 1000 | int}}"
+    #   unit_of_measurement: "W"
+    #   device_class: power
+    #   state_class: measurement
 
     # Weitergereichter Energie-Sensor
-    - name: "WB Energie integriert"
-      state: "{{ states('sensor.wb_energie_integriert_roh') | float(0) }}"
-      unit_of_measurement: "kWh"
-      device_class: energy
-      state_class: total_increasing
+    # - name: "WB Energie integriert"
+    #   state: "{{ states('sensor.wb_energie_integriert_roh') | float(0) }}"
+    #   unit_of_measurement: "kWh"
+    #   device_class: energy
+    #   state_class: total_increasing
         
     - name: "Sonnenaufgang Zeit"
       state: "{{ as_timestamp(state_attr('sun.sun', 'next_rising')) | timestamp_custom('%H:%M') }}"
