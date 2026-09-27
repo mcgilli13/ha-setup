@@ -394,7 +394,7 @@
         entity_id: input_number.ev_ladestrom
       data:
         value: 0
-        
+
 - alias: EV Ladestrom Nachregeln
   id: ev_ladestrom_nachregeln
   mode: single
@@ -487,3 +487,56 @@
     - action: input_boolean.turn_off
       target:
         entity_id: input_boolean.ev_force_charging
+
+- alias: EV Fahrzeugtyp automatisch erkennen
+  id: ev_fahrzeugtyp_erkennen
+  mode: single
+
+  trigger:
+    - platform: time_pattern
+      seconds: "/10"
+
+  condition:
+    # Nur während aktivem Laden prüfen
+    - condition: state
+      entity_id: select.solax_ev_charger_charger_use_mode
+      state: "Fast"
+
+    # Genug Leistung für eine zuverlässige Messung (deutlich über Rauschen/Leckstrom,
+    # aber unter der Mindest-Ladeleistung von 6A einphasig ~1380W)
+    - condition: numeric_state
+      entity_id: sensor.solax_ev_charger_charge_power_total
+      above: 500
+
+    # 15s Stabilität seit letzter Leistungsänderung, damit wir nicht mitten
+    # in der Anlaufphase (PWM-Verhandlung) messen
+    - condition: template
+      value_template: >
+        {{ (now() - states.sensor.solax_ev_charger_charge_power_total.last_changed).total_seconds() >= 15 }}
+
+  action:
+    - variables:
+        l1: "{{ states('sensor.solax_ev_charger_charge_current_l1') | float(0) }}"
+        l2: "{{ states('sensor.solax_ev_charger_charge_current_l2') | float(0) }}"
+        l3: "{{ states('sensor.solax_ev_charger_charge_current_l3') | float(0) }}"
+        erkannter_typ: >
+          {% if l1 > 1 and l2 < 1 and l3 < 1 %}
+            Cupra
+          {% elif l1 > 1 and l2 > 1 and l3 > 1 %}
+            Mercedes
+          {% else %}
+            unklar
+          {% endif %}
+
+    # Nur bei eindeutigem Ergebnis und nur bei tatsächlicher Änderung setzen
+    # (vermeidet unnötige State-Writes/Log-Rauschen)
+    - condition: template
+      value_template: "{{ erkannter_typ in ['Mercedes', 'Cupra'] }}"
+    - condition: template
+      value_template: "{{ erkannter_typ != states('input_select.ev_auto_typ') }}"
+
+    - action: input_select.select_option
+      target:
+        entity_id: input_select.ev_auto_typ
+      data:
+        option: "{{ erkannter_typ }}"
