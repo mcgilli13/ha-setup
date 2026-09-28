@@ -1,265 +1,86 @@
-#####################################
-##  Routine für Wallbox (SolaX EV Charger – solax_modbus Integration)
+#####################################################################
+##  Wallbox-Steuerung (SolaX EV Charger, native solax_modbus-Integration)
+##  Stand: 28.09.2026
 ##
-## Migriert von der eigenen Modbus-YAML-Integration (register-writes über
-## hub "solax_evc") auf die native solax_modbus HACS-Integration.
+##  Idee: Das Auto lädt mit PV-Überschuss. Die Batterie zählt dabei NICHT
+##  als Quelle (Batterie-Entladung wird wie Netzbezug behandelt).
+##  Ausnahme: Zwangsladen = bewusst, manuell, volle Leistung ohne Regelung.
 ##
-## Alte Logik ist unten komplett auskommentiert erhalten (Register 1575/1576
-## über modbus.write_register) – falls ein Rollback nötig ist, einfach die
-## "NEU"-Sektion wieder auskommentieren und die "ALT"-Sektion aktivieren.
+##  Steuerung der Wallbox
+##  - Start/Stopp:  select.solax_ev_charger_charger_use_mode
+##                  "Fast" = laden, "Stop" = aus (control_command spiegelt nur)
+##  - Ladestrom:    number.solax_ev_charger_charge_current (6-16 A)
+##  - Status:       sensor.solax_ev_charger_run_mode
+##                  Available = nichts angesteckt, Preparing = Handshake,
+##                  Charging = lädt, Finishing = angesteckt aber lädt nicht
+##                  (nach eigenem Stopp ODER wenn das Auto voll ist)
 ##
-## Was sich geändert hat:
-## - "EV Notaus": effektiver Netzbezug (Netz + Batterie-Entladung) > 2000 W
-##   stoppt SOFORT ohne Verzögerung. Zwangsladen hat Vorrang.
-## - "EV Start": pegelbasierter Template-Trigger, Ziel > 6.5 A und kein
-##   effektiver Bezug (< 100 W) müssen 3 Minuten am Stück gelten. Startet
-##   nach einem Stopp automatisch erneut, ohne dass eine Schwelle neu
-##   gekreuzt werden muss.
-## - "EV Stop": zwei pegelbasierte Trigger (Ziel < 6 A für 1 Min, oder
-##   effektiver Bezug > 300 W für 2 Min). Greift auch, wenn Zwangsladen
-##   endet (06:00) und die Bedingungen schon länger erfüllt sind.
+##  Abhängigkeiten (müssen existieren)
+##  - templates.yaml:  sensor.ev_ladestrom_optimal   (Zielstrom aus PV-Überschuss)
+##                     sensor.ev_ampere_ohne, sensor.netzbezug_effektiv
+##  - Helfer:          input_boolean.ev_force_charging, input_boolean.ev_nachtladen,
+##                     input_number.ev_ladestrom (Anzeige), input_select.ev_auto_typ,
+##                     counter.ev_startversuche
 ##
-#####################################
-
-##################### ALT (auskommentiert – eigene Modbus-YAML-Integration) #####################
-
-# - alias: EV Start
-#   id: ev_start_minimal
-#   mode: single
-#
-#   trigger:
-#     - platform: numeric_state
-#       entity_id: sensor.ev_ladestrom_optimal
-#       above: 6.5
-#       for: "00:00:45"
-#
-#     - platform: state
-#       entity_id: input_boolean.ev_force_charging
-#       to: "on"
-#
-#   condition:
-#     - condition: or
-#       conditions:
-#         # Solar-Start: PV-Überschuss laut Schätzung UND kein Netzbezug laut echter Messung
-#         - condition: and
-#           conditions:
-#             - condition: numeric_state
-#               entity_id: sensor.ev_ladestrom_optimal
-#               above: 0
-#             - condition: template
-#               value_template: "{{ states('sensor.hausverbrauch_aktuell') | float(0) <= 0 }}"
-#         # Zwangsladen: immer, egal woher der Strom kommt
-#         - condition: state
-#           entity_id: input_boolean.ev_force_charging
-#           state: "on"
-#
-#     # Mercedes bereit (0 = idle, 1 = handshaking, 3 = ready)
-#     - condition: template
-#       value_template: "{{ states('sensor.evc_status_code') in ['0','1','3'] }}"
-#
-#     # EV lädt nicht bereits
-#     - condition: numeric_state
-#       entity_id: sensor.wb_leistung_w
-#       below: 50
-#
-#   action:
-#     - variables:
-#         optimal: "{{ states('sensor.ev_ladestrom_optimal') | float(0) }}"
-#         strom: >
-#           {% if is_state('input_boolean.ev_force_charging','on') %}
-#             16
-#           {% else %}
-#             {{ optimal }}
-#           {% endif %}
-#
-#     # Strom setzen
-#     - service: input_number.set_value
-#       target:
-#         entity_id: input_number.ev_ladestrom
-#       data:
-#         value: "{{ strom }}"
-#
-#     - delay: "00:00:01"
-#
-#     # Ampere an Wallbox schreiben
-#     - service: modbus.write_register
-#       data:
-#         hub: solax_evc
-#         unit: 1
-#         address: 1576
-#         value: "{{ (strom * 100) | int }}"
-#
-#     - delay: "00:00:01"
-#
-#     # Start
-#     - service: modbus.write_register
-#       data:
-#         hub: solax_evc
-#         unit: 1
-#         address: 1575
-#         value: 4
-
-# - alias: EV Stop
-#   id: ev_stop
-#   mode: single
-#
-#   trigger:
-#     - platform: numeric_state
-#       entity_id: sensor.hausverbrauch_aktuell
-#       above: 2000   # Netzbezug > 5 kW
-#       for:
-#         seconds: 90
-#
-#   condition:
-#     - condition: state
-#       entity_id: sensor.evc_status_code
-#       state: "2"
-#     - condition: state
-#       entity_id: input_boolean.ev_force_charging
-#       state: "off"
-#
-#   action:
-#     - service: modbus.write_register
-#       data:
-#         hub: solax_evc
-#         unit: 1
-#         address: 1575
-#         value: 3
-#
-#     - service: input_number.set_value
-#       target:
-#         entity_id: input_number.ev_ladestrom
-#       data:
-#         value: 0
-
-# - alias: EV Ladestrom Dynamik Komplett
-#   id: ev_dynamik_komplett
-#   mode: single
-#
-#   trigger:
-#     - platform: time_pattern
-#       seconds: "/10"
-#
-#   condition:
-#     # Auto lädt oder ist startbereit
-#     - condition: template
-#       value_template: "{{ states('sensor.evc_status_code') in ['1','2'] }}"
-#
-#     # 5 Sekunden Sperre nach Status-Änderung
-#     - condition: template
-#       value_template: >
-#         {{ (now() - states.sensor.evc_status_code.last_changed).total_seconds() > 5 }}
-#
-#   action:
-#     - variables:
-#         # Basiswerte
-#         optimal: "{{ states('sensor.ev_ladestrom_optimal') | float(0) }}"
-#         aktuell: "{{ states('input_number.ev_ladestrom') | float(0) }}"
-#         netz: "{{ states('sensor.hausverbrauch_aktuell') | float(0) }}"
-#         zwang: "{{ is_state('input_boolean.ev_force_charging','on') }}"
-#
-#         # Grenzen
-#         min_a: 6
-#         max_a: 16
-#
-#         # Schrittweite
-#         step: 1
-#
-#         # Berechnung Zielwert
-#         ziel: >
-#           {% if zwang %}
-#             {{ max_a }}
-#           {% else %}
-#             {% set z = aktuell %}
-#
-#             {# --- UPSCALE: PV‑Überschuss --- #}
-#             {% if netz < -900 %}
-#               {% set z = z + step %}
-#             {% endif %}
-#
-#             {# --- DOWNSCALE: Netzbezug vermeiden --- #}
-#             {% if netz > 200 %}
-#               {% set z = z - step %}
-#             {% endif %}
-#
-#             {# --- DOWNSCALE nicht unter optimal --- #}
-#             {% if z < optimal %}
-#               {% set z = optimal %}
-#             {% endif %}
-#
-#             {# --- Grenzen einhalten --- #}
-#             {% if z < min_a %}
-#               {{ min_a }}
-#             {% elif z > max_a %}
-#               {{ max_a }}
-#             {% else %}
-#               {{ z | round(0) }}
-#             {% endif %}
-#           {% endif %}
-#
-#
-#         diff: "{{ (ziel - aktuell) | abs }}"
-#
-#     # Hysterese 0.5 A
-#     - condition: template
-#       value_template: "{{ diff > 0.5 }}"
-#
-#     # EV Sollwert setzen
-#     - service: input_number.set_value
-#       target:
-#         entity_id: input_number.ev_ladestrom
-#       data:
-#         value: "{{ ziel }}"
-#
-#     # Wallbox schreiben
-#     - service: modbus.write_register
-#       data:
-#         hub: solax_evc
-#         unit: 1
-#         address: 1576
-#         value: "{{ (ziel * 100) | int }}"
-
-# - alias: EV Nachtladen Start
-#   id: ev_nachtladen_start
-#   trigger:
-#     - platform: time
-#       at: "02:00:00"
-#   condition:
-#     - condition: state
-#       entity_id: input_boolean.ev_nachtladen
-#       state: "on"
-#   action:
-#     - service: input_boolean.turn_on
-#       target:
-#         entity_id: input_boolean.ev_force_charging
-
-# - alias: EV Nachtladen Ende
-#   id: ev_nachtladen_ende
-#   trigger:
-#     - platform: time
-#       at: "06:00:00"
-#   action:
-#     - service: input_boolean.turn_off
-#       target:
-#         entity_id: input_boolean.ev_force_charging
-
-##################### NEU (native solax_modbus-Integration) #####################
+##  Automationen
+##  - EV Start
+##      Solar-Start, wenn 3 Min am Stück gilt: Modus "Stop", Auto angesteckt,
+##      Ziel > 6.5 A, effektiver Bezug < 100 W, Startsperre nicht aktiv.
+##      Setzt Ladestrom und schaltet auf "Fast", wartet bis zu 90 s auf
+##      Run Mode "Charging". Erfolg: Fehlversuche auf 0. Misserfolg (Auto meist
+##      voll): Zähler +1 und Modus "Stop". Zwangsladen startet sofort und
+##      ignoriert die Sperre.
+##  - EV Startsperre zurücksetzen
+##      Nach 2 Fehlversuchen ist der Solar-Start gesperrt. Entsperrt wird,
+##      sobald der Run Mode "Available" erreicht (aus- und wieder einstecken).
+##  - EV Stop   (nur ohne Zwangsladen, pegelbasiert)
+##      Ziel < 6 A seit 1 Min ODER effektiver Bezug > 300 W seit 2 Min.
+##  - EV Notaus (nur ohne Zwangsladen)
+##      Effektiver Bezug > 2000 W: SOFORT stoppen, ohne Verzögerung.
+##  - EV Ladestrom Nachregeln   (alle 10 s, nur bei "Fast")
+##      Ziel ist Deckel und Boden. Runter direkt aufs Ziel, hoch nur in
+##      1-A-Schritten und nur bei effektivem Bezug < 100 W. Sicherheitsnetz:
+##      bei Bezug > 200 W zusätzlich -1 A. Mindestabstand 30 s zwischen zwei
+##      Änderungen, Deadband 0.5 A (gegen "Hyperventilieren").
+##      Zwangsladen: fest 16 A.
+##  - EV Nachtladen Start/Ende
+##      02:00 schaltet (bei aktivem Schalter) das Zwangsladen ein, 06:00 aus.
+##  - EV Fahrzeugtyp automatisch erkennen   (alle 10 s, nur beim Laden)
+##      Ab > 500 W und 15 s stabiler Leistung: nur L1 aktiv = Cupra (1-phasig),
+##      L1+L2+L3 aktiv = Mercedes (3-phasig). Setzt input_select.ev_auto_typ,
+##      das die Ampere-Berechnung in templates.yaml (230 V / 690 V) nutzt.
+##
+##  Bewusste Entscheidungen
+##  - "Effektiver Bezug" = Netzbezug + Batterie-Entladung
+##    (sensor.netzbezug_effektiv). Laden aus der Batterie gibt es nur im
+##    Zwangsladen.
+##  - Zwangsladen hat Vorrang vor Stop und Notaus.
+##  - Start (3 Min) ist träger als Stopp (1-2 Min).
+##  - Stop/Notaus/Start nutzen Template-Trigger mit Zustand statt
+##    numeric_state-Kreuzungen, damit sie auch nach z. B. Ende des
+##    Zwangsladens (06:00) oder nach einem Stopp neu bewerten.
+##
+##  Alte Logik (eigene Modbus-YAML, modbus.write_register auf Hub "solax_evc",
+##  Register 1575/1576): siehe Git-Historie.
+#####################################################################
 
 - alias: EV Start
   id: ev_start_minimal
   mode: single
 
   trigger:
-    # Pegelbasiert: feuert auch nach einem Stopp erneut, ohne dass das Ziel
-    # erst wieder eine Schwelle kreuzen muss. 3 Min = Start träger als Stopp.
+    # Pegelbasiert: 3 Min am Stück. Gesperrt, sobald 2 Startversuche
+    # gescheitert sind (Zähler >= 2), und nur bei angestecktem Auto.
     - platform: template
       value_template: >
         {{ is_state('select.solax_ev_charger_charger_use_mode', 'Stop')
+           and states('sensor.solax_ev_charger_run_mode') not in ['Available', 'unknown', 'unavailable']
            and states('sensor.ev_ladestrom_optimal') | float(0) > 6.5
-           and states('sensor.netzbezug_effektiv') | float(0) < 100 }}
+           and states('sensor.netzbezug_effektiv') | float(0) < 100
+           and states('counter.ev_startversuche') | int(0) < 2 }}
       for: "00:03:00"
 
-    # Zwangsladen jederzeit
+    # Zwangsladen jederzeit (ignoriert die Startsperre)
     - platform: state
       entity_id: input_boolean.ev_force_charging
       to: "on"
@@ -267,7 +88,7 @@
   condition:
     - condition: or
       conditions:
-        # Solar-Start: PV-Überschuss laut Schätzung UND kein Netzbezug laut echter Messung
+        # Solar-Start: Überschuss, kein effektiver Bezug, Sperre nicht aktiv
         - condition: and
           conditions:
             - condition: numeric_state
@@ -275,12 +96,18 @@
               above: 0
             - condition: template
               value_template: "{{ states('sensor.netzbezug_effektiv') | float(0) <= 100 }}"
+            - condition: template
+              value_template: "{{ states('counter.ev_startversuche') | int(0) < 2 }}"
         # Zwangsladen: immer, egal woher der Strom kommt
         - condition: state
           entity_id: input_boolean.ev_force_charging
           state: "on"
 
-    # Lädt noch nicht (verhindert doppeltes Starten / doppelte Trigger-Auslösung)
+    # Auto muss angesteckt sein
+    - condition: template
+      value_template: "{{ states('sensor.solax_ev_charger_run_mode') not in ['Available', 'unknown', 'unavailable'] }}"
+
+    # Lädt noch nicht (verhindert doppeltes Starten)
     - condition: state
       entity_id: select.solax_ev_charger_charger_use_mode
       state: "Stop"
@@ -295,15 +122,12 @@
             {{ [optimal, 6] | max | round(0) }}
           {% endif %}
 
-    # Ladestrom setzen – native Integration, kein Register-Write mehr nötig
     - action: number.set_value
       target:
         entity_id: number.solax_ev_charger_charge_current
       data:
         value: "{{ strom }}"
 
-    # Sync-Helper für Dashboard/Verlauf (input_number bleibt als Anzeige-Sollwert bestehen,
-    # falls Dashboards/History-Graphen noch darauf zeigen)
     - action: input_number.set_value
       target:
         entity_id: input_number.ev_ladestrom
@@ -312,12 +136,42 @@
 
     - delay: "00:00:01"
 
-    # Laden starten – ersetzt modbus.write_register Adresse 1575 = 4
     - action: select.select_option
       target:
         entity_id: select.solax_ev_charger_charger_use_mode
       data:
         option: "Fast"
+
+    # Hat die Wallbox wirklich angefangen zu laden? (gestern dauerte das 10-18 s)
+    - wait_template: "{{ is_state('sensor.solax_ev_charger_run_mode', 'Charging') }}"
+      timeout: "00:01:30"
+      continue_on_timeout: true
+
+    - choose:
+        # Erfolg: Fehlversuche zurücksetzen
+        - conditions:
+            - condition: state
+              entity_id: sensor.solax_ev_charger_run_mode
+              state: "Charging"
+          sequence:
+            - action: counter.reset
+              target:
+                entity_id: counter.ev_startversuche
+      # Misserfolg (Auto voll oder Wallbox lehnt ab): zählen und sauber aus
+      default:
+        - action: counter.increment
+          target:
+            entity_id: counter.ev_startversuche
+        - action: select.select_option
+          target:
+            entity_id: select.solax_ev_charger_charger_use_mode
+          data:
+            option: "Stop"
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.ev_ladestrom
+          data:
+            value: 0
 
 - alias: EV Stop
   id: ev_stop
@@ -535,3 +389,14 @@
         entity_id: input_select.ev_auto_typ
       data:
         option: "{{ erkannter_typ }}"
+
+- alias: EV Startsperre zurücksetzen
+  id: ev_startsperre_reset
+  trigger:
+    - platform: state
+      entity_id: sensor.solax_ev_charger_run_mode
+      to: "Available"
+  action:
+    - action: counter.reset
+      target:
+        entity_id: counter.ev_startversuche
