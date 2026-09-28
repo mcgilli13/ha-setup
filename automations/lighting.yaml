@@ -41,20 +41,20 @@
 #     domain: switch
 #   mode: single
 
-- id: '1741589399919'
-  alias: WZ Wand Leuchten
-  description: ''
-  use_blueprint:
-    path: Malte/zha-ikea-four-button-remote-styrbar-for-lights-e2001-e2002.yaml
-    input:
-      remote: cbc623342a5b1fea40e48c6a53297812
-      light:
-        device_id:
-        - a08087681aa33ff20e580c6bf520181b
-        - 532787dcbe228ef29751d5456197fb3b
-        - 00e63e1e5cd28ba2d8037972784925fb
-        - e68e5dbe137b8c4611e12d07342da6ac
-      button_left_short: []
+# - id: '1741589399919'
+#   alias: WZ Wand Leuchten
+#   description: ''
+#   use_blueprint:
+#     path: Malte/zha-ikea-four-button-remote-styrbar-for-lights-e2001-e2002.yaml
+#     input:
+#       remote: cbc623342a5b1fea40e48c6a53297812
+#       light:
+#         device_id:
+#         - a08087681aa33ff20e580c6bf520181b
+#         - 532787dcbe228ef29751d5456197fb3b
+#         - 00e63e1e5cd28ba2d8037972784925fb
+#         - e68e5dbe137b8c4611e12d07342da6ac
+#       button_left_short: []
 
 - id: '1784613521881'
   alias: Bewegung Flur
