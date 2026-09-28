@@ -1,4 +1,15 @@
 - sensor:
+    - name: "Netzbezug effektiv"
+      unique_id: "netzbezug_effektiv"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {% set netz = states('sensor.hausverbrauch_aktuell') | float(0) %}
+        {% set batt = states('sensor.solax_energy_dashboard_solax_battery_power') | float(0) %}
+        {# Batterie positiv = Entladung -> zählt wie Bezug #}
+        {{ (netz + ([batt, 0] | max)) | round(0) }}
+
     - name: "SolaX Batterie Leistung Dashboard"
       unique_id: solax_battery_power_dashboard
       unit_of_measurement: "W"
@@ -227,29 +238,14 @@
       unique_id: "ev_ladestrom_optimal"
       unit_of_measurement: "A"
       state: >
-        {% set amp_mit = states('sensor.ev_ampere_mit') | float(0) %}
-        {% set amp_ohne = states('sensor.ev_ampere_ohne') | float(0) %}
-        {% set max_a = 16 %}
-        {% set min_a = 6 %}
-
-        {# amp_ohne = das eigentliche Ziel: wie viel Strom stünde zur
-           Verfügung, wenn das EV genau so viel zieht #}
-        {% set ziel = [amp_ohne, max_a] | min %}
-
-        {% if amp_mit < 0 %}
-          {# Echtes Defizit: aktuell wird trotz Ladung bereits Netzstrom
-             bezogen -> zurückregeln #}
-          {% if amp_ohne >= min_a %}
-            {{ min_a }}
-          {% else %}
-            0
-          {% endif %}
-        {% elif ziel < min_a %}
+        {# PV minus Hauslast ohne EV, unabhängig von Netz und Batterie #}
+        {% set amp = states('sensor.ev_ampere_ohne') | float(0) %}
+        {% if amp < 6 %}
           0
         {% else %}
-          {{ ziel | round(0) }}
+          {{ [amp | int, 16] | min }}
         {% endif %}
-
+        
     # AC-THOR Sollwert
     - name: "AC-THOR Sollwert"
       unique_id: "ac_thor_sollwert"

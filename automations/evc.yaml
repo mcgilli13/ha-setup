@@ -9,28 +9,15 @@
 ## "NEU"-Sektion wieder auskommentieren und die "ALT"-Sektion aktivieren.
 ##
 ## Was sich geändert hat:
-## - Start/Stopp läuft jetzt über select.solax_ev_charger_charger_use_mode
-##   ("Fast" = laden, "Stop" = aus) statt über rohe Modbus-Register.
-##   Getestet und bestätigt: control_command spiegelt das nur nach, ist also
-##   nicht mehr nötig.
-## - Ladestrom über number.solax_ev_charger_charge_current statt
-##   modbus.write_register auf Register 1576.
-## - Neuer, eigenständiger "EV Notaus": Netzbezug > 2000 W stoppt SOFORT ohne
-##   Verzögerung. Die alte "EV Stop"-Automation hatte hier fälschlich eine
-##   90-Sekunden-Verzögerung – das war kein echter Notaus, sondern eher ein
-##   zweiter, langsamerer Normalstopp.
-## - "EV Stop" (normal) reagiert jetzt auf 1 Minute anhaltenden Mangel an
-##   Überschuss (sensor.ev_ladestrom_optimal < 6), statt nur auf Netzbezug.
-## - "EV Ladestrom Nachregeln" (Ex-"Dynamik Komplett") hat jetzt einen
-##   30-Sekunden-Mindestabstand zwischen zwei Anpassungen (über
-##   number.solax_ev_charger_charge_current.last_changed), zusätzlich zum
-##   bestehenden 0.5A-Deadband – verhindert das "Hyperventilieren".
-## - sensor.evc_status_code / sensor.wb_leistung_w (alte, eigene Sensoren)
-##   werden nicht mehr referenziert – Status wird jetzt direkt über
-##   select.solax_ev_charger_charger_use_mode gelesen. Falls diese beiden
-##   Sensoren anderswo (z. B. Dashboard-Logbuch) noch verwendet werden,
-##   bitte prüfen, ob sie nach der Migration überhaupt noch aktuelle Werte
-##   liefern.
+## - "EV Notaus": effektiver Netzbezug (Netz + Batterie-Entladung) > 2000 W
+##   stoppt SOFORT ohne Verzögerung. Zwangsladen hat Vorrang.
+## - "EV Start": pegelbasierter Template-Trigger, Ziel > 6.5 A und kein
+##   effektiver Bezug (< 100 W) müssen 3 Minuten am Stück gelten. Startet
+##   nach einem Stopp automatisch erneut, ohne dass eine Schwelle neu
+##   gekreuzt werden muss.
+## - "EV Stop": zwei pegelbasierte Trigger (Ziel < 6 A für 1 Min, oder
+##   effektiver Bezug > 300 W für 2 Min). Greift auch, wenn Zwangsladen
+##   endet (06:00) und die Bedingungen schon länger erfüllt sind.
 ##
 #####################################
 
@@ -263,11 +250,14 @@
   mode: single
 
   trigger:
-    # Anhaltender Überschuss – 45s Mindestdauer aus der alten Logik übernommen
-    - platform: numeric_state
-      entity_id: sensor.ev_ladestrom_optimal
-      above: 6.5
-      for: "00:00:45"
+    # Pegelbasiert: feuert auch nach einem Stopp erneut, ohne dass das Ziel
+    # erst wieder eine Schwelle kreuzen muss. 3 Min = Start träger als Stopp.
+    - platform: template
+      value_template: >
+        {{ is_state('select.solax_ev_charger_charger_use_mode', 'Stop')
+           and states('sensor.ev_ladestrom_optimal') | float(0) > 6.5
+           and states('sensor.netzbezug_effektiv') | float(0) < 100 }}
+      for: "00:03:00"
 
     # Zwangsladen jederzeit
     - platform: state
@@ -284,7 +274,7 @@
               entity_id: sensor.ev_ladestrom_optimal
               above: 0
             - condition: template
-              value_template: "{{ states('sensor.hausverbrauch_aktuell') | float(0) <= 0 }}"
+              value_template: "{{ states('sensor.netzbezug_effektiv') | float(0) <= 100 }}"
         # Zwangsladen: immer, egal woher der Strom kommt
         - condition: state
           entity_id: input_boolean.ev_force_charging
@@ -334,11 +324,19 @@
   mode: single
 
   trigger:
-    # Normaler Stopp: 1 Minute anhaltender Mangel an Überschuss
-    - platform: numeric_state
-      entity_id: sensor.ev_ladestrom_optimal
-      below: 6
+    # Pegelbasiert inkl. Gate: bewertet auch neu, wenn Zwangsladen endet (06:00)
+    - platform: template
+      value_template: >
+        {{ is_state('select.solax_ev_charger_charger_use_mode', 'Fast')
+           and is_state('input_boolean.ev_force_charging', 'off')
+           and states('sensor.ev_ladestrom_optimal') | float(0) < 6 }}
       for: "00:01:00"
+    - platform: template
+      value_template: >
+        {{ is_state('select.solax_ev_charger_charger_use_mode', 'Fast')
+           and is_state('input_boolean.ev_force_charging', 'off')
+           and states('sensor.netzbezug_effektiv') | float(0) > 300 }}
+      for: "00:02:00"
 
   condition:
     - condition: state
@@ -366,10 +364,11 @@
   mode: single
 
   trigger:
-    # SOFORT, keine Verzögerung
-    - platform: numeric_state
-      entity_id: sensor.hausverbrauch_aktuell
-      above: 2000
+    - platform: template
+      value_template: >
+        {{ is_state('select.solax_ev_charger_charger_use_mode', 'Fast')
+           and is_state('input_boolean.ev_force_charging', 'off')
+           and states('sensor.netzbezug_effektiv') | float(0) > 2000 }}
 
   condition:
     - condition: state
@@ -419,7 +418,7 @@
     - variables:
         optimal: "{{ states('sensor.ev_ladestrom_optimal') | float(0) }}"
         aktuell: "{{ states('number.solax_ev_charger_charge_current') | float(0) }}"
-        netz: "{{ states('sensor.hausverbrauch_aktuell') | float(0) }}"
+        bezug_eff: "{{ states('sensor.netzbezug_effektiv') | float(0) }}"
         zwang: "{{ is_state('input_boolean.ev_force_charging', 'on') }}"
         min_a: 6
         max_a: 16
@@ -429,22 +428,18 @@
             {{ max_a }}
           {% else %}
             {% set z = aktuell %}
-            {% if netz < -900 %}
-              {% set z = z + step %}
+            {# Runter: direkt aufs Ziel (Abschalten übernimmt EV Stop) #}
+            {% if optimal < aktuell %}
+              {% set z = [optimal, min_a] | max %}
+            {# Hoch: nur schrittweise UND nur wenn kein Bezug (Netz + Batterie) #}
+            {% elif optimal > aktuell and bezug_eff < 100 %}
+              {% set z = aktuell + step %}
             {% endif %}
-            {% if netz > 200 %}
+            {# Sicherheitsnetz für ungemessene Lasten: Bezug -> 1 A runter #}
+            {% if bezug_eff > 200 %}
               {% set z = z - step %}
             {% endif %}
-            {% if z < optimal %}
-              {% set z = optimal %}
-            {% endif %}
-            {% if z < min_a %}
-              {{ min_a }}
-            {% elif z > max_a %}
-              {{ max_a }}
-            {% else %}
-              {{ z | round(0) }}
-            {% endif %}
+            {{ [[z, max_a] | min, min_a] | max | round(0) }}
           {% endif %}
         diff: "{{ (ziel | float(0) - aktuell) | abs }}"
 
