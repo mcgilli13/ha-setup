@@ -68,7 +68,7 @@
   triggers:
   - trigger: numeric_state
     entity_id:
-    - sensor.zuhause_water_pressure
+    - sensor.zuhause_system_water_pressure
     for:
       hours: 1
       minutes: 0
