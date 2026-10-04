@@ -288,10 +288,10 @@
       then:
         - action: switch.turn_on
           target:
-            entity_id: >
+            entity_id: >-
               {% set z = ziel | int %}
-              {{ relais[:z] }}
-              
-    - if: "{{ ziel | int 
+              {{ relais[:z] | join(', ') }}
+
+    - if: "{{ ziel | int -
               {% set z = ziel | int %}
-              {{ relais[z:] }}
+              {{ relais[z:] | join(', ') }}
