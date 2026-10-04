@@ -157,25 +157,6 @@
           {{ p }}
         {% endif %}
 
-    # Energie Wallbox
-    # - name: "Wallbox Energy"
-    #   unique_id: "Wallbox Energie"
-    #   device_class: energy
-    #   unit_of_measurement: "kWh"
-    #   state: "{{ state_attr('sensor.wallbox', 'chargeEnergy') }}"
-    #   icon: mdi:flash
-    #   state_class: total_increasing
-
-    # Ladeleistung Wallbox
-    # - name: "Wallbox Power"
-    #   unique_id: "Wallbox Power"
-    #   device_class: power
-    #   unit_of_measurement: "W"
-    #   state: "{{ state_attr('sensor.wallbox', 'chargingPower') }}"
-    #   icon: mdi:flash
-    #   state_class: measurement
-
-
 #######################################################################
 #
 # EV Ladeleistung und Stromberechnung
