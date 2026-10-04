@@ -402,6 +402,11 @@
       state: >
         {% set schwelle = 4500 if is_state('binary_sensor.wp_boost_ausstehend', 'on') else 2500 %}
         {{ states('sensor.pv_ueberschuss_brutto') | float(0) >= schwelle }}
+
+    - name: "Heizstab Netzbezug hoch"
+      unique_id: heizstab_netzbezug_hoch
+      state: "{{ states('sensor.netzbezug_effektiv') | float(0) > 200 }}"
+      delay_on: "00:00:30"
  
 
 - trigger:
