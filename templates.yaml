@@ -136,7 +136,7 @@
       state_class: measurement
       unit_of_measurement: "W"
       state: >
-        {% set p = states('sensor.wp_gesamtleistung_w') | float(0) %}
+        {% set p = states('sensor.wp_gesamtleistung') | float(0) %}
         {% if p < 50 %}
           0
         {% else %}
@@ -308,7 +308,7 @@
     #     {% else %}Unknown ({{ code }}){% endif %}
 
    # Gesamtleistung Wärmepumpe in W 
-    - name: "WP Gesamtleistung W" 
+    - name: "WP Gesamtleistung" 
       unique_id: "wp_power_sum_w"
       unit_of_measurement: "W"
       device_class: power
@@ -352,7 +352,7 @@
         {% set solar = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
         {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
         {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
-        {% set wp = states('sensor.wp_gesamtleistung_w') | float(0) %}
+        {% set wp = states('sensor.wp_gesamtleistung') | float(0) %}
         {% set ac = 500 * (['climate.patrice', 'climate.schlafzimmer',
                             'climate.wohnzimmer', 'climate.buro']
                            | reject('is_state', 'off') | list | count) %}
@@ -367,14 +367,14 @@
       state_class: measurement
       state: >
         {{ (states('sensor.pv_ueberschuss_brutto') | float(0)
-            + states('sensor.wp_gesamtleistung_w') | float(0)) | round(0) }}
+            + states('sensor.wp_gesamtleistung') | float(0)) | round(0) }}
  
 - binary_sensor:
     # WP zieht tatsächlich Strom (Shelly-Messung, nicht Vaillant-Werte)
     - name: "WP laeuft"
       unique_id: wp_laeuft
       device_class: running
-      state: "{{ states('sensor.wp_gesamtleistung_w') | float(9999) > 300 }}"
+      state: "{{ states('sensor.wp_gesamtleistung') | float(9999) > 300 }}"
       delay_on: "00:00:30"
       delay_off: "00:05:00"      # überbrückt Taktpausen der WP
  
