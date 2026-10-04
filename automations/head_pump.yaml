@@ -95,6 +95,22 @@
           - switch.keller_shelly_heizstab_l1
           - switch.keller_shelly_heizstab_l2
           - switch.keller_shelly_heizstab_l3
+
+        # Dynamische Rotation basierend auf dem Tag des Monats (Rest von Tag / 3)
+        # Tag 1, 4, 7...   -> Rest 1 -> Reihenfolge: L2, L3, L1
+        # Tag 2, 5, 8...   -> Rest 2 -> Reihenfolge: L3, L1, L2
+        # Tag 3, 6, 9...   -> Rest 0 -> Reihenfolge: L1, L2, L3
+        relais: >
+          {% set tag = now().day %}
+          {% set shift = tag % 3 %}
+          {% if shift == 1 %}
+            {{ [relais_basis[1], relais_basis[2], relais_basis[0]] }}
+          {% elif shift == 2 %}
+            {{ [relais_basis[2], relais_basis[0], relais_basis[1]] }}
+          {% else %}
+            {{ relais_basis }}
+          {% endif %}
+
         stufe_w: 3000
         marge_hoch: 300
         marge_runter: 500
