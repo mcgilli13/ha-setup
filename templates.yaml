@@ -368,6 +368,17 @@
       state: >
         {{ (states('sensor.pv_ueberschuss_brutto') | float(0)
             + states('sensor.wp_gesamtleistung') | float(0)) | round(0) }}
+
+    - name: "Heizstab Leistung"
+      unique_id: heizstab_leistung
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {{ 3000 * ['switch.keller_shelly_heizstab_l1',
+                   'switch.keller_shelly_heizstab_l2',
+                   'switch.keller_shelly_heizstab_l3']
+                  | select('is_state', 'on') | list | count }}
  
 - binary_sensor:
     # WP zieht tatsächlich Strom (Shelly-Messung, nicht Vaillant-Werte)
