@@ -287,26 +287,6 @@
     #       {{ [ (out if out >= thor_min else 0), thor_max ] | min | round(0) }}
     #     {% endif %}
 
-    # Statusanzeige evc
-    # - name: "EVC Status"
-    #   state: >
-    #     {% set code = states('sensor.evc_status_code') | int(0) %}
-    #     {% if code == 0 %}Available
-    #     {% elif code == 1 %}Preparing
-    #     {% elif code == 2 %}Charging
-    #     {% elif code == 3 %}Finished
-    #     {% elif code == 4 %}Faulted
-    #     {% elif code == 5 %}Unavailable
-    #     {% elif code == 6 %}Reserved
-    #     {% elif code == 7 %}Suspended EV
-    #     {% elif code == 8 %}Suspended EVSE
-    #     {% elif code == 9 %}Update
-    #     {% elif code == 10 %}Card Activation
-    #     {% elif code == 11 %}Start Delay
-    #     {% elif code == 12 %}Charge Paused
-    #     {% elif code == 13 %}Stopping
-    #     {% else %}Unknown ({{ code }}){% endif %}
-
    # Gesamtleistung Wärmepumpe in W 
     - name: "WP Gesamtleistung" 
       unique_id: "wp_power_sum_w"
