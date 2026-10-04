@@ -133,6 +133,85 @@
       message: Wasserdruck Heizung zu gering
   mode: single
 
+# - id: heizstab_stufen
+#   alias: Heizstab Stufen (PV-Überschuss)
+#   mode: single
+#   max_exceeded: silent
+#   triggers:
+#     - trigger: time_pattern
+#       seconds: "/15"
+#     - trigger: state
+#       entity_id:
+#         - binary_sensor.wp_laeuft
+#         - input_boolean.ev_force_charging
+#         - input_boolean.heizstab_steuerung
+#     - trigger: numeric_state          # NEU
+#       entity_id: sensor.netzbezug_effektiv
+#       above: 500
+#   actions:
+#     - variables:
+#         relais:
+#           - switch.keller_shelly_heizstab_l1
+#           - switch.keller_shelly_heizstab_l2
+#           - switch.keller_shelly_heizstab_l3
+#         stufe_w: 3000
+#         marge_hoch: 300              # Stufe hoch erst bei Überschuss > Stufe + 300 W
+#         marge_runter: 500            # Stufe runter erst bei Fehlbetrag > 500 W
+#         start_ausstehend_w: 7500     # 2. Schwelle: solange der WP-Boost noch aussteht
+#         temp_max: 60                 # Notbremse, nur sinnvoll wenn der Sensor zum Heizstab-Speicher passt
+#         brutto: "{{ states('sensor.pv_ueberschuss_brutto') | float(none) }}"
+#         netz: "{{ states('sensor.netzbezug_effektiv') | float(none) }}"
+#         p_auto: "{{ states('sensor.solax_ev_charger_charge_power_total') | float(0) }}"
+#         aktuell: "{{ relais | select('is_state', 'on') | list | count }}"
+#         ausstehend: "{{ is_state('binary_sensor.wp_boost_ausstehend', 'on') }}"
+#         verfuegbar: "{{ (brutto - p_auto) if brutto is not none else 0 }}"
+#         sek_seit_schalten: >
+#           {{ now().timestamp() - (relais | map('extract', states)
+#             | map(attribute='last_changed') | map('as_timestamp') | max) }}
+#         erlaubt: >
+#           {{ is_state('input_boolean.heizstab_steuerung', 'on')
+#             and brutto is not none and netz is not none
+#             and is_state('binary_sensor.wp_laeuft', 'off')
+#             and is_state('input_boolean.ev_force_charging', 'off')
+#             and states('sensor.zuhause_domestic_hot_water_0_tank_temperature') | float(99) < temp_max }}
+#         ziel: >
+#           {% set z = aktuell %}
+#           {% if not erlaubt %}
+#             {% set z = 0 %}
+#           {% else %}
+#             {% set hoch = ((verfuegbar - marge_hoch) // stufe_w) | int %}
+#             {% if ausstehend and aktuell == 0 and verfuegbar < start_ausstehend_w %}
+#               {% set hoch = 0 %}
+#             {% endif %}
+#             {% set runter = ((verfuegbar + marge_runter) // stufe_w) | int %}
+#             {# Sicherheitsnetz: Bezug aus Netz oder Batterie #}
+#             {% if netz > 1000 and aktuell > 0 %}
+#               {% set z = 0 %}
+#             {% elif netz > 200 and aktuell > 0 %}
+#               {% set z = aktuell - 1 %}
+#             {% elif hoch > aktuell and netz < 100 %}
+#               {% set z = [hoch, aktuell + 1, 3] | min %}
+#             {% elif runter < aktuell %}
+#               {% set z = [runter, 0] | max %}
+#             {% endif %}
+#           {% endif %}
+#           {{ z | int }}
+#     - condition: template
+#       value_template: >
+#         {{ ziel != aktuell
+#           and ((ziel < aktuell and sek_seit_schalten > 10)
+#                 or (ziel > aktuell and sek_seit_schalten > 60)) }}
+#     - if: "{{ ziel > 0 }}"
+#       then:
+#         - action: switch.turn_on
+#           target:
+#             entity_id: "{{ relais[:ziel | int] }}"
+#     - if: "{{ ziel < 3 }}"
+#       then:
+#         - action: switch.turn_off
+#           target:
+#             entity_id: "{{ relais[ziel | int:] }}"
+
 - id: heizstab_stufen
   alias: Heizstab Stufen (PV-Überschuss)
   mode: single
@@ -145,7 +224,7 @@
         - binary_sensor.wp_laeuft
         - input_boolean.ev_force_charging
         - input_boolean.heizstab_steuerung
-    - trigger: numeric_state          # NEU
+    - trigger: numeric_state
       entity_id: sensor.netzbezug_effektiv
       above: 500
   actions:
@@ -155,10 +234,10 @@
           - switch.keller_shelly_heizstab_l2
           - switch.keller_shelly_heizstab_l3
         stufe_w: 3000
-        marge_hoch: 300              # Stufe hoch erst bei Überschuss > Stufe + 300 W
-        marge_runter: 500            # Stufe runter erst bei Fehlbetrag > 500 W
-        start_ausstehend_w: 7500     # 2. Schwelle: solange der WP-Boost noch aussteht
-        temp_max: 60                 # Notbremse, nur sinnvoll wenn der Sensor zum Heizstab-Speicher passt
+        marge_hoch: 300
+        marge_runter: 500
+        start_ausstehend_w: 7500
+        temp_max: 60
         brutto: "{{ states('sensor.pv_ueberschuss_brutto') | float(none) }}"
         netz: "{{ states('sensor.netzbezug_effektiv') | float(none) }}"
         p_auto: "{{ states('sensor.solax_ev_charger_charge_power_total') | float(0) }}"
@@ -167,7 +246,8 @@
         verfuegbar: "{{ (brutto - p_auto) if brutto is not none else 0 }}"
         sek_seit_schalten: >
           {{ now().timestamp() - (relais | map('extract', states)
-            | map(attribute='last_changed') | map('as_timestamp') | max) }}
+
+            | map(attribute='last_changed') | map('as_timestamp') | default([0]) | max) }}
         erlaubt: >
           {{ is_state('input_boolean.heizstab_steuerung', 'on')
             and brutto is not none and netz is not none
@@ -184,7 +264,6 @@
               {% set hoch = 0 %}
             {% endif %}
             {% set runter = ((verfuegbar + marge_runter) // stufe_w) | int %}
-            {# Sicherheitsnetz: Bezug aus Netz oder Batterie #}
             {% if netz > 1000 and aktuell > 0 %}
               {% set z = 0 %}
             {% elif netz > 200 and aktuell > 0 %}
@@ -196,19 +275,23 @@
             {% endif %}
           {% endif %}
           {{ z | int }}
+
+    # 1. Korrektur: Saubere Trennung der Bedingung im neuen Actions-Format
     - condition: template
       value_template: >
-        {{ ziel != aktuell
-          and ((ziel < aktuell and sek_seit_schalten > 10)
-                or (ziel > aktuell and sek_seit_schalten > 60)) }}
-    - if: "{{ ziel > 0 }}"
+        {{ ziel | int != aktuell | int and 
+           ((ziel | int < aktuell | int and sek_seit_schalten > 10) or 
+            (ziel | int > aktuell | int and sek_seit_schalten > 60)) }}
+
+    # 2. Korrektur: Sicheres Schalten via Jinja-Filter statt fehlerhaftem String-Slicing
+    - if: "{{ ziel | int > 0 }}"
       then:
         - action: switch.turn_on
           target:
-            entity_id: "{{ relais[:ziel | int] }}"
-    - if: "{{ ziel < 3 }}"
-      then:
-        - action: switch.turn_off
-          target:
-            entity_id: "{{ relais[ziel | int:] }}"
-  
+            entity_id: >
+              {% set z = ziel | int %}
+              {{ relais[:z] }}
+              
+    - if: "{{ ziel | int 
+              {% set z = ziel | int %}
+              {{ relais[z:] }}
