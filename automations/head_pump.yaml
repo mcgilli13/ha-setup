@@ -106,10 +106,11 @@
         aktuell: "{{ relais | select('is_state', 'on') | list | count }}"
         ausstehend: "{{ is_state('binary_sensor.wp_boost_ausstehend', 'on') }}"
         verfuegbar: "{{ (brutto - p_auto) if brutto is not none else 0 }}"
+        
+        # KORREKTUR: Saubere Ermittlung der letzten Änderung mittels 'expand'
         sek_seit_schalten: >
-          {{ now().timestamp() - (relais | map('extract', states)
-
-            | map(attribute='last_changed') | map('as_timestamp') | default() | max) }}
+          {{ now().timestamp() - (expand(relais) | map(attribute='last_changed') | map('as_timestamp') | max | default(0)) }}
+          
         erlaubt: >
           {{ is_state('input_boolean.heizstab_steuerung', 'on')
             and brutto is not none and netz is not none
@@ -144,7 +145,6 @@
            ((ziel | int < aktuell | int and sek_seit_schalten > 10) or 
             (ziel | int > aktuell | int and sek_seit_schalten > 60)) }}
 
-    # 1. Schleife: Schalte alle Relais bis zum 'ziel' EIN
     - repeat:
         for_each: "{{ relais[:ziel | int] }}"
         sequence:
@@ -152,7 +152,6 @@
             target:
               entity_id: "{{ repeat.item }}"
 
-    # 2. Schleife: Schalte alle Relais ab dem 'ziel' AUS
     - repeat:
         for_each: "{{ relais[ziel | int:] }}"
         sequence:
