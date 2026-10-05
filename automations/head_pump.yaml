@@ -25,6 +25,7 @@
     - trigger: numeric_state
       entity_id: sensor.hausverbrauch_aktuell
       above: 5000
+      for: "00:00:10"
       id: netzbezug_sofort
     - trigger: time
       at: "17:00:00"
@@ -89,6 +90,7 @@
     - trigger: numeric_state
       entity_id: sensor.netzbezug_effektiv
       above: 500
+      for: "00:00:05"
   actions:
     - variables:
         relais: >-

@@ -227,6 +227,7 @@
         {{ is_state('select.solax_ev_charger_charger_use_mode', 'Fast')
            and is_state('input_boolean.ev_force_charging', 'off')
            and states('sensor.netzbezug_effektiv') | float(0) > 2000 }}
+      for: "00:00:10"
 
   condition:
     - condition: state
