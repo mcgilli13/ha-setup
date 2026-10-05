@@ -109,7 +109,7 @@
         marge_hoch: 300
         marge_runter: 500
         start_ausstehend_w: 7500
-        temp_max: 60
+        temp_max: 65
         brutto: "{{ states('sensor.pv_ueberschuss_brutto') | float(none) }}"
         netz: "{{ states('sensor.netzbezug_effektiv') | float(none) }}"
         p_auto: "{{ states('sensor.solax_ev_charger_charge_power_total') | float(0) }}"
