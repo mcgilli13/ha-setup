@@ -319,6 +319,14 @@
       delay_on: "00:00:30"
       delay_off: "00:05:00"      # überbrückt Taktpausen der WP
  
+    - name: "WP Boost Freigabe"
+      unique_id: wp_boost_freigabe
+      delay_on: "00:05:00"
+      state: >
+        {{ is_state('binary_sensor.wp_boost_ausstehend', 'on')
+           and states('sensor.pv_ueberschuss_vor_wp') | float(0) > 4000
+           and states('sensor.hausverbrauch_aktuell') | float(0) < 500 }}
+
     # Boost ist tagsüber möglich, der Sollwert steht aber noch auf 44 °C
     - name: "WP Boost ausstehend"
       unique_id: wp_boost_ausstehend
