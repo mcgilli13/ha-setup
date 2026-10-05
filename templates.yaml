@@ -76,11 +76,15 @@
 #      availability: "{{ states('sensor.solax_cloud_api') == 'True' }}"
 
     # Stabiler Hausverbrauch / Grid-Sensor
+    - name: "Hausverbrauch aktuell"
+      unique_id: "Hausverbrauch_aktuell"
+      device_class: power
+      state_class: measurement
+      unit_of_measurement: "W"
       state: >
         {% set bezug = states('sensor.tibber_leistung') | float(0) %}
         {% set eins = states('sensor.tibber_einspeiseleistung') | float(0) %}
         {{ (bezug - eins) | round(0) }}
-
 
     # Leistung von Waschmaschine + Trockner
     - name: "Waschen & Trocknen"
