@@ -10,9 +10,10 @@
     1 Stunde über 1 kW liegt, sofort bei Netzbezug > 5 kW, oder spätestens ab 17 Uhr.
   mode: single
   triggers:
-    - trigger: numeric_state
-      entity_id: sensor.pv_ueberschuss_vor_wp
-      above: 4000
+    - trigger: template
+      value_template: >
+        {{ is_state('binary_sensor.wp_boost_ausstehend', 'on')
+          and states('sensor.pv_ueberschuss_vor_wp') | float(0) > 4000 }}
       for:
         minutes: 5
       id: ueberschuss
