@@ -9,6 +9,10 @@ ev_nachtladen:
    icon: mdi:weather-night
 
 # AC•THOR Steuerung - Aktiviert den Heizstab zur Nutzung überschüssiger Solarenergie
-ac_thor_steuerung:
-   name: AC•THOR Steuerung aktiv
-   icon: mdi:power
+#ac_thor_steuerung:
+#   name: AC•THOR Steuerung aktiv
+#   icon: mdi:power
+
+heizstab_steuerung:
+    name: Heizstab Steuerung aktiv
+    icon: mdi:water-boiler

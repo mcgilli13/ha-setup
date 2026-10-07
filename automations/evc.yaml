@@ -76,6 +76,7 @@
         {{ is_state('select.solax_ev_charger_charger_use_mode', 'Stop')
            and states('sensor.solax_ev_charger_run_mode') not in ['Available', 'unknown', 'unavailable']
            and states('sensor.ev_ladestrom_optimal') | float(0) > 6.5
+           and is_state('binary_sensor.ev_start_ueberschuss_ok', 'on') 
            and states('sensor.netzbezug_effektiv') | float(0) < 100
            and states('counter.ev_startversuche') | int(0) < 2 }}
       for: "00:03:00"
@@ -91,6 +92,9 @@
         # Solar-Start: Überschuss, kein effektiver Bezug, Sperre nicht aktiv
         - condition: and
           conditions:
+            - condition: state
+              entity_id: binary_sensor.ev_start_ueberschuss_ok
+              state: "on"
             - condition: numeric_state
               entity_id: sensor.ev_ladestrom_optimal
               above: 0
@@ -223,6 +227,7 @@
         {{ is_state('select.solax_ev_charger_charger_use_mode', 'Fast')
            and is_state('input_boolean.ev_force_charging', 'off')
            and states('sensor.netzbezug_effektiv') | float(0) > 2000 }}
+      for: "00:00:10"
 
   condition:
     - condition: state

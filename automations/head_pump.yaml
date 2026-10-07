@@ -5,35 +5,32 @@
 - id: "WP-PV-Ueberschuss"
   alias: "Warmwasser: PV-Überschuss Boost"
   description: >
-    Erhöht die Warmwasser-Solltemperatur auf 55°C bei anhaltendem PV-Überschuss
-    (Hausverbrauch < -3.5 kW, also Einspeisung, für 20 Min). Senkt sie zurück auf
-    40°C, wenn der Netzbezug länger als 1 Stunde über 1 kW liegt, sofort bei
-    Netzbezug > 5 kW, oder spätestens ab 17 Uhr.
+    Erhöht die Warmwasser-Solltemperatur auf 55°C, wenn der PV-Überschuss vor der WP
+    über 4 kW liegt (5 Min). Senkt sie zurück auf 44°C, wenn der Netzbezug länger als
+    1 Stunde über 1 kW liegt, sofort bei Netzbezug > 5 kW, oder spätestens ab 17 Uhr.
   mode: single
   triggers:
-    - trigger: numeric_state
-      entity_id: sensor.hausverbrauch_aktuell
-      below: -3500
+    - trigger: template
+      value_template: >
+        {{ is_state('binary_sensor.wp_boost_ausstehend', 'on')
+          and states('sensor.pv_ueberschuss_vor_wp') | float(0) > 4000 }}
       for:
-        minutes: 20
+        minutes: 5
       id: ueberschuss
-      note: "Einspeisung > 3.5 kW für 20 Min -> Warmwasser auf 55°C hochfahren"
     - trigger: numeric_state
       entity_id: sensor.hausverbrauch_aktuell
       above: 1000
       for:
         hours: 1
       id: netzbezug_verzoegert
-      note: "Netzbezug > 1 kW für 1 Stunde -> zurück auf 44°C (Hysterese)"
     - trigger: numeric_state
       entity_id: sensor.hausverbrauch_aktuell
       above: 5000
+      for: "00:00:10"
       id: netzbezug_sofort
-      note: "Netzbezug > 5 kW -> sofort zurück auf 44°C, keine Wartezeit"
     - trigger: time
       at: "17:00:00"
       id: abend
-      note: "Spätestens ab 17 Uhr immer zurück auf 44°C"
   conditions: []
   actions:
     - choose:
@@ -51,10 +48,7 @@
                 temperature: 55
         - conditions:
             - condition: trigger
-              id:
-                - netzbezug_verzoegert
-                - netzbezug_sofort
-                - abend
+              id: [netzbezug_verzoegert, netzbezug_sofort, abend]
           sequence:
             - action: water_heater.set_temperature
               target:
@@ -66,19 +60,111 @@
   alias: Wenig Wasser (Heizung)
   description: sendet eine Nachricht wenn ...
   triggers:
-  - trigger: numeric_state
-    entity_id:
-    - sensor.zuhause_water_pressure
-    for:
-      hours: 1
-      minutes: 0
-      seconds: 0
-    below: 1.2
+    - trigger: numeric_state
+      entity_id:
+        - sensor.zuhause_system_water_pressure
+      for:
+        hours: 1
+        minutes: 0
+        seconds: 0
+      below: 1.2
   conditions: []
   actions:
-  - action: notify.mobile_app_mgiphone
-    metadata: {}
-    data:
-      message: Wasserdruck Heizung zu gering
+    - action: notify.mobile_app_mgiphone
+      metadata: {}
+      data:
+        message: Wasserdruck Heizung zu gering
   mode: single
 
+- id: heizstab_stufen
+  alias: Heizstab Stufen (PV-Überschuss)
+  mode: single
+  max_exceeded: silent
+  triggers:
+    - trigger: time_pattern
+      seconds: "/15"
+    - trigger: state
+      entity_id:
+        - binary_sensor.wp_laeuft
+        - input_boolean.ev_force_charging
+        - input_boolean.heizstab_steuerung
+    - trigger: numeric_state
+      entity_id: sensor.netzbezug_effektiv
+      above: 500
+      for: "00:00:05"
+  actions:
+    - variables:
+        relais: >-
+          {% set tag = now().day %}
+          {% set shift = tag % 3 %}
+          {% if shift == 1 %}
+            ["switch.keller_shelly_heizstab_l2", "switch.keller_shelly_heizstab_l3", "switch.keller_shelly_heizstab_l1"]
+          {% elif shift == 2 %}
+            ["switch.keller_shelly_heizstab_l3", "switch.keller_shelly_heizstab_l1", "switch.keller_shelly_heizstab_l2"]
+          {% else %}
+            ["switch.keller_shelly_heizstab_l1", "switch.keller_shelly_heizstab_l2", "switch.keller_shelly_heizstab_l3"]
+          {% endif %}
+
+        stufe_w: 3000
+        marge_hoch: 300
+        marge_runter: 500
+        start_ausstehend_w: 7500
+        temp_max: 65
+        brutto: "{{ states('sensor.pv_ueberschuss_brutto') | float(none) }}"
+        netz: "{{ states('sensor.netzbezug_effektiv') | float(none) }}"
+        p_auto: "{{ states('sensor.solax_ev_charger_charge_power_total') | float(0) }}"
+        aktuell: "{{ relais | select('is_state', 'on') | list | count }}"
+        ausstehend: "{{ is_state('binary_sensor.wp_boost_ausstehend', 'on') }}"
+        verfuegbar: "{{ (brutto - p_auto) if brutto is not none else 0 }}"
+        
+        # KORREKTUR: Saubere Ermittlung der letzten Änderung mittels 'expand'
+        sek_seit_schalten: >
+          {{ now().timestamp() - (expand(relais) | map(attribute='last_changed') | map('as_timestamp') | max | default(0)) }}
+          
+        erlaubt: >
+          {{ is_state('input_boolean.heizstab_steuerung', 'on')
+            and brutto is not none and netz is not none
+            and is_state('binary_sensor.wp_laeuft', 'off')
+            and is_state('input_boolean.ev_force_charging', 'off')
+            and states('sensor.zuhause_domestic_hot_water_0_tank_temperature') | float(99) < temp_max }}
+        ziel: >
+          {% set z = aktuell %}
+          {% if not erlaubt %}
+            {% set z = 0 %}
+          {% else %}
+            {% set hoch = ((verfuegbar - marge_hoch) // stufe_w) | int %}
+            {% if ausstehend and aktuell == 0 and verfuegbar < start_ausstehend_w %}
+              {% set hoch = 0 %}
+            {% endif %}
+            {% set runter = ((verfuegbar + marge_runter) // stufe_w) | int %}
+            {% if netz > 1000 and aktuell > 0 %}
+              {% set z = 0 %}
+            {% elif is_state('binary_sensor.heizstab_netzbezug_hoch', 'on') and aktuell > 0 %}
+              {% set z = aktuell - 1 %}
+            {% elif hoch > aktuell and netz < 100 %}
+              {% set z = [hoch, aktuell + 1, 3] | min %}
+            {% elif runter < aktuell %}
+              {% set z = [runter, 0] | max %}
+            {% endif %}
+          {% endif %}
+          {{ z | int }}
+
+    - condition: template
+      value_template: >
+        {{ ziel | int != aktuell | int and 
+           ((ziel | int < aktuell | int and sek_seit_schalten > 10) or 
+            (ziel | int > aktuell | int and sek_seit_schalten > 60)) }}
+
+    - repeat:
+        for_each: "{{ relais[:ziel | int] }}"
+        sequence:
+          - action: switch.turn_on
+            target:
+              entity_id: "{{ repeat.item }}"
+
+    - repeat:
+        for_each: "{{ relais[ziel | int:] }}"
+        sequence:
+          - action: switch.turn_off
+            target:
+              entity_id: "{{ repeat.item }}"

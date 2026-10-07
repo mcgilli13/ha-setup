@@ -84,24 +84,7 @@
       state: >
         {% set bezug = states('sensor.tibber_leistung') | float(0) %}
         {% set eins = states('sensor.tibber_einspeiseleistung') | float(0) %}
-
-        {# Wenn beide > 0, entscheide nach der dominanten Richtung #}
-        {% if bezug > 0 and eins > 0 %}
-          {% if bezug > eins %}
-            {{ bezug - eins }}      {# Netto Richtung Bezug #}
-          {% else %}
-            {{ eins - bezug | float * -1 }}   {# Netto Richtung Einspeisung #}
-          {% endif %}
-
-        {# Normalfall #}
-        {% elif bezug > 0 %}
-          {{ bezug }}
-        {% elif eins > 0 %}
-          {{ -eins }}
-        {% else %}
-          0
-        {% endif %}
-
+        {{ (bezug - eins) | round(0) }}
 
     # Leistung von Waschmaschine + Trockner
     - name: "Waschen & Trocknen"
@@ -136,7 +119,7 @@
       state_class: measurement
       unit_of_measurement: "W"
       state: >
-        {% set p = states('sensor.wp_gesamtleistung_w_v2') | float(0) %}
+        {% set p = states('sensor.wp_gesamtleistung') | float(0) %}
         {% if p < 50 %}
           0
         {% else %}
@@ -156,25 +139,6 @@
         {% else %}
           {{ p }}
         {% endif %}
-
-    # Energie Wallbox
-    # - name: "Wallbox Energy"
-    #   unique_id: "Wallbox Energie"
-    #   device_class: energy
-    #   unit_of_measurement: "kWh"
-    #   state: "{{ state_attr('sensor.wallbox', 'chargeEnergy') }}"
-    #   icon: mdi:flash
-    #   state_class: total_increasing
-
-    # Ladeleistung Wallbox
-    # - name: "Wallbox Power"
-    #   unique_id: "Wallbox Power"
-    #   device_class: power
-    #   unit_of_measurement: "W"
-    #   state: "{{ state_attr('sensor.wallbox', 'chargingPower') }}"
-    #   icon: mdi:flash
-    #   state_class: measurement
-
 
 #######################################################################
 #
@@ -246,70 +210,50 @@
           {{ [amp | int, 16] | min }}
         {% endif %}
         
-    # AC-THOR Sollwert
-    - name: "AC-THOR Sollwert"
-      unique_id: "ac_thor_sollwert"
-      unit_of_measurement: "W"
-      state: >
-        {% set solar = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
-        {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
-        {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
-        {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
-        {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
-        {% set ev_w = states('sensor.solax_ev_charger_charge_power_total') | float(0) %}
-
-        {# Klima-Offsets #}
-        {% set ac_pat   = 500 if not is_state('climate.patrice', 'off') else 0 %}
-        {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
-        {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
-        {% set ac_buro   = 500 if not is_state('climate.buro', 'off') else 0 %}
-
-        {# Reserve #}
-        {% set reserve = 1000 %}
-
-        {# Hauslast ohne Thor #}
-        {% set haus = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + ev_w + reserve %}
-
-        {# Überschuss u #}
-        {% set u = solar - haus %}
-
-        {# EV-First nur wenn EV wirklich lädt #}
-        {% set ev_laedt = is_state('select.solax_ev_charger_charger_use_mode', 'Fast') %}
-        {% set ev_opt_a = states('sensor.ev_ladestrom_optimal') | float(0) %}
-
-        {% if ev_laedt and ev_opt_a < 16 %}
-          0
-        {% else %}
-          {# Mindestschwelle und Deckelung für Thor #}
-          {% set out = [u, 0] | max %}
-          {% set thor_min = 1000 %}
-          {% set thor_max = 10000 %}
-          {{ [ (out if out >= thor_min else 0), thor_max ] | min | round(0) }}
-        {% endif %}
-
-    # Statusanzeige evc
-    # - name: "EVC Status"
+    # # AC-THOR Sollwert
+    # - name: "AC-THOR Sollwert"
+    #   unique_id: "ac_thor_sollwert"
+    #   unit_of_measurement: "W"
     #   state: >
-    #     {% set code = states('sensor.evc_status_code') | int(0) %}
-    #     {% if code == 0 %}Available
-    #     {% elif code == 1 %}Preparing
-    #     {% elif code == 2 %}Charging
-    #     {% elif code == 3 %}Finished
-    #     {% elif code == 4 %}Faulted
-    #     {% elif code == 5 %}Unavailable
-    #     {% elif code == 6 %}Reserved
-    #     {% elif code == 7 %}Suspended EV
-    #     {% elif code == 8 %}Suspended EVSE
-    #     {% elif code == 9 %}Update
-    #     {% elif code == 10 %}Card Activation
-    #     {% elif code == 11 %}Start Delay
-    #     {% elif code == 12 %}Charge Paused
-    #     {% elif code == 13 %}Stopping
-    #     {% else %}Unknown ({{ code }}){% endif %}
+    #     {% set solar = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
+    #     {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
+    #     {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
+    #     {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
+    #     {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
+    #     {% set ev_w = states('sensor.solax_ev_charger_charge_power_total') | float(0) %}
 
-   # Gesamtleistung Wärmepumpe in W v2 
-    - name: "WP Gesamtleistung W v2"
-      unique_id: "wp_power_sum_w_v2"
+    #     {# Klima-Offsets #}
+    #     {% set ac_pat   = 500 if not is_state('climate.patrice', 'off') else 0 %}
+    #     {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
+    #     {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
+    #     {% set ac_buro   = 500 if not is_state('climate.buro', 'off') else 0 %}
+
+    #     {# Reserve #}
+    #     {% set reserve = 1000 %}
+
+    #     {# Hauslast ohne Thor #}
+    #     {% set haus = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + ev_w + reserve %}
+
+    #     {# Überschuss u #}
+    #     {% set u = solar - haus %}
+
+    #     {# EV-First nur wenn EV wirklich lädt #}
+    #     {% set ev_laedt = is_state('select.solax_ev_charger_charger_use_mode', 'Fast') %}
+    #     {% set ev_opt_a = states('sensor.ev_ladestrom_optimal') | float(0) %}
+
+    #     {% if ev_laedt and ev_opt_a < 16 %}
+    #       0
+    #     {% else %}
+    #       {# Mindestschwelle und Deckelung für Thor #}
+    #       {% set out = [u, 0] | max %}
+    #       {% set thor_min = 1000 %}
+    #       {% set thor_max = 10000 %}
+    #       {{ [ (out if out >= thor_min else 0), thor_max ] | min | round(0) }}
+    #     {% endif %}
+
+   # Gesamtleistung Wärmepumpe in W 
+    - name: "WP Gesamtleistung" 
+      unique_id: "wp_power_sum_w"
       unit_of_measurement: "W"
       device_class: power
       state_class: measurement
@@ -319,26 +263,89 @@
           (states('sensor.shelly_wp_aussen_leistung') | float(0))
         %}
         {% if p < 0  %} 0 {% else %} {{ p }} {% endif %}
-
-    # Wallbox Leistung in W
-    # - name: "WB Leistung W"
-    #   state: "{{ (states('sensor.evc_charging_power') | float(0)) * 1000 | int}}"
-    #   unit_of_measurement: "W"
-    #   device_class: power
-    #   state_class: measurement
-
-    # Weitergereichter Energie-Sensor
-    # - name: "WB Energie integriert"
-    #   state: "{{ states('sensor.wb_energie_integriert_roh') | float(0) }}"
-    #   unit_of_measurement: "kWh"
-    #   device_class: energy
-    #   state_class: total_increasing
-        
+     
     - name: "Sonnenaufgang Zeit"
       state: "{{ as_timestamp(state_attr('sun.sun', 'next_rising')) | timestamp_custom('%H:%M') }}"
 
     - name: "Sonnenuntergang Zeit"
       state: "{{ as_timestamp(state_attr('sun.sun', 'next_setting')) | timestamp_custom('%H:%M') }}"
+
+    # PV-Überschuss nach Hausverbrauch und WP, OHNE Auto und OHNE Heizstab.
+    # Ändert sich nicht, wenn Auto oder Heizstab schalten.
+    - name: "PV Ueberschuss brutto"
+      unique_id: pv_ueberschuss_brutto
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      availability: "{{ has_value('sensor.solax_energy_dashboard_solax_solar_power') }}"
+      state: >
+        {% set solar = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
+        {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
+        {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
+        {% set wp = states('sensor.wp_gesamtleistung') | float(0) %}
+        {% set ac = 500 * (['climate.patrice', 'climate.schlafzimmer',
+                            'climate.wohnzimmer', 'climate.buro']
+                           | reject('is_state', 'off') | list | count) %}
+        {{ (solar - og - eg - wp - ac) | round(0) }}
+ 
+    # Wie oben, aber die WP wird wieder dazugerechnet: was stünde der WP zur Verfügung?
+    # Dient als Trigger für den Boost.
+    - name: "PV Ueberschuss vor WP"
+      unique_id: pv_ueberschuss_vor_wp
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {{ (states('sensor.pv_ueberschuss_brutto') | float(0)
+            + states('sensor.wp_gesamtleistung') | float(0)) | round(0) }}
+
+    - name: "Heizstab Leistung"
+      unique_id: heizstab_leistung
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {{ 3000 * ['switch.keller_shelly_heizstab_l1',
+                   'switch.keller_shelly_heizstab_l2',
+                   'switch.keller_shelly_heizstab_l3']
+                  | select('is_state', 'on') | list | count }}
+ 
+- binary_sensor:
+    # WP zieht tatsächlich Strom (Shelly-Messung, nicht Vaillant-Werte)
+    - name: "WP laeuft"
+      unique_id: wp_laeuft
+      device_class: running
+      state: "{{ states('sensor.wp_gesamtleistung') | float(9999) > 300 }}"
+      delay_on: "00:00:30"
+      delay_off: "00:05:00"      # überbrückt Taktpausen der WP
+ 
+    - name: "WP Boost Freigabe"
+      unique_id: wp_boost_freigabe
+      delay_on: "00:05:00"
+      state: >
+        {{ is_state('binary_sensor.wp_boost_ausstehend', 'on')
+           and states('sensor.pv_ueberschuss_vor_wp') | float(0) > 4000
+           and states('sensor.hausverbrauch_aktuell') | float(0) < 500 }}
+
+    # Boost ist tagsüber möglich, der Sollwert steht aber noch auf 44 °C
+    - name: "WP Boost ausstehend"
+      unique_id: wp_boost_ausstehend
+      state: >
+        {{ 6 <= now().hour < 17
+           and state_attr('water_heater.zuhause_domestic_hot_water_0', 'temperature') | float(55) < 54 }}
+ 
+    # Auto-Startschwelle: 4,5 kW solange der Boost aussteht, sonst 2,5 kW
+    - name: "EV Start Ueberschuss ok"
+      unique_id: ev_start_ueberschuss_ok
+      state: >
+        {% set schwelle = 4500 if is_state('binary_sensor.wp_boost_ausstehend', 'on') else 2500 %}
+        {{ states('sensor.pv_ueberschuss_brutto') | float(0) >= schwelle }}
+
+    - name: "Heizstab Netzbezug hoch"
+      unique_id: heizstab_netzbezug_hoch
+      state: "{{ states('sensor.netzbezug_effektiv') | float(0) > 200 }}"
+      delay_on: "00:00:30"
+ 
 
 - trigger:
     - trigger: time_pattern
@@ -364,30 +371,4 @@
           {{ fixed }}
         {% endif %}
 
-#- switch:
-#    - name: "EVC Laden"
-#      unique_id: evc_ladefreigabe
-#      icon: mdi:ev-station
-#      state: "{{ states('sensor.evc_status_code') | int(0) == 2 }}"
-#      turn_on:
-#        - action: modbus.write_register
-#          data:
-#            hub: solax_evc
-#            unit: 1
-#            address: 1552
-#            value: 2
-#        - delay: "00:00:01"
-#        - action: modbus.write_register
-#          data:
-#            hub: solax_evc
-#            unit: 1
-#            address: 1575
-#            value: 4
-#      turn_off:
-#        - action: modbus.write_register
-#          data:
-#            hub: solax_evc
-#            unit: 1
-#            address: 1575
-#            value: 3
 
