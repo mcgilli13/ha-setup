@@ -120,13 +120,28 @@
         # KORREKTUR: Saubere Ermittlung der letzten Änderung mittels 'expand'
         sek_seit_schalten: >
           {{ now().timestamp() - (expand(relais) | map(attribute='last_changed') | map('as_timestamp') | max | default(0)) }}
-          
+
+        # Batterie zuerst: unter soc_start bekommt die Batterie den Überschuss.
+        # Hysterese: läuft der Heizstab schon, bleibt er bis soc_halt erlaubt,
+        # damit er nicht um die 80 % herum flattert.
+        soc_start: 80
+        soc_halt: 75
+        batterie_soc: "{{ states('sensor.solax_inverter_battery_capacity') | float(0) }}"
+
         erlaubt: >
           {{ is_state('input_boolean.heizstab_steuerung', 'on')
             and brutto is not none and netz is not none
             and is_state('binary_sensor.wp_laeuft', 'off')
             and is_state('input_boolean.ev_force_charging', 'off')
-            and states('sensor.zuhause_domestic_hot_water_0_tank_temperature') | float(99) < temp_max }}
+            and batterie_soc >= (soc_halt if aktuell | int(0) > 0 else soc_start)
+            and states('sensor.zuhause_domestic_hot_water_0_tank_temperature') | float(99) < temp_max }}  
+        
+        # erlaubt: >
+        #   {{ is_state('input_boolean.heizstab_steuerung', 'on')
+        #     and brutto is not none and netz is not none
+        #     and is_state('binary_sensor.wp_laeuft', 'off')
+        #     and is_state('input_boolean.ev_force_charging', 'off')
+        #     and states('sensor.zuhause_domestic_hot_water_0_tank_temperature') | float(99) < temp_max }}
         ziel: >
           {% set z = aktuell %}
           {% if not erlaubt %}
