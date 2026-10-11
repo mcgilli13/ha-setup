@@ -129,28 +129,74 @@
     type: press
   mode: single
 
-- alias: Batterie manuell Sicherheitsabschaltung
-  id: batterie_manuell_sicherheit
+# - alias: Batterie manuell Sicherheitsabschaltung
+#   id: batterie_manuell_sicherheit
+#   mode: single
+
+#   trigger:
+#     # Pegelbasiert: greift auch, wenn du bei SOC > 95 % einschaltest
+#     - platform: template
+#       value_template: >
+#         {{ is_state('switch.batterie_netzladen_manuell', 'on')
+#            and states('sensor.solax_inverter_battery_capacity') | float(0) >= 80 }}
+#     # Maximale Dauer, falls du es vergisst
+#     - platform: state
+#       entity_id: switch.batterie_netzladen_manuell
+#       to: "on"
+#       for: "01:30:00"
+
+#   condition:
+#     - condition: state
+#       entity_id: switch.batterie_netzladen_manuell
+#       state: "on"
+
+#   action:
+#     - action: switch.turn_off
+#       target:
+#         entity_id: switch.batterie_netzladen_manuell
+
+- alias: Batterie Halten beenden bei hohem Preis
+  id: batterie_halten_preis
   mode: single
 
   trigger:
-    # Pegelbasiert: greift auch, wenn du bei SOC > 95 % einschaltest
+    # Preis über 0,35 €/kWh seit 1 Min -> Batterie wieder freigeben.
+    # Bei unbekanntem Preis wird ebenfalls freigegeben (float(1) = teuer).
     - platform: template
       value_template: >
-        {{ is_state('switch.batterie_netzladen_manuell', 'on')
+        {{ is_state('select.batterie_modus', 'Halten')
+           and states('sensor.tibber_strompreis') | float(1) > 0.35 }}
+      for: "00:01:00"
+
+  action:
+    - action: select.select_option
+      target:
+        entity_id: select.batterie_modus
+      data:
+        option: "Self Use"
+
+- alias: Batterie Netzladen Sicherheitsabschaltung
+  id: batterie_netzladen_sicherheit
+  mode: single
+
+  trigger:
+    - platform: template
+      value_template: >
+        {{ is_state('select.batterie_modus', 'Netz laden')
            and states('sensor.solax_inverter_battery_capacity') | float(0) >= 80 }}
-    # Maximale Dauer, falls du es vergisst
     - platform: state
-      entity_id: switch.batterie_netzladen_manuell
-      to: "on"
+      entity_id: select.batterie_modus
+      to: "Netz laden"
       for: "01:30:00"
 
   condition:
     - condition: state
-      entity_id: switch.batterie_netzladen_manuell
-      state: "on"
+      entity_id: select.batterie_modus
+      state: "Netz laden"
 
   action:
-    - action: switch.turn_off
+    - action: select.select_option
       target:
-        entity_id: switch.batterie_netzladen_manuell
+        entity_id: select.batterie_modus
+      data:
+        option: "Self Use"
