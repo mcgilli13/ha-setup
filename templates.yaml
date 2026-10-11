@@ -93,16 +93,15 @@
           {{ p }}
         {% endif %}
 
-#######################################################################
-#
-# EV Ladeleistung und Stromberechnung
-# EV Ampere Ohne: Berechnet den verfügbaren Strom für das EV
-#                 ohne Berücksichtigung der aktuellen EV-Ladeleistung.
-# EV Ampere Mit: Berechnet den verfügbaren Strom für das EV 
-#  unter Berücksichtigung der aktuellen EV-Ladeleistung.
-#
-#######################################################################
-
+      #######################################################################
+      #
+      # EV Ladeleistung und Stromberechnung
+      # EV Ampere Ohne: Berechnet den verfügbaren Strom für das EV
+      #                 ohne Berücksichtigung der aktuellen EV-Ladeleistung.
+      # EV Ampere Mit: Berechnet den verfügbaren Strom für das EV 
+      #  unter Berücksichtigung der aktuellen EV-Ladeleistung.
+      #
+      #######################################################################
 
     - name: "EV Ampere Ohne"
       unique_id: "ev_ampere_ohne"
@@ -324,4 +323,34 @@
           {{ fixed }}
         {% endif %}
 
-
+- switch:
+    - name: "Batterie Netzladen (manuell)"
+      unique_id: batterie_netzladen_manuell
+      icon: mdi:battery-charging-high
+      # Zustand wird direkt vom Wechselrichter gelesen, kein Helfer nötig
+      state: >
+        {{ is_state('select.solax_inverter_charger_use_mode', 'Manual Mode')
+           and is_state('select.solax_inverter_manual_mode_select', 'Force Charge') }}
+      turn_on:
+        - action: select.select_option
+          target:
+            entity_id: select.solax_inverter_charger_use_mode
+          data:
+            option: "Manual Mode"
+        - delay: "00:00:02"
+        - action: select.select_option
+          target:
+            entity_id: select.solax_inverter_manual_mode_select
+          data:
+            option: "Force Charge"
+      turn_off:
+        - action: select.select_option
+          target:
+            entity_id: select.solax_inverter_manual_mode_select
+          data:
+            option: "Stop Charge and Discharge"
+        - action: select.select_option
+          target:
+            entity_id: select.solax_inverter_charger_use_mode
+          data:
+            option: "Self Use Mode"
