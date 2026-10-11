@@ -128,3 +128,29 @@
     entity_id: 7b9f0b2bbcd11f2bead1dcb1a2f90f34
     type: press
   mode: single
+
+- alias: Batterie manuell Sicherheitsabschaltung
+  id: batterie_manuell_sicherheit
+  mode: single
+
+  trigger:
+    # Pegelbasiert: greift auch, wenn du bei SOC > 95 % einschaltest
+    - platform: template
+      value_template: >
+        {{ is_state('switch.batterie_netzladen_manuell', 'on')
+           and states('sensor.solax_inverter_battery_capacity') | float(0) >= 80 }}
+    # Maximale Dauer, falls du es vergisst
+    - platform: state
+      entity_id: switch.batterie_netzladen_manuell
+      to: "on"
+      for: "01:30:00"
+
+  condition:
+    - condition: state
+      entity_id: switch.batterie_netzladen_manuell
+      state: "on"
+
+  action:
+    - action: switch.turn_off
+      target:
+        entity_id: switch.batterie_netzladen_manuell
