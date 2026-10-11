@@ -359,10 +359,7 @@
     - name: "Batterie Modus"
       unique_id: batterie_modus_manuell
       icon: mdi:battery-sync
-      options:
-        - "Self Use"
-        - "Netz laden"
-        - "Halten"
+      options: "{{ ['Self Use', 'Netz laden', 'Halten'] }}"
       # Zustand wird direkt vom Wechselrichter gelesen
       state: >
         {% set m = states('select.solax_inverter_charger_use_mode') %}
