@@ -1,22 +1,14 @@
-- id: '1735906130775'
-  alias: Waschmaschine fertig
-  description: sendet eine Nachricht wenn ...
-  triggers:
-  - trigger: numeric_state
-    entity_id:
-    - sensor.smart_switch_23111643379067510d0248e1e9e22e55_current
-    for:
-      hours: 0
-      minutes: 2
-      seconds: 0
-    below: 0.2
-  conditions: []
-  actions:
+alias: Waschmaschine fertig
+triggers:
+  - trigger: state
+    entity_id: binary_sensor.waschmaschine_laeuft
+    from: "on"
+    to: "off"
+actions:
   - action: notify.mobile_app_mgiphone
-    metadata: {}
     data:
       message: Waschmaschine fertig
-  mode: single
+mode: single
 
 - id: '1735909372625'
   alias: Trockner fertig

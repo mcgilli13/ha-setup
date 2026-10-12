@@ -297,7 +297,13 @@
       unique_id: heizstab_netzbezug_hoch
       state: "{{ states('sensor.netzbezug_effektiv') | float(0) > 200 }}"
       delay_on: "00:00:30"
- 
+
+    - name: "Waschmaschine laeuft"
+      unique_id: waschmaschine_laeuft
+      device_class: running
+      state: "{{ states('sensor.smart_switch_23111643379067510d0248e1e9e22e55_power') | float(0) > 10 }}"
+      delay_on: "00:01:00"    # kurze Spitzen im Leerlauf zählen nicht
+      delay_off: "00:05:00"   # überbrückt Pausen im Programm (Einweichen, Warten) 
 
 - trigger:
     - trigger: time_pattern
