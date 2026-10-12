@@ -1,33 +1,46 @@
-alias: Waschmaschine fertig
-triggers:
-  - trigger: state
-    entity_id: binary_sensor.waschmaschine_laeuft
-    from: "on"
-    to: "off"
-actions:
-  - action: notify.mobile_app_mgiphone
-    data:
-      message: Waschmaschine fertig
-mode: single
+- id: '1735906130775'
+  alias: Waschmaschine fertig
+  description: ''
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.waschmaschine_laeuft
+      from: "on"
+      to: "off"
+  conditions: []
+  actions:
+    - action: notify.mobile_app_mgiphone
+      data:
+        message: "Waschmaschine fertig"
+  mode: single
 
 - id: '1735909372625'
   alias: Trockner fertig
-  description: sendet eine Nachricht wenn ...
+  description: 'Heizen beendet, Trommel läuft noch nach'
   triggers:
-  - trigger: numeric_state
-    entity_id:
-    - sensor.smart_switch_23111669739212510d0248e1e9e24660_current
-    for:
-      hours: 0
-      minutes: 2
-      seconds: 0
-    below: 0.2
+    - trigger: state
+      entity_id: binary_sensor.trockner_heizt
+      from: "on"
+      to: "off"
   conditions: []
   actions:
-  - action: notify.mobile_app_mgiphone
-    metadata: {}
-    data:
-      message: Trockner fertig
+    - action: notify.mobile_app_mgiphone
+      data:
+        message: "Trockner fertig: Wäsche ist trocken, die Trommel läuft noch nach"
+  mode: single
+
+- id: 'trockner_nachlauf_ende'
+  alias: Trockner Nachlauf beendet
+  description: 'Optional: Trommel steht, Inhalt ist kalt'
+  triggers:
+    - trigger: state
+      entity_id: binary_sensor.trockner_laeuft
+      from: "on"
+      to: "off"
+  conditions: []
+  actions:
+    - action: notify.mobile_app_mgiphone
+      data:
+        message: "Trockner Nachlauf beendet: Wäsche ist kalt"
   mode: single
 
 - id: '1739168879557'

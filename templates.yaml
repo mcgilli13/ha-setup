@@ -305,6 +305,20 @@
       delay_on: "00:01:00"    # kurze Spitzen im Leerlauf zählen nicht
       delay_off: "00:05:00"   # überbrückt Pausen im Programm (Einweichen, Warten) 
 
+    - name: "Trockner laeuft"
+      unique_id: trockner_laeuft
+      device_class: running
+      state: "{{ states('sensor.smart_switch_23111669739212510d0248e1e9e24660_power') | float(0) > 10 }}"
+      delay_on: "00:01:00"    # ein einzelner Burst oder Leerlauf-Ausreißer schaltet nicht ein
+      delay_off: "00:10:00"   # überbrückt die Trommel-Pausen im Nachlauf (längste gemessene: ca. 7 Min)
+    
+    - name: "Trockner heizt"
+      unique_id: trockner_heizt
+      device_class: running
+      state: "{{ states('sensor.smart_switch_23111669739212510d0248e1e9e24660_power') | float(0) > 300 }}"
+      delay_on: "00:02:00"
+      delay_off: "00:03:00"      
+      
 - trigger:
     - trigger: time_pattern
       minutes: "/5"
