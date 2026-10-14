@@ -160,6 +160,32 @@
 #       target:
 #         entity_id: switch.batterie_netzladen_manuell
 
+- alias: Batterie Netzladen im Preisfenster
+  id: batterie_netzladen_preisfenster
+  mode: single
+
+  trigger:
+    - platform: template
+      value_template: >
+        {{ is_state('binary_sensor.batterie_preisfenster_gut', 'on')
+           and is_state('binary_sensor.batterie_pv_prognose_reicht_nicht', 'on')
+           and is_state('select.batterie_modus', 'Self Use')
+           and states('sensor.solax_inverter_battery_capacity') | float(100) < 60
+           and states('sensor.solax_energy_dashboard_solax_solar_power') | float(99999) < 4000
+           and is_state('input_boolean.ev_force_charging', 'off')
+           and is_state('select.solax_ev_charger_charger_use_mode', 'Stop') }}
+      for: "00:05:00"
+
+  action:
+    - action: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.batterie_netzladen_auto
+    - action: select.select_option
+      target:
+        entity_id: select.batterie_modus
+      data:
+        option: "Netz laden"
+
 - alias: Batterie Halten beenden bei hohem Preis
   id: batterie_halten_preis
   mode: single
