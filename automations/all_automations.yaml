@@ -186,17 +186,16 @@
       data:
         option: "Netz laden"
 
-- alias: Batterie Halten beenden bei hohem Preis
+- alias: Batterie Halten beenden bei Spitzenpreis
   id: batterie_halten_preis
   mode: single
 
   trigger:
-    # Preis über 0,35 €/kWh seit 1 Min -> Batterie wieder freigeben.
-    # Bei unbekanntem Preis wird ebenfalls freigegeben (float(1) = teuer).
+    # Spitzenpreis-Zeitraum seit 1 Min -> Batterie wieder freigeben
     - platform: template
       value_template: >
         {{ is_state('select.batterie_modus', 'Halten')
-           and states('sensor.tibber_strompreis') | float(1) > 0.35 }}
+           and is_state('binary_sensor.control_tibber_price_spitzenpreis_zeitraum', 'on') }}
       for: "00:01:00"
 
   action:
@@ -231,3 +230,42 @@
         entity_id: select.batterie_modus
       data:
         option: "Self Use"
+
+- alias: Batterie Netzladen Fenster Ende
+  id: batterie_netzladen_fenster_ende
+  mode: single
+
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.batterie_preisfenster_gut
+      to: "off"
+      for: "00:01:00"
+    # Sonne ist da: Rest macht die PV
+    - platform: numeric_state
+      entity_id: sensor.solax_energy_dashboard_solax_solar_power
+      above: 6000
+      for: "00:05:00"
+    # Modus wurde anderweitig verlassen (z. B. durch die Sicherheitsabschaltung bei 80 %)
+    - platform: state
+      entity_id: select.batterie_modus
+      from: "Netz laden"
+
+  condition:
+    - condition: state
+      entity_id: input_boolean.batterie_netzladen_auto
+      state: "on"
+
+  action:
+    - if:
+        - condition: state
+          entity_id: select.batterie_modus
+          state: "Netz laden"
+      then:
+        - action: select.select_option
+          target:
+            entity_id: select.batterie_modus
+          data:
+            option: "Self Use"
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.batterie_netzladen_auto
