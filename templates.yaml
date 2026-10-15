@@ -27,53 +27,6 @@
           0
         {% endif %}          
         
-#    # Exportleistung (Netzeinspeisung > 0)
-#    - name: "SolaX Net Export"
-#      unique_id: Solax_Export
-#      icon: mdi:transmission-tower
-#      unit_of_measurement: "W"
-#      state: >
-#        {% set v = states('sensor.solax_feed_in_power') | float(0) %}
-#        {{ v if v > 0 else 0 }}
-
-#    # Importleistung (Netzbezug > 0)
-#    - name: "SolaX Net Import"
-#      unique_id: Solax_Import
-#      unit_of_measurement: "W"
-#      icon: mdi:transmission-tower
-#      state: >
-#        {% set v = states('sensor.solax_feed_in_power') | float(0) %}
-#        {{ (0 - v) if v < 0 else 0 }}
-
-#    # Status des Wechselrichters (übersetzt von Statuscode)
-#    - name: "Solax Status"
-#      unique_id: Solax_Status
-#      icon: mdi:solar-power-variant
-#      state: >
-#        {% set attr = states('sensor.solax_inverter_status') | int(0) + 100 %}
-#        {% if attr == 100 %}Wait
-#        {% elif attr == 101 %}Check
-#        {% elif attr == 102 %}Normal
-#        {% elif attr == 103 %}Fault
-#        {% elif attr == 104 %}Permanent Fault
-#        {% elif attr == 105 %}Update
-#        {% elif attr == 106 %}EPS Check
-#        {% elif attr == 107 %}EPS
-#        {% elif attr == 108 %}Self-test
-#        {% elif attr == 109 %}Idle
-#        {% elif attr == 110 %}Standby
-#        {% elif attr == 111 %}Pv Wake Up Bat
-#        {% elif attr == 112 %}Gen Check
-#        {% elif attr == 113 %}Gen Run
-#        {% else %} Unknown {% endif %}
-
-#    # AC Power aus Cloud
-#    - name: "Solax Cloud AC Power"
-#      unique_id: "Solax_Cloud_AC_Power"
-#      unit_of_measurement: "W"
-#      device_class: power
-#      state: "{{ states.sensor.solax_cloud_api.attributes.result.acpower | default(0) }}"
-#      availability: "{{ states('sensor.solax_cloud_api') == 'True' }}"
 
     # Stabiler Hausverbrauch / Grid-Sensor
     - name: "Hausverbrauch aktuell"
@@ -140,16 +93,15 @@
           {{ p }}
         {% endif %}
 
-#######################################################################
-#
-# EV Ladeleistung und Stromberechnung
-# EV Ampere Ohne: Berechnet den verfügbaren Strom für das EV
-#                 ohne Berücksichtigung der aktuellen EV-Ladeleistung.
-# EV Ampere Mit: Berechnet den verfügbaren Strom für das EV 
-#  unter Berücksichtigung der aktuellen EV-Ladeleistung.
-#
-#######################################################################
-
+      #######################################################################
+      #
+      # EV Ladeleistung und Stromberechnung
+      # EV Ampere Ohne: Berechnet den verfügbaren Strom für das EV
+      #                 ohne Berücksichtigung der aktuellen EV-Ladeleistung.
+      # EV Ampere Mit: Berechnet den verfügbaren Strom für das EV 
+      #  unter Berücksichtigung der aktuellen EV-Ladeleistung.
+      #
+      #######################################################################
 
     - name: "EV Ampere Ohne"
       unique_id: "ev_ampere_ohne"
@@ -345,7 +297,52 @@
       unique_id: heizstab_netzbezug_hoch
       state: "{{ states('sensor.netzbezug_effektiv') | float(0) > 200 }}"
       delay_on: "00:00:30"
- 
+
+    - name: "Waschmaschine laeuft"
+      unique_id: waschmaschine_laeuft
+      device_class: running
+      state: "{{ states('sensor.smart_switch_23111643379067510d0248e1e9e22e55_power') | float(0) > 10 }}"
+      delay_on: "00:01:00"    # kurze Spitzen im Leerlauf zählen nicht
+      delay_off: "00:05:00"   # überbrückt Pausen im Programm (Einweichen, Warten) 
+
+    - name: "Trockner laeuft"
+      unique_id: trockner_laeuft
+      device_class: running
+      state: "{{ states('sensor.smart_switch_23111669739212510d0248e1e9e24660_power') | float(0) > 10 }}"
+      delay_on: "00:01:00"    # ein einzelner Burst oder Leerlauf-Ausreißer schaltet nicht ein
+      delay_off: "00:10:00"   # überbrückt die Trommel-Pausen im Nachlauf (längste gemessene: ca. 7 Min)
+    
+    - name: "Trockner heizt"
+      unique_id: trockner_heizt
+      device_class: running
+      state: "{{ states('sensor.smart_switch_23111669739212510d0248e1e9e24660_power') | float(0) > 300 }}"
+      delay_on: "00:02:00"
+      delay_off: "00:03:00"      
+
+    - name: "Batterie PV-Prognose reicht nicht"
+      unique_id: batterie_pv_prognose_reicht_nicht
+      state: >
+        {% set soc = states('sensor.solax_inverter_battery_capacity') | float(-1) %}
+        {% set rest = states('sensor.energy_production_today_remaining') | float(-1) %}
+        {% set morgen = states('sensor.energy_production_tomorrow') | float(-1) %}
+        {% set prognose = rest if now().hour < 16 else morgen %}
+        {% if soc < 0 or prognose < 0 %}
+          false
+        {% else %}
+          {% set bedarf_batterie = (80 - soc) / 100 * 20 %}  {# kWh bis 80 %, Batterie 20 kWh #}
+          {% set bedarf_haus = 8 %}                          {# kWh Hausverbrauch Rest/Folgetag, geschätzt #}
+          {{ prognose < (bedarf_batterie + bedarf_haus) * 1.3 }}  {# 30 % Sicherheit für Prognosefehler #}
+        {% endif %}
+
+    - name: "Batterie Preisfenster gut"
+      unique_id: batterie_preisfenster_gut
+      state: >
+        {% set bp = 'binary_sensor.control_tibber_price_bestpreis_zeitraum' %}
+        {% set im_fenster = is_state(bp, 'on') %}
+        {% set fenster = state_attr(bp, 'price_mean') | float(999) %}
+        {% set tagesmax = state_attr(bp, 'day_price_max') | float(0) %}
+        {# Wirkungsgrad 0.9 und 5 ct Reserve, Preise in ct/kWh #}
+        {{ im_fenster and (fenster / 0.9 + 5) < tagesmax }}
 
 - trigger:
     - trigger: time_pattern
@@ -371,4 +368,84 @@
           {{ fixed }}
         {% endif %}
 
+- triggers:
+    - trigger: time_pattern
+      minutes: "/30"
+    - trigger: homeassistant
+      event: start
+  actions:
+    - action: weather.get_forecasts
+      target:
+        entity_id: weather.forecast_home
+      data:
+        type: hourly
+      response_variable: wetter
+  sensor:
+    - name: "PV Prognose Bewölkung"
+      unique_id: pv_prognose_bewoelkung
+      unit_of_measurement: "%"
+      state: >
+        {% set jetzt = now() %}
+        {% set ns = namespace(summe=0, n=0) %}
+        {% for f in wetter['weather.forecast_home'].forecast | default([]) %}
+          {% set t = as_datetime(f.datetime) | as_local %}
+          {% if t.date() == jetzt.date() and 9 <= t.hour < 16 and t.hour >= jetzt.hour and f.cloud_coverage is defined %}
+            {% set ns.summe = ns.summe + f.cloud_coverage %}
+            {% set ns.n = ns.n + 1 %}
+          {% endif %}
+        {% endfor %}
+        {{ (ns.summe / ns.n) | round(0) if ns.n > 0 else 'unknown' }}
 
+- select:
+    - name: "Batterie Modus"
+      unique_id: batterie_modus_manuell
+      icon: mdi:battery-sync
+      options: "{{ ['Self Use', 'Netz laden', 'Halten'] }}"
+      # Zustand wird direkt vom Wechselrichter gelesen
+      state: >
+        {% set m = states('select.solax_inverter_charger_use_mode') %}
+        {% set s = states('select.solax_inverter_manual_mode_select') %}
+        {% if m == 'Self Use Mode' %}Self Use
+        {% elif m == 'Manual Mode' and s == 'Force Charge' %}Netz laden
+        {% elif m == 'Manual Mode' and s == 'Stop Charge and Discharge' %}Halten
+        {% else %}unknown{% endif %}
+      select_option:
+        - choose:
+            - conditions: "{{ option == 'Netz laden' }}"
+              sequence:
+                - action: select.select_option
+                  target:
+                    entity_id: select.solax_inverter_charger_use_mode
+                  data:
+                    option: "Manual Mode"
+                - delay: "00:00:02"
+                - action: select.select_option
+                  target:
+                    entity_id: select.solax_inverter_manual_mode_select
+                  data:
+                    option: "Force Charge"
+            - conditions: "{{ option == 'Halten' }}"
+              sequence:
+                - action: select.select_option
+                  target:
+                    entity_id: select.solax_inverter_charger_use_mode
+                  data:
+                    option: "Manual Mode"
+                - delay: "00:00:02"
+                - action: select.select_option
+                  target:
+                    entity_id: select.solax_inverter_manual_mode_select
+                  data:
+                    option: "Stop Charge and Discharge"
+            - conditions: "{{ option == 'Self Use' }}"
+              sequence:
+                - action: select.select_option
+                  target:
+                    entity_id: select.solax_inverter_manual_mode_select
+                  data:
+                    option: "Stop Charge and Discharge"
+                - action: select.select_option
+                  target:
+                    entity_id: select.solax_inverter_charger_use_mode
+                  data:
+                    option: "Self Use Mode"
