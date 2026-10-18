@@ -223,6 +223,9 @@
     - condition: state
       entity_id: select.batterie_modus
       state: "Netz laden"
+    - condition: state
+      entity_id: input_boolean.override_batterie_laden
+      state: "off"
 
   action:
     - action: select.select_option
@@ -254,7 +257,10 @@
     - condition: state
       entity_id: input_boolean.batterie_netzladen_auto
       state: "on"
-
+    - condition: state
+      entity_id: input_boolean.override_batterie_laden
+      state: "off"
+      
   action:
     - if:
         - condition: state
@@ -269,3 +275,41 @@
     - action: input_boolean.turn_off
       target:
         entity_id: input_boolean.batterie_netzladen_auto
+
+- id: 'override_batterie_laden_durchsetzen'
+  alias: Override Batterie laden durchsetzen
+  description: Solange der Override an ist, bleibt die Batterie im Modus Netz laden
+  mode: single
+  triggers:
+    # Pegelbasiert: greift beim Einschalten und auch, wenn jemand den Modus wieder wegschaltet
+    - trigger: template
+      value_template: >
+        {{ is_state('input_boolean.override_batterie_laden', 'on')
+           and not is_state('select.batterie_modus', 'Netz laden') }}
+      for: "00:00:10"
+  conditions: []
+  actions:
+    - action: select.select_option
+      target:
+        entity_id: select.batterie_modus
+      data:
+        option: "Netz laden"
+
+- id: 'override_batterie_laden_beenden'
+  alias: Override Batterie laden beenden
+  description: Beim Ausschalten zurück auf Self Use
+  mode: single
+  triggers:
+    - trigger: state
+      entity_id: input_boolean.override_batterie_laden
+      to: "off"
+  conditions:
+    - condition: state
+      entity_id: select.batterie_modus
+      state: "Netz laden"
+  actions:
+    - action: select.select_option
+      target:
+        entity_id: select.batterie_modus
+      data:
+        option: "Self Use"
