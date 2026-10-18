@@ -66,4 +66,31 @@
       light_target:
         entity_id: light.flur_lampe_klein
       no_motion_wait: 60
-      
+
+- id: 'blumen_sonnenstand'
+  alias: Blumen nach Sonnenstand
+  description: Ein bei Sonnenaufgang, aus bei Sonnenuntergang
+  triggers:
+    - trigger: sun
+      event: sunrise
+      # offset: "-00:30:00"   # optional: früher/später schalten
+      id: sonnenaufgang
+    - trigger: sun
+      event: sunset
+      # offset: "00:30:00"
+      id: sonnenuntergang
+  conditions: []
+  actions:
+    - choose:
+        - conditions:
+            - condition: trigger
+              id: sonnenaufgang
+          sequence:
+            - action: switch.turn_on
+              target:
+                entity_id: switch.keller_shelly_blumen
+      default:
+        - action: switch.turn_off
+          target:
+            entity_id: switch.keller_shelly_blumen
+  mode: single      
