@@ -334,15 +334,15 @@
           {{ prognose < (bedarf_batterie + bedarf_haus) * 1.3 }}  {# 30 % Sicherheit für Prognosefehler #}
         {% endif %}
 
-    - name: "Batterie Preisfenster gut"
-      unique_id: batterie_preisfenster_gut
-      state: >
-        {% set bp = 'binary_sensor.control_tibber_price_bestpreis_zeitraum' %}
-        {% set im_fenster = is_state(bp, 'on') %}
-        {% set fenster = state_attr(bp, 'price_mean') | float(999) %}
-        {% set tagesmax = state_attr(bp, 'day_price_max') | float(0) %}
-        {# Wirkungsgrad 0.9 und 5 ct Reserve, Preise in ct/kWh #}
-        {{ im_fenster and (fenster / 0.9 + 5) < tagesmax }}
+    # - name: "Batterie Preisfenster gut"
+    #   unique_id: batterie_preisfenster_gut
+    #   state: >
+    #     {% set bp = 'binary_sensor.control_tibber_price_bestpreis_zeitraum' %}
+    #     {% set im_fenster = is_state(bp, 'on') %}
+    #     {% set fenster = state_attr(bp, 'price_mean') | float(999) %}
+    #     {% set tagesmax = state_attr(bp, 'day_price_max') | float(0) %}
+    #     {# Wirkungsgrad 0.9 und 5 ct Reserve, Preise in ct/kWh #}
+    #     {{ im_fenster and (fenster / 0.9 + 5) < tagesmax }}
 
 - trigger:
     - trigger: time_pattern
@@ -449,3 +449,57 @@
                     entity_id: select.solax_inverter_charger_use_mode
                   data:
                     option: "Self Use Mode"
+
+- triggers:
+    - trigger: time_pattern
+      minutes: "/15"
+    - trigger: homeassistant
+      event: start
+    - trigger: state
+      entity_id: binary_sensor.control_tibber_price_morgige_daten_verfugbar
+      to: "on"
+  conditions:
+    - condition: template
+      value_template: "{{ has_value('sensor.solax_inverter_battery_capacity') }}"
+  actions:
+    - action: tibber_prices.plan_charging
+      data:
+        battery_capacity_kwh: 20
+        current_soc_percent: "{{ states('sensor.solax_inverter_battery_capacity') | float(0) | round(0) }}"
+        target_soc_percent: 80
+        charging_efficiency: 0.95
+        discharging_efficiency: 0.95
+        max_charge_power_w: 10000
+        search_scope: next_24h
+        must_reach_soc_percent: 40
+        must_reach_by_event: next_peak_period
+        expected_discharge_price: 48
+        reserve_for_discharge: true
+      response_variable: plan
+  binary_sensor:
+    - name: "Batterie Preisfenster gut"
+      unique_id: batterie_preisfenster_gut
+      state: >
+        {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan.get('intervals_found') else [] %}
+        {% set ns = namespace(an=false) %}
+        {% for s in segs %}
+          {% if as_datetime(s.start) <= now() + timedelta(minutes=1) and now() < as_datetime(s.end) %}
+            {% set ns.an = true %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.an }}
+  sensor:
+    - name: "Batterie Ladeplan Start"
+      unique_id: batterie_ladeplan_start
+      device_class: timestamp
+      state: >
+        {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan.get('intervals_found') else [] %}
+        {{ segs[0].start if segs else 'unknown' }}
+      attributes:
+        ende: >
+          {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan.get('intervals_found') else [] %}
+          {{ segs[-1].end if segs else '' }}
+        preis_ct: "{{ plan.get('charging', {}).get('avg_price_per_kwh', '') }}"
+        netzbezug_kwh: "{{ plan.get('charging', {}).get('total_energy_kwh', '') }}"
+        ersparnis_ct: "{{ plan.get('economics', {}).get('expected_net_savings', '') }}"
+        grund: "{{ plan.get('reason', '') }}"
