@@ -174,7 +174,7 @@
            and states('sensor.solax_energy_dashboard_solax_solar_power') | float(99999) < 4000
            and is_state('input_boolean.ev_force_charging', 'off')
            and is_state('select.solax_ev_charger_charger_use_mode', 'Stop') }}
-      for: "00:05:00"
+      for: "00:02:00"
 
   action:
     - action: input_boolean.turn_on
@@ -260,7 +260,7 @@
     - condition: state
       entity_id: input_boolean.override_batterie_laden
       state: "off"
-      
+
   action:
     - if:
         - condition: state
