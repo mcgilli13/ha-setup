@@ -208,7 +208,7 @@
           sequence:
             - action: number.set_value
               target:
-                entity_id: number.ac_thor_9s_1_power_ac9
+                entity_id: number.ac_thor_9s_1_leistung_ac9
               data:
                 value: 0
         - conditions:
@@ -218,6 +218,6 @@
           sequence:
             - action: number.set_value
               target:
-                entity_id: number.ac_thor_9s_1_power_ac9
+                entity_id: number.ac_thor_9s_1_leistung_ac9
               data:
                 value: "{{ states('input_number.ac_thor_manuelle_leistung') | int(0) }}"
