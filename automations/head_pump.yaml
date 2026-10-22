@@ -183,3 +183,40 @@
           - action: switch.turn_off
             target:
               entity_id: "{{ repeat.item }}"
+
+- alias: AC-Thor manuell steuern
+  mode: restart
+  triggers:
+    - trigger: state
+      entity_id: input_boolean.acthor_manuell
+      to: "off"
+      id: aus
+    - trigger: state
+      entity_id:
+        - input_boolean.acthor_manuell
+        - input_number.acthor_manuell_leistung
+      id: wert
+    - trigger: time_pattern
+      seconds: "/5"
+      id: takt
+  actions:
+    - choose:
+        - conditions:
+            - condition: trigger
+              id: aus
+          sequence:
+            - action: number.set_value
+              target:
+                entity_id: number.ac_thor_9s_1_power_ac9
+              data:
+                value: 0
+        - conditions:
+            - condition: state
+              entity_id: input_boolean.acthor_manuell
+              state: "on"
+          sequence:
+            - action: number.set_value
+              target:
+                entity_id: number.ac_thor_9s_1_power_ac9
+              data:
+                value: "{{ states('input_number.acthor_manuell_leistung') | int(0) }}"

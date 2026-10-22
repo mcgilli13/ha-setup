@@ -266,7 +266,7 @@
       unique_id: batterie_soc_mindest
       unit_of_measurement: "%"
       state: >
-        {% set s = states('input_select.batterie_fahrplan') %}
+        {% set s = states('input_select.batterie_fahrplan') if has_value('input_select.batterie_fahrplan') else 'Auto' %}
         {# Auto: Oktober bis März = Winter. Monate hier anpassen #}
         {% set winter = (now().month in [10, 11, 12, 1, 2, 3]) if s == 'Auto' else s == 'Winter' %}
         {{ 60 if winter else 40 }}
@@ -275,7 +275,7 @@
       unique_id: batterie_soc_ziel
       unit_of_measurement: "%"
       state: >
-        {% set s = states('input_select.batterie_fahrplan') %}
+        {% set s = states('input_select.batterie_fahrplan') if has_value('input_select.batterie_fahrplan') else 'Auto' %}
         {% set winter = (now().month in [10, 11, 12, 1, 2, 3]) if s == 'Auto' else s == 'Winter' %}
         {{ 80 if winter else 70 }}
  
