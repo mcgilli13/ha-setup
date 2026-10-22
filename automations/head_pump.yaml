@@ -194,8 +194,8 @@
       id: aus
     - trigger: state
       entity_id:
-        - input_boolean.ac_thor_manuell
-        - input_number.acthor_manuell_leistung
+        - input_boolean.acthor_manuell
+        - input_number.ac_thor_manuelle_leistung
       id: wert
     - trigger: time_pattern
       seconds: "/5"
@@ -220,4 +220,4 @@
               target:
                 entity_id: number.ac_thor_9s_1_power_ac9
               data:
-                value: "{{ states('input_number.ac_thor_manuell_leistung') | int(0) }}"
+                value: "{{ states('input_number.ac_thor_manuelle_leistung') | int(0) }}"
