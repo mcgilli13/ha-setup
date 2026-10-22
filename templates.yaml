@@ -499,20 +499,30 @@
     - condition: template
       value_template: "{{ has_value('sensor.solax_inverter_battery_capacity') }}"
   actions:
+    - variables:
+      plan: {}
     - action: tibber_prices.plan_charging
+      continue_on_error: true
       data:
         battery_capacity_kwh: 20
         current_soc_percent: "{{ states('sensor.solax_inverter_battery_capacity') | float(0) | round(0) }}"
       #  target_soc_percent: 80
         target_soc_percent: "{{ states('sensor.batterie_soc_ziel') | int(80) }}"
-        must_reach_soc_percent: "{{ states('sensor.batterie_soc_mindest') | int(60) }}"
+      #  must_reach_soc_percent: "{{ states('sensor.batterie_soc_mindest') | int(60) }}"
         charging_efficiency: 0.95
         discharging_efficiency: 0.95
         max_charge_power_w: 10000
         search_scope: next_24h
       #  must_reach_soc_percent: 60
-        must_reach_by_event: next_peak_period
-        expected_discharge_price: 48
+      #  must_reach_by_event: next_peak_period
+      #  expected_discharge_price: 48
+
+        must_reach_soc_percent: "{{ states('sensor.batterie_soc_mindest') | int(60) if states('sensor.solax_inverter_battery_capacity') | float(0) < states('sensor.batterie_soc_mindest') | float(60) else states('sensor.batterie_soc_ziel') | int(80) }}"
+        must_reach_by: >
+          {% set heute = today_at(states('input_datetime.batterie_ladefrist')) %}
+          {{ (heute if heute > now() else heute + timedelta(days=1)).isoformat() }}
+        expected_discharge_price: "{{ states('input_number.batterie_erwarteter_preis') | float(48) }}"
+
         reserve_for_discharge: true
       response_variable: plan
   sensor:

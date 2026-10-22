@@ -313,3 +313,23 @@
         entity_id: select.batterie_modus
       data:
         option: "Self Use"
+
+- id: 'batterie_netzladen_watchdog'
+  alias: Batterie Netzladen reagiert nicht
+  description: Netz laden ist gesetzt, aber die Batterie lädt nicht (z. B. Wechselrichter im Idle Mode)
+  mode: single
+  triggers:
+    - trigger: template
+      value_template: >
+        {{ is_state('select.batterie_modus', 'Netz laden')
+           and is_state('input_boolean.override_batterie_laden', 'off')
+           and states('sensor.solax_inverter_battery_capacity') | float(100) < 90
+           and states('sensor.solax_energy_dashboard_solax_battery_power') | float(0) > -1000 }}
+      for: "00:03:00"
+  conditions: []
+  actions:
+    - action: notify.mobile_app_mgiphone
+      data:
+        message: >
+          Netzladen läuft nicht: Modus "Netz laden", aber die Batterie lädt nicht
+          (Wechselrichter: {{ states('sensor.solax_inverter_run_mode') }}).

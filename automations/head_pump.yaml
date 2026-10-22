@@ -184,40 +184,92 @@
             target:
               entity_id: "{{ repeat.item }}"
 
-- id: acthor_manuell_steuern
-  alias: AC-Thor manuell steuern
+- id: acthor_steuern
+  alias: AC-Thor steuern (manuell und PV-Überschuss)
+  description: >
+    Einziger Schreiber auf den AC-Thor. Manuell: fester Wert vom Schieberegler.
+    Auto: PV-Überschuss brutto minus Auto in 200-W-Schritten, mit den Sperren
+    des Heizstabs (WP läuft, Zwangsladen, Batterie zuerst, Speichertemperatur).
   mode: restart
+  max_exceeded: silent
   triggers:
-    - trigger: state
-      entity_id: input_boolean.acthor_manuell
-      to: "off"
-      id: aus
+    # Der Thor hält Werte nur 10 s, daher alle 5 s neu senden
+    - trigger: time_pattern
+      seconds: "/5"
     - trigger: state
       entity_id:
         - input_boolean.acthor_manuell
         - input_number.ac_thor_manuelle_leistung
-      id: wert
-    - trigger: time_pattern
-      seconds: "/5"
-      id: takt
+        - input_boolean.acthor_auto
+        - binary_sensor.wp_laeuft
+        - input_boolean.ev_force_charging
+    - trigger: numeric_state
+      entity_id: sensor.netzbezug_effektiv
+      above: 500
+      for: "00:00:03"
+  conditions:
+    - condition: template
+      value_template: "{{ has_value('number.ac_thor_9s_1_leistung_ac9') }}"
   actions:
-    - choose:
-        - conditions:
-            - condition: trigger
-              id: aus
-          sequence:
-            - action: number.set_value
-              target:
-                entity_id: number.ac_thor_9s_1_leistung_ac9
-              data:
-                value: 0
-        - conditions:
-            - condition: state
-              entity_id: input_boolean.acthor_manuell
-              state: "on"
-          sequence:
-            - action: number.set_value
-              target:
-                entity_id: number.ac_thor_9s_1_leistung_ac9
-              data:
-                value: "{{ states('input_number.ac_thor_manuelle_leistung') | int(0) }}"
+    - variables:
+        schritt_w: 200
+        marge_w: 300            # Reserve, wird vom Überschuss abgezogen
+        start_w: 1000           # ab so viel (nach Reserve) darf der Thor anlaufen
+        halt_w: 600             # läuft er schon, bleibt er bis hierhin an
+        max_w: 9000
+        start_ausstehend_w: 7500  # WP-Boost hat Vorrang (wie beim Heizstab)
+        temp_max: 65
+        soc_start: 80
+        soc_halt: 75
+        manuell: "{{ is_state('input_boolean.acthor_manuell', 'on') }}"
+        auto_an: "{{ is_state('input_boolean.acthor_auto', 'on') }}"
+        aktuell: "{{ states('number.ac_thor_9s_1_leistung_ac9') | float(0) }}"
+        brutto: "{{ states('sensor.pv_ueberschuss_brutto') | float(none) }}"
+        netz: "{{ states('sensor.netzbezug_effektiv') | float(none) }}"
+        p_auto: "{{ states('sensor.solax_ev_charger_charge_power_total') | float(0) }}"
+        verfuegbar: "{{ (brutto - p_auto) if brutto is not none else 0 }}"
+        ausstehend: "{{ is_state('binary_sensor.wp_boost_ausstehend', 'on') }}"
+        batterie_soc: "{{ states('sensor.solax_inverter_battery_capacity') | float(0) }}"
+        erlaubt: >
+          {{ auto_an
+             and brutto is not none and netz is not none
+             and is_state('binary_sensor.wp_laeuft', 'off')
+             and is_state('input_boolean.ev_force_charging', 'off')
+             and batterie_soc >= (soc_halt if aktuell > 0 else soc_start)
+             and states('sensor.zuhause_domestic_hot_water_0_tank_temperature') | float(99) < temp_max }}
+        ziel: >
+          {% if manuell %}
+            {{ states('input_number.ac_thor_manuelle_leistung') | float(0) }}
+          {% elif not erlaubt %}
+            0
+          {% else %}
+            {% set roh = verfuegbar - marge_w %}
+            {# Anlauf erst ab start_w, laufender Thor bleibt bis halt_w #}
+            {% if roh < (halt_w if aktuell > 0 else start_w) %}
+              {% set z = 0 %}
+            {% else %}
+              {% set z = (roh // schritt_w) * schritt_w %}
+            {% endif %}
+            {# WP-Boost ausstehend: Thor erst bei viel Überschuss anlaufen lassen #}
+            {% if ausstehend and aktuell == 0 and verfuegbar < start_ausstehend_w %}
+              {% set z = 0 %}
+            {% endif %}
+            {# Netzbezug: um den Bezug (aufgerundet auf 200 W) zurücknehmen, ab 1 kW ganz aus #}
+            {% if netz > 1000 %}
+              {% set z = 0 %}
+            {% elif netz > 150 and aktuell > 0 %}
+              {% set z = [z, aktuell - ((netz / schritt_w) | round(0, 'ceil')) * schritt_w] | min %}
+            {% endif %}
+            {# Hochfahren begrenzen: höchstens 3 Schritte (600 W) pro Takt #}
+            {% if z > aktuell %}
+              {% set z = [z, aktuell + 3 * schritt_w] | min %}
+            {% endif %}
+            {{ [z, 0] | max }}
+          {% endif %}
+        senden: "{{ [[ziel | float(0), 0] | max, max_w] | min | round(0) | int }}"
+
+    - action: number.set_value
+      target:
+        entity_id: number.ac_thor_9s_1_leistung_ac9
+      data:
+        value: "{{ senden }}"
