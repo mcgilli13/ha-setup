@@ -184,7 +184,8 @@
             target:
               entity_id: "{{ repeat.item }}"
 
-- alias: AC-Thor manuell steuern
+- id: acthor_manuell_steuern
+  alias: AC-Thor manuell steuern
   mode: restart
   triggers:
     - trigger: state
