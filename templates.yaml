@@ -162,47 +162,6 @@
           {{ [amp | int, 16] | min }}
         {% endif %}
         
-    # # AC-THOR Sollwert
-    # - name: "AC-THOR Sollwert"
-    #   unique_id: "ac_thor_sollwert"
-    #   unit_of_measurement: "W"
-    #   state: >
-    #     {% set solar = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
-    #     {% set og = states('sensor.shellypro3em_og_leistung') | float(0) %}
-    #     {% set eg = states('sensor.shellypro3em_eg_leistung') | float(0) %}
-    #     {% set wp1 = states('sensor.shelly_wp_innen_leistung') | float(0) %}
-    #     {% set wp2 = states('sensor.shelly_wp_aussen_leistung') | float(0) %}
-    #     {% set ev_w = states('sensor.solax_ev_charger_charge_power_total') | float(0) %}
-
-    #     {# Klima-Offsets #}
-    #     {% set ac_pat   = 500 if not is_state('climate.patrice', 'off') else 0 %}
-    #     {% set ac_schlaf = 500 if not is_state('climate.schlafzimmer', 'off') else 0 %}
-    #     {% set ac_wohn   = 500 if not is_state('climate.wohnzimmer', 'off') else 0 %}
-    #     {% set ac_buro   = 500 if not is_state('climate.buro', 'off') else 0 %}
-
-    #     {# Reserve #}
-    #     {% set reserve = 1000 %}
-
-    #     {# Hauslast ohne Thor #}
-    #     {% set haus = og + eg + wp1 + wp2 + ac_pat + ac_schlaf + ac_wohn + ac_buro + ev_w + reserve %}
-
-    #     {# Überschuss u #}
-    #     {% set u = solar - haus %}
-
-    #     {# EV-First nur wenn EV wirklich lädt #}
-    #     {% set ev_laedt = is_state('select.solax_ev_charger_charger_use_mode', 'Fast') %}
-    #     {% set ev_opt_a = states('sensor.ev_ladestrom_optimal') | float(0) %}
-
-    #     {% if ev_laedt and ev_opt_a < 16 %}
-    #       0
-    #     {% else %}
-    #       {# Mindestschwelle und Deckelung für Thor #}
-    #       {% set out = [u, 0] | max %}
-    #       {% set thor_min = 1000 %}
-    #       {% set thor_max = 10000 %}
-    #       {{ [ (out if out >= thor_min else 0), thor_max ] | min | round(0) }}
-    #     {% endif %}
-
    # Gesamtleistung Wärmepumpe in W 
     - name: "WP Gesamtleistung" 
       unique_id: "wp_power_sum_w"
@@ -370,16 +329,6 @@
         {% set soc = states('sensor.solax_inverter_battery_capacity') | float(100) %}
         {{ ns.im_plan or (laedt and preis <= be and soc < states('sensor.batterie_soc_ziel') | float(80)) }}
 
-    # - name: "Batterie Preisfenster gut"
-    #   unique_id: batterie_preisfenster_gut
-    #   state: >
-    #     {% set bp = 'binary_sensor.control_tibber_price_bestpreis_zeitraum' %}
-    #     {% set im_fenster = is_state(bp, 'on') %}
-    #     {% set fenster = state_attr(bp, 'price_mean') | float(999) %}
-    #     {% set tagesmax = state_attr(bp, 'day_price_max') | float(0) %}
-    #     {# Wirkungsgrad 0.9 und 5 ct Reserve, Preise in ct/kWh #}
-    #     {{ im_fenster and (fenster / 0.9 + 5) < tagesmax }}
-
 - trigger:
     - trigger: time_pattern
       minutes: "/5"
@@ -506,16 +455,11 @@
       data:
         battery_capacity_kwh: 20
         current_soc_percent: "{{ states('sensor.solax_inverter_battery_capacity') | float(0) | round(0) }}"
-      #  target_soc_percent: 80
         target_soc_percent: "{{ states('sensor.batterie_soc_ziel') | int(80) }}"
-      #  must_reach_soc_percent: "{{ states('sensor.batterie_soc_mindest') | int(60) }}"
         charging_efficiency: 0.95
         discharging_efficiency: 0.95
         max_charge_power_w: 10000
         search_scope: next_24h
-      #  must_reach_soc_percent: 60
-      #  must_reach_by_event: next_peak_period
-      #  expected_discharge_price: 48
 
         must_reach_soc_percent: "{{ states('sensor.batterie_soc_mindest') | int(60) if states('sensor.solax_inverter_battery_capacity') | float(0) < states('sensor.batterie_soc_mindest') | float(60) else states('sensor.batterie_soc_ziel') | int(80) }}"
         must_reach_by: >
