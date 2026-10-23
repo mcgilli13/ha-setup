@@ -198,9 +198,8 @@
       seconds: "/5"
     - trigger: state
       entity_id:
-        - input_boolean.acthor_manuell
+        - input_select.acthor_modus
         - input_number.ac_thor_manuelle_leistung
-        - input_boolean.acthor_auto
         - binary_sensor.wp_laeuft
         - input_boolean.ev_force_charging
     - trigger: numeric_state
@@ -221,9 +220,9 @@
         temp_max: 65
         soc_start: 80
         soc_halt: 75
-        manuell: "{{ is_state('input_boolean.acthor_manuell', 'on') }}"
-        auto_an: "{{ is_state('input_boolean.acthor_auto', 'on') }}"
-        aktuell: "{{ states('number.ac_thor_9s_1_leistung_ac9') | float(0) }}"
+        modus: "{{ states('input_select.acthor_modus') }}"
+        manuell: "{{ modus == 'Manuell' }}"
+        auto_an: "{{ modus == 'Auto' }}"        aktuell: "{{ states('number.ac_thor_9s_1_leistung_ac9') | float(0) }}"
         brutto: "{{ states('sensor.pv_ueberschuss_brutto') | float(none) }}"
         netz: "{{ states('sensor.netzbezug_effektiv') | float(none) }}"
         p_auto: "{{ states('sensor.solax_ev_charger_charge_power_total') | float(0) }}"
