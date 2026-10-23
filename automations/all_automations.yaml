@@ -130,6 +130,7 @@
            and states('sensor.solax_inverter_battery_capacity') | float(100) < states('sensor.batterie_soc_mindest') | float(60)
            and states('sensor.solax_energy_dashboard_solax_solar_power') | float(99999) < 4000
            and is_state('input_boolean.ev_force_charging', 'off')
+           and is_state('input_boolean.batterie_netzladen_erlaubt', 'on')
            and is_state('select.solax_ev_charger_charger_use_mode', 'Stop') }}
       for: "00:02:00"
 
@@ -148,11 +149,11 @@
   mode: single
 
   trigger:
-    # Spitzenpreis-Zeitraum seit 1 Min -> Batterie wieder freigeben
     - platform: template
       value_template: >
         {{ is_state('select.batterie_modus', 'Halten')
-           and is_state('binary_sensor.control_tibber_price_spitzenpreis_zeitraum', 'on') }}
+           and states('sensor.tibber_strompreis') | float(0) * 100
+               >= states('input_number.batterie_erwarteter_preis') | float(52) - 5 }}
       for: "00:01:00"
 
   action:
@@ -209,6 +210,10 @@
     - platform: state
       entity_id: select.batterie_modus
       from: "Netz laden"
+    #  Trigger, damit ein laufendes automatisches Laden sofort stoppt
+    - platform: state
+      entity_id: input_boolean.batterie_netzladen_erlaubt
+      to: "off"
 
   condition:
     - condition: state
