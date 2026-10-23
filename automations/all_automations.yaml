@@ -73,23 +73,6 @@
           - switch.s1_02
   mode: single
 
-# - alias: AC•THOR dynamisch steuern
-#   id: 16108d049fc54851a1a449775201c261
-#   mode: single
-#   trigger:
-#   - platform: time_pattern
-#     seconds: "/10"
-#   condition:
-#   - condition: state
-#     entity_id: input_boolean.ac_thor_steuerung
-#     state: "on"
-#   action:
-#   - service: number.set_value
-#     target:
-#       entity_id: number.ac_thor_9s_1_power_ac9
-#     data:
-#       value: "{{ states('sensor.ac_thor_sollwert') | float(0) }}"
-
 - id: '1765627713197'
   alias: Kamin ein
   description: ''
@@ -133,32 +116,6 @@
     entity_id: 7b9f0b2bbcd11f2bead1dcb1a2f90f34
     type: press
   mode: single
-
-# - alias: Batterie manuell Sicherheitsabschaltung
-#   id: batterie_manuell_sicherheit
-#   mode: single
-
-#   trigger:
-#     # Pegelbasiert: greift auch, wenn du bei SOC > 95 % einschaltest
-#     - platform: template
-#       value_template: >
-#         {{ is_state('switch.batterie_netzladen_manuell', 'on')
-#            and states('sensor.solax_inverter_battery_capacity') | float(0) >= 80 }}
-#     # Maximale Dauer, falls du es vergisst
-#     - platform: state
-#       entity_id: switch.batterie_netzladen_manuell
-#       to: "on"
-#       for: "01:30:00"
-
-#   condition:
-#     - condition: state
-#       entity_id: switch.batterie_netzladen_manuell
-#       state: "on"
-
-#   action:
-#     - action: switch.turn_off
-#       target:
-#         entity_id: switch.batterie_netzladen_manuell
 
 - alias: Batterie Netzladen im Preisfenster
   id: batterie_netzladen_preisfenster
