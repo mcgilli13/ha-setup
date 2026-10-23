@@ -500,7 +500,7 @@
       value_template: "{{ has_value('sensor.solax_inverter_battery_capacity') }}"
   actions:
     - variables:
-      plan: {}
+        plan: {}
     - action: tibber_prices.plan_charging
       continue_on_error: true
       data:
