@@ -64,5 +64,7 @@
 #     }
 
 
-ac_thor_power:
-  url: "http://192.168.178{{ power }}"
+rest_command:
+  ac_thor_power:
+    url: "http://192.168.178.8/control.html?power={{ power }}"
+
