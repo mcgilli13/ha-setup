@@ -45,25 +45,24 @@
 #    }
 
 # Steuerung des AC•THOR 9s über die my-PV Cloud API
-set_ac_thor_power:
-  url: "https://api.my-pv.com/api/v1/device/!secret mypv_serial/power"
-  method: POST
-  headers:
-    accept: "application/json"
-    Authorization: !secret mypv_token
-    Content-Type: "application/json"
-  payload: >
-    {
-      "validForMinutes": 5,
-      "power": {{ states('sensor.ac_thor_überschuss_watt') | float(0) | round(0) }},
-      "pidPower": null,
-      "timeBoostOverride": 0,
-      "timeBoostValue": 0,
-      "legionellaBoostBlock": 0,
-      "batteryDischargeBlock": 0
-    }
+# set_ac_thor_power:
+#   url: "https://api.my-pv.com/api/v1/device/!secret mypv_serial/power"
+#   method: POST
+#   headers:
+#     accept: "application/json"
+#     Authorization: !secret mypv_token
+#     Content-Type: "application/json"
+#   payload: >
+#     {
+#       "validForMinutes": 5,
+#       "power": {{ states('sensor.ac_thor_überschuss_watt') | float(0) | round(0) }},
+#       "pidPower": null,
+#       "timeBoostOverride": 0,
+#       "timeBoostValue": 0,
+#       "legionellaBoostBlock": 0,
+#       "batteryDischargeBlock": 0
+#     }
 
 
 ac_thor_power:
   url: "http://192.168.178.8{{ power }}"
-  
