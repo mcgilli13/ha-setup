@@ -208,7 +208,7 @@
       for: "00:00:03"
   conditions:
     - condition: template
-      value_template: "{{ has_value('number.ac_thor_9s_1_leistung_ac9') }}"
+      value_template: "{{ has_value('sensor.my_pv_ac_thor_9s_leistung') }}"
   actions:
     - variables:
         schritt_w: 200
@@ -217,13 +217,13 @@
         halt_w: 600             # läuft er schon, bleibt er bis hierhin an
         max_w: 9000
         start_ausstehend_w: 7500  # WP-Boost hat Vorrang (wie beim Heizstab)
-        temp_max: 65
+        temp_max: 60
         soc_start: 80
         soc_halt: 75
         modus: "{{ states('input_select.acthor_modus') }}"
         manuell: "{{ modus == 'Manuell' }}"
         auto_an: "{{ modus == 'Auto' }}"        
-        aktuell: "{{ states('number.ac_thor_9s_1_leistung_ac9') | float(0) }}"
+        aktuell: "{{ states('sensor.my_pv_ac_thor_9s_leistung') | float(0) }}"
         brutto: "{{ states('sensor.pv_ueberschuss_brutto') | float(none) }}"
         netz: "{{ states('sensor.netzbezug_effektiv') | float(none) }}"
         p_auto: "{{ states('sensor.solax_ev_charger_charge_power_total') | float(0) }}"
@@ -236,7 +236,7 @@
              and is_state('binary_sensor.wp_laeuft', 'off')
              and is_state('input_boolean.ev_force_charging', 'off')
              and batterie_soc >= (soc_halt if aktuell > 0 else soc_start)
-             and states('sensor.zuhause_domestic_hot_water_0_tank_temperature') | float(99) < temp_max }}
+             and state_attr('water_heater.keller_my_pv_ac_thor_9s', 'current_temperature') | float(99) < temp_max }}
         ziel: >
           {% if manuell %}
             {{ states('input_number.ac_thor_manuelle_leistung') | float(0) }}
@@ -268,8 +268,6 @@
           {% endif %}
         senden: "{{ [[ziel | float(0), 0] | max, max_w] | min | round(0) | int }}"
 
-    - action: number.set_value
-      target:
-        entity_id: number.ac_thor_9s_1_leistung_ac9
+    - action: rest_command.ac_thor_power
       data:
-        value: "{{ senden }}"
+        power: "{{ senden }}"
