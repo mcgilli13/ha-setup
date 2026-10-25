@@ -139,6 +139,11 @@
       for: "00:02:00"
 
   action:
+    - action: input_number.set_value
+      target:
+        entity_id: input_number.batterie_ladepreis_zuletzt
+      data:
+        value: "{{ state_attr('sensor.batterie_ladeplan_start', 'preis_ct') | float(states('input_number.batterie_ladepreis_zuletzt') | float(40)) }}"
     - action: input_boolean.turn_on
       target:
         entity_id: input_boolean.batterie_netzladen_auto
@@ -358,3 +363,69 @@
     - action: input_boolean.turn_off
       target:
         entity_id: input_boolean.batterie_boden_halten
+
+- id: 'batterie_voll_halten_start'
+  alias: Batterie voll halten
+  description: Voll geladene Batterie halten, bis sich das Entladen rentiert
+  mode: single
+  triggers:
+    - trigger: template
+      value_template: >
+        {{ is_state('select.batterie_modus', 'Self Use')
+           and is_state('input_boolean.batterie_netzladen_erlaubt', 'on')
+           and is_state('input_boolean.override_batterie_laden', 'off')
+           and states('sensor.solax_inverter_battery_capacity') | float(0) >= states('sensor.batterie_soc_ziel') | float(80)
+           and states('sensor.solax_energy_dashboard_solax_solar_power') | float(99999) < 500
+           and states('sensor.tibber_strompreis') | float(99) * 100 < states('sensor.batterie_entladeschwelle') | float(0) - 2 }}
+      for: "00:01:00"
+  conditions: []
+  actions:
+    - action: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.batterie_voll_halten
+    - action: select.select_option
+      target:
+        entity_id: select.batterie_modus
+      data:
+        option: "Halten"
+
+- id: 'batterie_voll_halten_ende'
+  alias: Batterie voll halten beenden
+  description: Entladen freigeben, wenn der Strom teurer ist als das Laden, oder die PV läuft
+  mode: single
+  triggers:
+    - trigger: template
+      value_template: >
+        {{ is_state('input_boolean.batterie_voll_halten', 'on')
+           and is_state('select.batterie_modus', 'Halten')
+           and is_state('input_boolean.batterie_voll_halten', 'off')
+           and states('sensor.tibber_strompreis') | float(0) * 100 >= states('sensor.batterie_entladeschwelle') | float(999) }}
+      for: "00:01:00"
+    - trigger: template
+      value_template: >
+        {{ is_state('input_boolean.batterie_voll_halten', 'on')
+           and is_state('select.batterie_modus', 'Halten')
+           and states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) >= 500 }}
+      for: "00:05:00"
+    # Modus wurde anderweitig verlassen
+    - trigger: state
+      entity_id: select.batterie_modus
+      from: "Halten"
+  conditions:
+    - condition: state
+      entity_id: input_boolean.batterie_voll_halten
+      state: "on"
+  actions:
+    - if:
+        - condition: state
+          entity_id: select.batterie_modus
+          state: "Halten"
+      then:
+        - action: select.select_option
+          target:
+            entity_id: select.batterie_modus
+          data:
+            option: "Self Use"
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.batterie_voll_halten

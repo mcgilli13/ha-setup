@@ -237,7 +237,17 @@
         {% set s = states('input_select.batterie_fahrplan') if has_value('input_select.batterie_fahrplan') else 'Auto' %}
         {% set winter = (now().month in [10, 11, 12, 1, 2, 3]) if s == 'Auto' else s == 'Winter' %}
         {{ 80 if winter else 70 }}
- 
+
+    - name: "Batterie Entladeschwelle"
+      unique_id: batterie_entladeschwelle
+      unit_of_measurement: "ct"
+      state: >
+        {% set lade = states('input_number.batterie_ladepreis_zuletzt') | float(40) %}
+        {% set basis = lade / 0.9 + 3 %}   {# Wirkungsgrad 90 % und 3 ct Marge #}
+        {% set tagesmax = (state_attr('sensor.tibber_strompreis', 'max_price') | float(0)) * 100 %}
+        {# Nie höher als knapp unter dem heutigen Höchstpreis, sonst würde nie entladen #}
+        {{ ([basis, tagesmax - 1] | min if tagesmax > 0 else basis) | round(1) }}
+
 - binary_sensor:
     # WP zieht tatsächlich Strom (Shelly-Messung, nicht Vaillant-Werte)
     - name: "WP laeuft"
