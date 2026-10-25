@@ -65,4 +65,4 @@
 
 
 ac_thor_power:
-  url: "http://192.168.178.8{{ power }}"
+  url: "http://192.168.178{{ power }}"
