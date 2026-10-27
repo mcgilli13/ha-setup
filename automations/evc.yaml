@@ -347,6 +347,13 @@
   mode: single
 
   trigger:
+    # Triggered, wenn die Leistung für 15 Sekunden stabil über 500W liegt
+    - platform: numeric_state
+      entity_id: sensor.solax_ev_charger_charge_power_total
+      above: 500
+      for:
+        seconds: 15
+    # Zusätzlicher Trigger alle 10 Sekunden (wie vorher), falls schon geladen wird
     - platform: time_pattern
       seconds: "/10"
 
@@ -356,17 +363,10 @@
       entity_id: select.solax_ev_charger_charger_use_mode
       state: "Fast"
 
-    # Genug Leistung für eine zuverlässige Messung (deutlich über Rauschen/Leckstrom,
-    # aber unter der Mindest-Ladeleistung von 6A einphasig ~1380W)
+    # Sicherheitsprüfung: Leistung muss über 500W sein
     - condition: numeric_state
       entity_id: sensor.solax_ev_charger_charge_power_total
       above: 500
-
-    # 15s Stabilität seit letzter Leistungsänderung, damit wir nicht mitten
-    # in der Anlaufphase (PWM-Verhandlung) messen
-    - condition: template
-      value_template: >
-        {{ (now() - states.sensor.solax_ev_charger_charge_power_total.last_changed).total_seconds() >= 15 }}
 
   action:
     - variables:
@@ -374,18 +374,18 @@
         l2: "{{ states('sensor.solax_ev_charger_charge_current_l2') | float(0) }}"
         l3: "{{ states('sensor.solax_ev_charger_charge_current_l3') | float(0) }}"
         erkannter_typ: >
-          {% if l1 > 1 and l2 < 1 and l3 < 1 %}
+          {% if l1 > 2 and l2 < 2 and l3 < 2 %}
             Cupra
-          {% elif l1 > 1 and l2 > 1 and l3 > 1 %}
+          {% elif l1 > 2 and l2 > 2 and l3 > 2 %}
             Mercedes
           {% else %}
             unklar
           {% endif %}
 
     # Nur bei eindeutigem Ergebnis und nur bei tatsächlicher Änderung setzen
-    # (vermeidet unnötige State-Writes/Log-Rauschen)
     - condition: template
       value_template: "{{ erkannter_typ in ['Mercedes', 'Cupra'] }}"
+      
     - condition: template
       value_template: "{{ erkannter_typ != states('input_select.ev_auto_typ') }}"
 
