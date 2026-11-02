@@ -446,7 +446,65 @@
                   data:
                     option: "Self Use Mode"
 
-- triggers:
+# - triggers:
+#     - trigger: time_pattern
+#       minutes: "/15"
+#     - trigger: homeassistant
+#       event: start
+#     - trigger: state
+#       entity_id: binary_sensor.control_tibber_price_morgige_daten_verfugbar
+#       to: "on"
+#   conditions:
+#     - condition: template
+#       value_template: "{{ has_value('sensor.solax_inverter_battery_capacity') }}"
+#   actions:
+#     - variables:
+#         plan: {}
+#     - action: tibber_prices.plan_charging
+#       continue_on_error: true
+#       data:
+#         battery_capacity_kwh: 20
+#         current_soc_percent: "{{ states('sensor.solax_inverter_battery_capacity') | float(0) | round(0) }}"
+#         target_soc_percent: "{{ states('sensor.batterie_soc_ziel') | int(80) }}"
+#         charging_efficiency: 0.95
+#         discharging_efficiency: 0.95
+#         max_charge_power_w: 10000
+#         search_scope: next_24h
+#         max_cost_per_kwh: "{{ (state_attr('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'day_price_min') | float(40)) + 4 }}"
+#         must_reach_soc_percent: "{{ states('sensor.batterie_soc_mindest') | int(60) if states('sensor.solax_inverter_battery_capacity') | float(0) < states('sensor.batterie_soc_mindest') | float(60) else states('sensor.batterie_soc_ziel') | int(80) }}"
+#         must_reach_by: >
+#           {% set heute = today_at(states('input_datetime.batterie_ladefrist')) %}
+#           {{ (heute if heute > now() else heute + timedelta(days=1)).isoformat() }}
+#         expected_discharge_price: "{{ states('input_number.batterie_erwarteter_preis') | float(48) }}"
+
+#         reserve_for_discharge: true
+#       response_variable: plan
+#   sensor:
+#     - name: "Batterie Ladeplan Start"
+#       unique_id: batterie_ladeplan_start
+#       device_class: timestamp
+#       state: >
+#         {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan.get('intervals_found') else [] %}
+#         {{ segs[0].start if segs else 'unknown' }}
+#       attributes:
+#         # Ende des ERSTEN Blocks (passt zum Start)
+#         ende: >
+#           {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan.get('intervals_found') else [] %}
+#           {{ segs[0].end if segs else '' }}
+#         # alle Blöcke, auch spätere
+#         segmente: >
+#           {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan.get('intervals_found') else [] %}
+#           {% set ns = namespace(l=[]) %}
+#           {% for s in segs %}{% set ns.l = ns.l + [{'start': s.start, 'ende': s.end}] %}{% endfor %}
+#           {{ ns.l }}
+#         weitere_bloecke: >
+#           {{ [(plan.get('charging', {}).get('schedule', {}).get('segment_count', 1) | int(1)) - 1, 0] | max if plan.get('intervals_found') else 0 }}
+#         break_even_ct: "{{ plan.get('economics', {}).get('break_even_price', '') }}"
+#         preis_ct: "{{ plan.get('charging', {}).get('avg_price_per_kwh', '') }}"
+#         netzbezug_kwh: "{{ plan.get('charging', {}).get('total_energy_kwh', '') }}"
+#         ersparnis_ct: "{{ plan.get('economics', {}).get('expected_net_savings', '') }}"
+#         grund: "{{ plan.get('reason', '') }}"
+- trigger:
     - trigger: time_pattern
       minutes: "/15"
     - trigger: homeassistant
@@ -454,12 +512,10 @@
     - trigger: state
       entity_id: binary_sensor.control_tibber_price_morgige_daten_verfugbar
       to: "on"
-  conditions:
+  condition:
     - condition: template
       value_template: "{{ has_value('sensor.solax_inverter_battery_capacity') }}"
-  actions:
-    - variables:
-        plan: {}
+  action:
     - action: tibber_prices.plan_charging
       continue_on_error: true
       data:
@@ -471,12 +527,12 @@
         max_charge_power_w: 10000
         search_scope: next_24h
         max_cost_per_kwh: "{{ (state_attr('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'day_price_min') | float(40)) + 4 }}"
-        must_reach_soc_percent: "{{ states('sensor.batterie_soc_mindest') | int(60) if states('sensor.solax_inverter_battery_capacity') | float(0) < states('sensor.batterie_soc_mindest') | float(60) else states('sensor.batterie_soc_ziel') | int(80) }}"
+        must_reach_soc_percent: >
+          {{ states('sensor.batterie_soc_mindest') | int(60) if states('sensor.solax_inverter_battery_capacity') | float(0) < states('sensor.batterie_soc_mindest') | float(60) else states('sensor.batterie_soc_ziel') | int(80) }}
         must_reach_by: >
           {% set heute = today_at(states('input_datetime.batterie_ladefrist')) %}
           {{ (heute if heute > now() else heute + timedelta(days=1)).isoformat() }}
         expected_discharge_price: "{{ states('input_number.batterie_erwarteter_preis') | float(48) }}"
-
         reserve_for_discharge: true
       response_variable: plan
   sensor:
@@ -487,20 +543,8 @@
         {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan.get('intervals_found') else [] %}
         {{ segs[0].start if segs else 'unknown' }}
       attributes:
-        # Ende des ERSTEN Blocks (passt zum Start)
         ende: >
           {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan.get('intervals_found') else [] %}
-          {{ segs[0].end if segs else '' }}
-        # alle Blöcke, auch spätere
+          {{ segs[0].end if segs else 'unknown' }}
         segmente: >
-          {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan.get('intervals_found') else [] %}
-          {% set ns = namespace(l=[]) %}
-          {% for s in segs %}{% set ns.l = ns.l + [{'start': s.start, 'ende': s.end}] %}{% endfor %}
-          {{ ns.l }}
-        weitere_bloecke: >
-          {{ [(plan.get('charging', {}).get('schedule', {}).get('segment_count', 1) | int(1)) - 1, 0] | max if plan.get('intervals_found') else 0 }}
-        break_even_ct: "{{ plan.get('economics', {}).get('break_even_price', '') }}"
-        preis_ct: "{{ plan.get('charging', {}).get('avg_price_per_kwh', '') }}"
-        netzbezug_kwh: "{{ plan.get('charging', {}).get('total_energy_kwh', '') }}"
-        ersparnis_ct: "{{ plan.get('economics', {}).get('expected_net_savings', '') }}"
-        grund: "{{ plan.get('reason', '') }}"
+          {{ plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan.get('intervals_found') else [] }}
