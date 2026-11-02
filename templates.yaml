@@ -512,9 +512,6 @@
     - trigger: state
       entity_id: binary_sensor.control_tibber_price_morgige_daten_verfugbar
       to: "on"
-  condition:
-    - condition: template
-      value_template: "{{ has_value('sensor.solax_inverter_battery_capacity') }}"
   action:
     - action: tibber_prices.plan_charging
       continue_on_error: true
@@ -526,13 +523,21 @@
         discharging_efficiency: 0.95
         max_charge_power_w: 10000
         search_scope: next_24h
-        max_cost_per_kwh: "{{ (state_attr('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'day_price_min') | float(40)) + 4 }}"
+        # Korrektur: Teilt das Ergebnis durch 100, um von Cent auf Euro (z.B. 0.48) zu kommen
+        max_cost_per_kwh: "{{ (((state_attr('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'day_price_min') | float(40)) + 4) / 100) | round(4) }}"
         must_reach_soc_percent: >
-          {{ states('sensor.batterie_soc_mindest') | int(60) if states('sensor.solax_inverter_battery_capacity') | float(0) < states('sensor.batterie_soc_mindest') | float(60) else states('sensor.batterie_soc_ziel') | int(80) }}
+          {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
+          {% set mindest = states('sensor.batterie_soc_mindest') | float(60) %}
+          {{ mindest | int if soc < mindest else states('sensor.batterie_soc_ziel') | int(80) }}
         must_reach_by: >
-          {% set heute = today_at(states('input_datetime.batterie_ladefrist')) %}
-          {{ (heute if heute > now() else heute + timedelta(days=1)).isoformat() }}
-        expected_discharge_price: "{{ states('input_number.batterie_erwarteter_preis') | float(48) }}"
+          {% set ladefrist = states('input_datetime.batterie_ladefrist') %}
+          {% set uhrzeit = ladefrist if ladefrist not in ['unknown', 'unavailable'] else '10:00:00' %}
+          {% set ziel_heute = today_at(uhrzeit) %}
+          {# Wenn das Ziel heute ist, aber weniger als 6 Stunden in der Zukunft liegt, nimm morgen #}
+          {% set ziel = ziel_heute if ziel_heute > now() + timedelta(hours=6) else ziel_heute + timedelta(days=1) %}
+          {{ ziel.strftime('%Y-%m-%d %H:%M:%S') }}
+        # Korrektur: Auch hier den erwarteten Preis von Cent in Euro umrechnen
+        expected_discharge_price: "{{ (states('input_number.batterie_erwarteter_preis') | float(52) / 100) | round(4) }}"
         reserve_for_discharge: true
       response_variable: plan
   sensor:
@@ -540,7 +545,7 @@
       unique_id: batterie_ladeplan_start
       device_class: timestamp
       state: >
-        {% if plan is defined and plan.get('intervals_found', false) %}
+        {% if plan is defined and plan is mapping and plan.get('charging') is not none %}
           {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) %}
           {{ (segs | first).start if segs | length > 0 else 'unknown' }}
         {% else %}
@@ -548,17 +553,16 @@
         {% endif %}
       attributes:
         ende: >
-          {% if plan is defined and plan.get('intervals_found', false) %}
+          {% if plan is defined and plan is mapping and plan.get('charging') is not none %}
             {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) %}
             {{ (segs | first).end if segs | length > 0 else 'unknown' }}
           {% else %}
             unknown
           {% endif %}
         segmente: >
-          {% if plan is defined %}
+          {% if plan is defined and plan is mapping and plan.get('charging') is not none %}
             {{ plan.get('charging', {}).get('schedule', {}).get('segments', []) }}
           {% else %}
             []
           {% endif %}
-        raw_response: >
-          {{ plan if plan is defined else 'Variable plan nicht im Scope' }}
+        letztes_update: "{{ now().isoformat() }}"
