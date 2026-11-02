@@ -540,11 +540,13 @@
       unique_id: batterie_ladeplan_start
       device_class: timestamp
       state: >
-        {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan.get('intervals_found') else [] %}
-        {{ segs[0].start if segs else 'unknown' }}
+        {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan is defined and plan.get('intervals_found') else [] %}
+        {{ segs[0].start if segs | length > 0 else 'unknown' }}
       attributes:
         ende: >
-          {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan.get('intervals_found') else [] %}
-          {{ segs[0].end if segs else 'unknown' }}
+          {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan is defined and plan.get('intervals_found') else [] %}
+          {{ segs[0].end if segs | length > 0 else 'unknown' }}
         segmente: >
-          {{ plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan.get('intervals_found') else [] }}
+          {{ plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan is defined and plan.get('intervals_found') else [] }}
+        raw_response: >
+          {{ plan if plan is defined else 'Variable nicht definiert' }}
