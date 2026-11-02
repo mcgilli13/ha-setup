@@ -523,7 +523,6 @@
         discharging_efficiency: 0.95
         max_charge_power_w: 10000
         search_scope: next_24h
-        # Korrektur: Teilt das Ergebnis durch 100, um von Cent auf Euro (z.B. 0.48) zu kommen
         max_cost_per_kwh: "{{ (((state_attr('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'day_price_min') | float(40)) + 4) / 100) | round(4) }}"
         must_reach_soc_percent: >
           {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
@@ -533,10 +532,8 @@
           {% set ladefrist = states('input_datetime.batterie_ladefrist') %}
           {% set uhrzeit = ladefrist if ladefrist not in ['unknown', 'unavailable'] else '10:00:00' %}
           {% set ziel_heute = today_at(uhrzeit) %}
-          {# Wenn das Ziel heute ist, aber weniger als 6 Stunden in der Zukunft liegt, nimm morgen #}
           {% set ziel = ziel_heute if ziel_heute > now() + timedelta(hours=6) else ziel_heute + timedelta(days=1) %}
-          {{ ziel.strftime('%Y-%m-%d %H:%M:%S') }}
-        # Korrektur: Auch hier den erwarteten Preis von Cent in Euro umrechnen
+          {{ ziel.isoformat() }}
         expected_discharge_price: "{{ (states('input_number.batterie_erwarteter_preis') | float(52) / 100) | round(4) }}"
         reserve_for_discharge: true
       response_variable: plan
