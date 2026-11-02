@@ -540,13 +540,25 @@
       unique_id: batterie_ladeplan_start
       device_class: timestamp
       state: >
-        {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan is defined and plan.get('intervals_found') else [] %}
-        {{ segs[0].start if segs | length > 0 else 'unknown' }}
+        {% if plan is defined and plan.get('intervals_found', false) %}
+          {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) %}
+          {{ (segs | first).start if segs | length > 0 else 'unknown' }}
+        {% else %}
+          unknown
+        {% endif %}
       attributes:
         ende: >
-          {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan is defined and plan.get('intervals_found') else [] %}
-          {{ segs[0].end if segs | length > 0 else 'unknown' }}
+          {% if plan is defined and plan.get('intervals_found', false) %}
+            {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) %}
+            {{ (segs | first).end if segs | length > 0 else 'unknown' }}
+          {% else %}
+            unknown
+          {% endif %}
         segmente: >
-          {{ plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan is defined and plan.get('intervals_found') else [] }}
+          {% if plan is defined %}
+            {{ plan.get('charging', {}).get('schedule', {}).get('segments', []) }}
+          {% else %}
+            []
+          {% endif %}
         raw_response: >
-          {{ plan if plan is defined else 'Variable nicht definiert' }}
+          {{ plan if plan is defined else 'Variable plan nicht im Scope' }}
