@@ -515,21 +515,16 @@
     - trigger: event
       event_type: ladeplan_manuell_triggern
   
+  # Die Solar-Bedingung schützt dich vor Netzladung, wenn genug Sonne kommt
   condition:
     - condition: template
       value_template: >
         {% set kapazitaet_gesamt = 20.0 %}
         {% set soc_aktuell = states('sensor.solax_inverter_battery_capacity') | float(0) %}
         {% set soc_ziel = states('sensor.batterie_soc_ziel') | float(80) %}
-        
-        {# Berechne, wie viele kWh noch in den Akku passen #}
         {% set benoetigte_kwh = ((soc_ziel - soc_aktuell) / 100) * kapazitaet_gesamt %}
-        
-        {# Holt die restliche Solar-Prognose für HEUTE (in kWh) #}
-        {# ⚠️ Tausche sensor.solar_prognose_rest_heute gegen deine Entität aus #}
+        {# Nutze deine reale Rest-PV-Prognose-Entität für heute in kWh #}
         {% set solar_prognose_kwh = states('sensor.solar_prognose_rest_heute') | float(0) %}
-        
-        {# Trigger nur erlauben, wenn die Sonne es NICHT alleine schafft #}
         {{ solar_prognose_kwh < benoetigte_kwh }}
 
   action:
@@ -539,8 +534,9 @@
         battery_capacity_kwh: 20
         current_soc_percent: "{{ states('sensor.solax_inverter_battery_capacity') | float(0) | round(0) }}"
         target_soc_percent: "{{ states('sensor.batterie_soc_ziel') | int(80) }}"
-        charging_efficiency: 0.95
-        discharging_efficiency: 0.95
+        # Maximale Effizienz signalisieren, um den Verlustfilter zu umgehen
+        charging_efficiency: 1.0
+        discharging_efficiency: 1.0
         max_charge_power_w: 10000
         search_scope: next_24h
         max_cost_per_kwh: 0.99
@@ -562,8 +558,9 @@
             {{ today_at('17:00:00').isoformat() }}
           {% endif %}
           
-        expected_discharge_price: 0.01
-        reserve_for_discharge: false
+        # Extrem hoch ansetzen: Signalisiert, dass der Strom im Akku später Gold wert ist
+        expected_discharge_price: 0.99
+        reserve_for_discharge: true
       response_variable: plan
   sensor:
     - name: "Batterie Ladeplan Start"
@@ -592,4 +589,4 @@
           {% endif %}
         letztes_update: "{{ now().isoformat() }}"
         raw_response: >
-          {{ plan if plan is defined else 'Keine Daten (Bedingung blockiert evtl. wegen Sonne)' }}
+          {{ plan if plan is defined else 'Keine Daten' }}
