@@ -514,6 +514,24 @@
       to: "on"
     - trigger: event
       event_type: ladeplan_manuell_triggern
+  
+  condition:
+    - condition: template
+      value_template: >
+        {% set kapazitaet_gesamt = 20.0 %}
+        {% set soc_aktuell = states('sensor.solax_inverter_battery_capacity') | float(0) %}
+        {% set soc_ziel = states('sensor.batterie_soc_ziel') | float(80) %}
+        
+        {# Berechne, wie viele kWh noch in den Akku passen #}
+        {% set benoetigte_kwh = ((soc_ziel - soc_aktuell) / 100) * kapazitaet_gesamt %}
+        
+        {# Holt die restliche Solar-Prognose für HEUTE (in kWh) #}
+        {# ⚠️ Tausche sensor.solar_prognose_rest_heute gegen deine Entität aus #}
+        {% set solar_prognose_kwh = states('sensor.solar_prognose_rest_heute') | float(0) %}
+        
+        {# Trigger nur erlauben, wenn die Sonne es NICHT alleine schafft #}
+        {{ solar_prognose_kwh < benoetigte_kwh }}
+
   action:
     - action: tibber_prices.plan_charging
       continue_on_error: true
@@ -524,21 +542,26 @@
         charging_efficiency: 0.95
         discharging_efficiency: 0.95
         max_charge_power_w: 10000
-        # Suchraum auf den aktuellen Tag begrenzen, um nicht in die nächste Nacht zu rutschen
         search_scope: next_24h
-        # 99 Cent stellt sicher, dass der Preisfilter NIEMALS die Ladung blockiert
         max_cost_per_kwh: 0.99
-        # Wir wollen den Akku vor dem Peak so voll wie möglich machen (Ziel-SoC anstreben!)
         must_reach_soc_percent: "{{ states('sensor.batterie_soc_ziel') | int(80) }}"
-        # DIE ENTSCHEIDENDE ÄNDERUNG: Die Deadline ist HEUTE NACHMITTAG um 16:00 Uhr (vor dem Peak)
+        
+        # DYNAMISCHE DEADLINE: Findet den Start des teuersten Peaks
         must_reach_by: >
-          {% set deadline_heute = today_at('16:00:00') %}
-          {% if deadline_heute > now() %}
-            {{ deadline_heute.isoformat() }}
+          {% set prices = state_attr('sensor.tibber_prices', 'prices') if states('sensor.tibber_prices') not in ['unknown', 'unavailable'] else [] %}
+          {% if prices | length > 0 %}
+            {% set ns = namespace(max_price=0.0, peak_time=none) %}
+            {% for p in prices[:16] %}
+              {% if p.total | float > ns.max_price %}
+                {% set ns.max_price = p.total | float %}
+                {% set ns.peak_time = p.startsAt %}
+              {% endif %}
+            {% endfor %}
+            {{ as_datetime(ns.peak_time).isoformat() if ns.peak_time is not none else (now() + timedelta(hours=6)).isoformat() }}
           {% else %}
-            {{ (deadline_heute + timedelta(days=1)).isoformat() }}
+            {{ today_at('17:00:00').isoformat() }}
           {% endif %}
-        # Wirtschaftlichen Zwang abschalten, um das Laden vor 16:00 Uhr zu erzwingen
+          
         expected_discharge_price: 0.01
         reserve_for_discharge: false
       response_variable: plan
@@ -569,4 +592,4 @@
           {% endif %}
         letztes_update: "{{ now().isoformat() }}"
         raw_response: >
-          {{ plan if plan is defined else 'Keine Daten' }}
+          {{ plan if plan is defined else 'Keine Daten (Bedingung blockiert evtl. wegen Sonne)' }}
