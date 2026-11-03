@@ -515,7 +515,6 @@
     - trigger: event
       event_type: ladeplan_manuell_triggern
   
-  # Die Solar-Bedingung schützt dich vor Netzladung, wenn genug Sonne kommt
   condition:
     - condition: template
       value_template: >
@@ -523,7 +522,6 @@
         {% set soc_aktuell = states('sensor.solax_inverter_battery_capacity') | float(0) %}
         {% set soc_ziel = states('sensor.batterie_soc_ziel') | float(80) %}
         {% set benoetigte_kwh = ((soc_ziel - soc_aktuell) / 100) * kapazitaet_gesamt %}
-        {# Nutze deine reale Rest-PV-Prognose-Entität für heute in kWh #}
         {% set solar_prognose_kwh = states('sensor.solar_prognose_rest_heute') | float(0) %}
         {{ solar_prognose_kwh < benoetigte_kwh }}
 
@@ -534,32 +532,28 @@
         battery_capacity_kwh: 20
         current_soc_percent: "{{ states('sensor.solax_inverter_battery_capacity') | float(0) | round(0) }}"
         target_soc_percent: "{{ states('sensor.batterie_soc_ziel') | int(80) }}"
-        # Maximale Effizienz signalisieren, um den Verlustfilter zu umgehen
-        charging_efficiency: 1.0
-        discharging_efficiency: 1.0
+        charging_efficiency: 0.95
+        discharging_efficiency: 0.95
         max_charge_power_w: 10000
         search_scope: next_24h
-        max_cost_per_kwh: 0.99
+        
+        # DYNAMISCHES PREISLIMIT: Nimmt den echten Höchstwert des Tages (z.B. 0.5910)
+        max_cost_per_kwh: >
+          {% set max_preis_cent = state_attr('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'day_price_max') | float(0) %}
+          {{ (max_preis_cent / 100) | round(4) if max_preis_cent > 0 else 0.99 }}
+          
         must_reach_soc_percent: "{{ states('sensor.batterie_soc_ziel') | int(80) }}"
         
-        # DYNAMISCHE DEADLINE: Findet den Start des teuersten Peaks
+        # DYNAMISCHE DEADLINE: Endet pünktlich zum Beginn des aktuellen Bestpreis-Fensters
         must_reach_by: >
-          {% set prices = state_attr('sensor.tibber_prices', 'prices') if states('sensor.tibber_prices') not in ['unknown', 'unavailable'] else [] %}
-          {% if prices | length > 0 %}
-            {% set ns = namespace(max_price=0.0, peak_time=none) %}
-            {% for p in prices[:16] %}
-              {% if p.total | float > ns.max_price %}
-                {% set ns.max_price = p.total | float %}
-                {% set ns.peak_time = p.startsAt %}
-              {% endif %}
-            {% endfor %}
-            {{ as_datetime(ns.peak_time).isoformat() if ns.peak_time is not none else (now() + timedelta(hours=6)).isoformat() }}
+          {% set active_period_end = state_attr('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'end') %}
+          {% if active_period_end not in ['none', 'unknown', 'unavailable', none] %}
+            {{ as_datetime(active_period_end).isoformat() }}
           {% else %}
-            {{ today_at('17:00:00').isoformat() }}
+            {{ today_at('15:15:00').isoformat() }}
           {% endif %}
           
-        # Extrem hoch ansetzen: Signalisiert, dass der Strom im Akku später Gold wert ist
-        expected_discharge_price: 0.99
+        expected_discharge_price: "{{ (states('input_number.batterie_erwarteter_preis') | float(52) / 100) | round(4) }}"
         reserve_for_discharge: true
       response_variable: plan
   sensor:
