@@ -534,7 +534,7 @@
           {# Schaut immer exakt 12 Stunden in die Zukunft, um die besten Fenster im kommenden Block zu finden #}
           {{ (now() + timedelta(hours=12)).isoformat() }}
         expected_discharge_price: "{{ (states('input_number.batterie_erwarteter_preis') | float(52) / 100) | round(4) }}"
-        reserve_for_discharge: true
+        reserve_for_discharge: false
       response_variable: plan
   sensor:
     - name: "Batterie Ladeplan Start"
