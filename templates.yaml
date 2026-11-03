@@ -564,3 +564,6 @@
             []
           {% endif %}
         letztes_update: "{{ now().isoformat() }}"
+        raw_response: >
+          {{ plan if plan is defined else 'Keine Daten von der Aktion erhalten' }}
+
