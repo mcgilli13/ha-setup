@@ -531,12 +531,8 @@
           {% set mindest = states('sensor.batterie_soc_mindest') | float(60) %}
           {{ mindest | int if soc < mindest else states('sensor.batterie_soc_ziel') | int(80) }}
         must_reach_by: >
-          {% set ladefrist = states('input_datetime.batterie_ladefrist') %}
-          {% set uhrzeit = ladefrist if ladefrist not in ['unknown', 'unavailable'] else '10:00:00' %}
-          {% set ziel_heute = today_at(uhrzeit) %}
-          {# Präzise Logik: Wenn die Uhrzeit heute noch in der Zukunft liegt, nimm heute. Sonst morgen. #}
-          {% set ziel = ziel_heute if ziel_heute > now() else ziel_heute + timedelta(days=1) %}
-          {{ ziel.isoformat() }}
+          {# Schaut immer exakt 12 Stunden in die Zukunft, um die besten Fenster im kommenden Block zu finden #}
+          {{ (now() + timedelta(hours=12)).isoformat() }}
         expected_discharge_price: "{{ (states('input_number.batterie_erwarteter_preis') | float(52) / 100) | round(4) }}"
         reserve_for_discharge: true
       response_variable: plan
