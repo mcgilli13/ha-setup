@@ -524,18 +524,22 @@
         charging_efficiency: 0.95
         discharging_efficiency: 0.95
         max_charge_power_w: 10000
-        # ÄNDERUNG 1: Suchraum auf den exakt gleichen Zeitraum wie die Frist erweitern
+        # Suchraum auf den aktuellen Tag begrenzen, um nicht in die nächste Nacht zu rutschen
         search_scope: next_24h
-        # ÄNDERUNG 2: Preislimit künstlich extrem hoch ansetzen (99 Cent), um Blockaden durch Brutto/Netto-Fehler zu killen
+        # 99 Cent stellt sicher, dass der Preisfilter NIEMALS die Ladung blockiert
         max_cost_per_kwh: 0.99
-        must_reach_soc_percent: >
-          {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
-          {% set mindest = states('sensor.batterie_soc_mindest') | float(60) %}
-          {{ mindest | int if soc < mindest else states('sensor.batterie_soc_ziel') | int(80) }}
-        # ÄNDERUNG 3: Robustes 24-Stunden-Fenster im vollen ISO-Format
-        must_reach_by: "{{ (now() + timedelta(hours=24)).isoformat() }}"
-        expected_discharge_price: 0.99
-        # ÄNDERUNG 4: Absolut sicher auf false setzen
+        # Wir wollen den Akku vor dem Peak so voll wie möglich machen (Ziel-SoC anstreben!)
+        must_reach_soc_percent: "{{ states('sensor.batterie_soc_ziel') | int(80) }}"
+        # DIE ENTSCHEIDENDE ÄNDERUNG: Die Deadline ist HEUTE NACHMITTAG um 16:00 Uhr (vor dem Peak)
+        must_reach_by: >
+          {% set deadline_heute = today_at('16:00:00') %}
+          {% if deadline_heute > now() %}
+            {{ deadline_heute.isoformat() }}
+          {% else %}
+            {{ (deadline_heute + timedelta(days=1)).isoformat() }}
+          {% endif %}
+        # Wirtschaftlichen Zwang abschalten, um das Laden vor 16:00 Uhr zu erzwingen
+        expected_discharge_price: 0.01
         reserve_for_discharge: false
       response_variable: plan
   sensor:
@@ -565,5 +569,4 @@
           {% endif %}
         letztes_update: "{{ now().isoformat() }}"
         raw_response: >
-          {{ plan if plan is defined else 'Keine Daten von der Aktion erhalten' }}
-
+          {{ plan if plan is defined else 'Keine Daten' }}
