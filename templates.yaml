@@ -524,16 +524,18 @@
         charging_efficiency: 0.95
         discharging_efficiency: 0.95
         max_charge_power_w: 10000
+        # ÄNDERUNG 1: Suchraum auf den exakt gleichen Zeitraum wie die Frist erweitern
         search_scope: next_24h
-        max_cost_per_kwh: "{{ (((state_attr('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'day_price_min') | float(40)) + 4) / 100) | round(4) }}"
+        # ÄNDERUNG 2: Preislimit künstlich extrem hoch ansetzen (99 Cent), um Blockaden durch Brutto/Netto-Fehler zu killen
+        max_cost_per_kwh: 0.99
         must_reach_soc_percent: >
           {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
           {% set mindest = states('sensor.batterie_soc_mindest') | float(60) %}
           {{ mindest | int if soc < mindest else states('sensor.batterie_soc_ziel') | int(80) }}
-        must_reach_by: >
-          {# Schaut immer exakt 12 Stunden in die Zukunft, um die besten Fenster im kommenden Block zu finden #}
-          {{ (now() + timedelta(hours=12)).isoformat() }}
-        expected_discharge_price: "{{ (states('input_number.batterie_erwarteter_preis') | float(52) / 100) | round(4) }}"
+        # ÄNDERUNG 3: Robustes 24-Stunden-Fenster im vollen ISO-Format
+        must_reach_by: "{{ (now() + timedelta(hours=24)).isoformat() }}"
+        expected_discharge_price: 0.99
+        # ÄNDERUNG 4: Absolut sicher auf false setzen
         reserve_for_discharge: false
       response_variable: plan
   sensor:
