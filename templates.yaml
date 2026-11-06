@@ -16,7 +16,7 @@
       device_class: power
       state_class: measurement
       state: >
-        {% set power = states('sensor.solax_total_battery_power_charge') | float(0) | abs %}
+        {% set power = states('sensor.solax_inverter_total_battery_power_charge') | float(0) | abs %}
         {% set status = states('sensor.solax_inverter_bdc_status') | lower | trim %}
         
         {% if status == 'charge' or status == 'charging' %}
