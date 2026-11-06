@@ -574,15 +574,12 @@
         {% endif %}
       attributes:
         ende: >
-          {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) if plan is defined and plan is mapping and plan.get('intervals_found') else [] %}
-          {{ segs[-1].end if segs else '' }}
-        # ende: >
-        #   {% if plan is defined and plan is mapping and plan.get('charging') is not none %}
-        #     {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) %}
-        #     {{ (segs | first).end if segs | length > 0 else 'unknown' }}
-        #   {% else %}
-        #     unknown
-        #   {% endif %}
+          {% if plan is defined and plan is mapping and plan.get('charging') is not none %}
+            {% set segs = plan.get('charging', {}).get('schedule', {}).get('segments', []) %}
+            {{ (segs | last).end if segs | length > 0 else 'unknown' }}
+          {% else %}
+            unknown
+          {% endif %}
         segmente: >
           {% if plan is defined and plan is mapping and plan.get('charging') is not none %}
             {{ plan.get('charging', {}).get('schedule', {}).get('segments', []) }}
