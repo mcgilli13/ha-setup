@@ -588,3 +588,9 @@
         letztes_update: "{{ now().isoformat() }}"
         raw_response: >
           {{ plan if plan is defined else 'Keine Daten' }}
+        preis_ct: "{{ plan.get('charging', {}).get('avg_price_per_kwh', '') if plan is defined and plan is mapping else '' }}"
+        netzbezug_kwh: "{{ plan.get('charging', {}).get('total_energy_kwh', '') if plan is defined and plan is mapping else '' }}"
+        ersparnis_ct: "{{ plan.get('economics', {}).get('expected_net_savings', '') if plan is defined and plan is mapping else '' }}"
+        break_even_ct: "{{ plan.get('economics', {}).get('break_even_price', '') if plan is defined and plan is mapping else '' }}"
+        grund: "{{ plan.get('reason', '') if plan is defined and plan is mapping else '' }}"
+        weitere_bloecke: "{{ [(plan.get('charging', {}).get('schedule', {}).get('segment_count', 1) | int(1)) - 1, 0] | max if plan is defined and plan is mapping and plan.get('intervals_found') else 0 }}"
