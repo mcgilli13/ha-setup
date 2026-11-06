@@ -556,8 +556,9 @@
           {% endif %}
           
         # expected_discharge_price: "{{ (states('input_number.batterie_erwarteter_preis') | float(52) / 100) | round(4) }}"
-        expected_discharge_price: "{{ states('input_number.batterie_erwarteter_preis') | float(60) }}"
-
+        # expected_discharge_price: "{{ states('input_number.batterie_erwarteter_preis') | float(60) }}"
+        expected_discharge_price: "{{ (state_attr('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'day_price_max') | float(60)) - 5 }}"
+        
         reserve_for_discharge: true
       response_variable: plan
   sensor:
