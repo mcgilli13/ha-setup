@@ -538,10 +538,12 @@
         search_scope: next_24h
         
         # DYNAMISCHES PREISLIMIT: Nimmt den echten Höchstwert des Tages (z.B. 0.5910)
-        max_cost_per_kwh: >
-          {% set max_preis_cent = state_attr('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'day_price_max') | float(0) %}
-          {{ (max_preis_cent / 100) | round(4) if max_preis_cent > 0 else 0.99 }}
-          
+        # max_cost_per_kwh: >
+        #   {% set max_preis_cent = state_attr('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'day_price_max') | float(0) %}
+        #   {{ (max_preis_cent / 100) | round(4) if max_preis_cent > 0 else 0.99 }}
+
+        max_cost_per_kwh: "{{ (state_attr('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'day_price_min') | float(40)) + 4 }}"
+        
         must_reach_soc_percent: "{{ states('sensor.batterie_soc_ziel') | int(80) }}"
         
         # DYNAMISCHE DEADLINE: Endet pünktlich zum Beginn des aktuellen Bestpreis-Fensters
@@ -553,7 +555,9 @@
             {{ today_at('15:15:00').isoformat() }}
           {% endif %}
           
-        expected_discharge_price: "{{ (states('input_number.batterie_erwarteter_preis') | float(52) / 100) | round(4) }}"
+        # expected_discharge_price: "{{ (states('input_number.batterie_erwarteter_preis') | float(52) / 100) | round(4) }}"
+        expected_discharge_price: "{{ states('input_number.batterie_erwarteter_preis') | float(60) }}"
+
         reserve_for_discharge: true
       response_variable: plan
   sensor:
