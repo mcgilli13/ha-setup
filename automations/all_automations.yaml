@@ -162,10 +162,10 @@
       value_template: >
         {{ is_state('select.batterie_modus', 'Halten')
            and is_state('input_boolean.batterie_boden_halten', 'off')
-           and states('sensor.tibber_strompreis') | float(0) * 100
-               >= states('input_number.batterie_erwarteter_preis') | float(52) - 5 }}
+           and is_state('input_boolean.batterie_voll_halten', 'off')
+           and states('sensor.tibber_strompreis') | float(0) * 100 >= states('sensor.batterie_entladeschwelle') | float(999) }}
       for: "00:01:00"
-
+      
   action:
     - action: select.select_option
       target:
@@ -398,7 +398,6 @@
       value_template: >
         {{ is_state('input_boolean.batterie_voll_halten', 'on')
            and is_state('select.batterie_modus', 'Halten')
-           and is_state('input_boolean.batterie_voll_halten', 'off')
            and states('sensor.tibber_strompreis') | float(0) * 100 >= states('sensor.batterie_entladeschwelle') | float(999) }}
       for: "00:01:00"
     - trigger: template
