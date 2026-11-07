@@ -407,10 +407,6 @@
            and is_state('select.batterie_modus', 'Halten')
            and states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) >= 500 }}
       for: "00:05:00"
-    # Modus wurde anderweitig verlassen
-    - trigger: state
-      entity_id: select.batterie_modus
-      from: "Halten"
   conditions:
     - condition: state
       entity_id: input_boolean.batterie_voll_halten
