@@ -41,11 +41,6 @@
       for: "00:02:00"
 
   action:
-    - action: input_number.set_value
-      target:
-        entity_id: input_number.batterie_ladepreis_zuletzt
-      data:
-        value: "{{ state_attr('sensor.batterie_ladeplan_start', 'preis_ct') | float(states('input_number.batterie_ladepreis_zuletzt') | float(40)) }}"
     - action: input_boolean.turn_on
       target:
         entity_id: input_boolean.batterie_netzladen_auto
