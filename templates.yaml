@@ -464,10 +464,14 @@
         max_charge_power_w: 10000
         search_scope: next_24h
         
-        max_cost_per_kwh: "{{ (state_attr('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'day_price_min') | float(40)) + 4 }}"
+        #max_cost_per_kwh: "{{ (state_attr('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'day_price_min') | float(40)) + 4 }}"
+        #must_reach_soc_percent: "{{ states('sensor.batterie_soc_ziel') | int(80) }}"
         
-        must_reach_soc_percent: "{{ states('sensor.batterie_soc_ziel') | int(80) }}"
-        
+        max_cost_per_kwh: "{{ state_attr('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'day_price_max') | float(99) }}"
+        must_reach_by: >
+          {% set frist = today_at(states('input_datetime.batterie_ladefrist')) %}
+          {{ (frist if frist > now() else frist + timedelta(days=1)).isoformat() }}
+
         # DYNAMISCHE DEADLINE: Endet pünktlich zum Beginn des aktuellen Bestpreis-Fensters
         must_reach_by: >
           {% set active_period_end = state_attr('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'end') %}
