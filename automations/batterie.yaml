@@ -10,14 +10,12 @@
   actions:
     - action: input_number.set_value
       target:
-        entity_id: input_number.batterie_ladepreis_zuletzt
+        entity_id: input_number.batterie_entladeschwelle
       data:
         value: >
-          {% if is_state('input_boolean.batterie_netzladen_auto', 'on') %}
-            {{ state_attr('sensor.batterie_ladeplan_start', 'preis_ct') | float(states('sensor.tibber_strompreis') | float(0) * 100) }}
-          {% else %}
-            {{ (states('sensor.tibber_strompreis') | float(0) * 100) | round(1) }}
-          {% endif %}
+          {% set lade = state_attr('sensor.batterie_ladeplan_start', 'preis_ct') | float(states('sensor.tibber_strompreis') | float(0) * 100) %}
+          {% set max_tag = (state_attr('sensor.tibber_strompreis', 'max_price') | float(0)) * 100 %}
+          {{ ([lade / 0.9 + 3, max_tag - 1] | min if max_tag > 0 else lade / 0.9 + 3) | round(1) }}
 
 - alias: Batterie Netzladen im Preisfenster
   id: batterie_netzladen_preisfenster
