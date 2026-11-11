@@ -319,3 +319,22 @@
     - action: input_boolean.turn_off
       target:
         entity_id: input_boolean.batterie_voll_halten
+
+- id: 'batterie_entladeschwelle_startwert'
+  alias: Entladeschwelle Startwert setzen
+  description: Verhindert, dass die Entladeschwelle nach einem Neustart auf 0 steht
+  mode: single
+  triggers:
+    - trigger: homeassistant
+      event: start
+    - trigger: time
+      at: "00:05:00"
+  conditions:
+    - condition: template
+      value_template: "{{ states('input_number.batterie_entladeschwelle') | float(0) <= 0 }}"
+  actions:
+    - action: input_number.set_value
+      target:
+        entity_id: input_number.batterie_entladeschwelle
+      data:
+        value: 70
