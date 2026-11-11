@@ -7,10 +7,10 @@ ev_ladestrom:
   mode: slider
   icon: mdi:current-dc
 
-batterie_entladepreis_manuell:
+batterie_entladeschwelle:
   name: "Batterie Entladepreis (manuell)"
   min: 0
-  max: 100
+  max: 150
   step: 0.5
   unit_of_measurement: "ct/kWh"
   mode: box
