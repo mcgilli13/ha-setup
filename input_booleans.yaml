@@ -16,3 +16,8 @@ ev_nachtladen:
 heizstab_steuerung:
     name: Heizstab Steuerung aktiv
     icon: mdi:water-boiler
+
+input_boolean:
+  batterie_override:
+    name: "Batterie Override Netz laden"
+    icon: mdi:battery-alert-variant-outline
