@@ -6,3 +6,12 @@ ev_ladestrom:
   unit_of_measurement: "A"
   mode: slider
   icon: mdi:current-dc
+
+batterie_entladeschwelle:
+  name: "Batterie Entladeschwelle"
+  min: 0
+  max: 150
+  step: 0.5
+  unit_of_measurement: "ct/kWh"
+  mode: box
+  icon: mdi:battery-charging-100
