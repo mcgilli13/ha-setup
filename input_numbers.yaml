@@ -15,3 +15,33 @@ batterie_entladeschwelle:
   unit_of_measurement: "ct/kWh"
   mode: box
   icon: mdi:battery-charging-100
+
+batterie_ziel_soc:
+  name: "Batterie Ziel SOC"
+  min: 0
+  max: 100
+  step: 1
+  initial: 80
+  unit_of_measurement: "%"
+  mode: box
+  icon: mdi:battery-charging-100
+
+batterie_mindest_soc:
+  name: "Batterie Mindest SOC"
+  min: 0
+  max: 100
+  step: 1
+  initial: 60 
+  unit_of_measurement: "%"
+  mode: box
+  icon: mdi:battery-charging-100
+
+batterie_ladepreis_merker:
+  name: "Batterie Ladepreis Merker"
+  min: 0
+  max: 150
+  step: 0.1
+  initial: 40
+  unit_of_measurement: "ct/kWh"
+  mode: box
+  icon: mdi:battery-charging-100
