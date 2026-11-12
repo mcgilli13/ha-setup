@@ -249,22 +249,21 @@
       unique_id: batterie_entscheidung_grund
       icon: mdi:battery-sync
       state: >-
-        {% if not has_value('sensor.solax_battery_capacity')
+        {% if not has_value('sensor.solax_inverter_battery_capacity')
               or not has_value('sensor.tibber_strompreis') %}unbekannt
         {% else %}
-        {% set soc = states('sensor.solax_battery_capacity') | float(0) %}
-        {% set pv = states('sensor.solax_pv_power') | float(0) %}
+        {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
+        {% set pv = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
         {% set preis = states('sensor.tibber_strompreis') | float(0) * 100 %}
-        {% set ziel = states('input_number.batterie_ziel_soc') | float(80) %}
-        {% set mind = states('input_number.batterie_mindest_soc') | float(60) %}
-        {% set merk = states('input_number.batterie_ladepreis_merker') | float(30) %}
-        {% set fenster = is_state('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'on') %}
+        {% set ziel = states('sensor.batterie_soc_ziel') | float(80) %}
+        {% set mind = states('sensor.batterie_soc_mindest') | float(60) %}
+        {% set merk = states('input_number.batterie_entladeschwelle') | float(40) %}
+        {% set fenster = is_state('binary_sensor.batterie_preisfenster_gut', 'on') %}
+        {% set reicht_nicht = is_state('binary_sensor.batterie_pv_prognose_reicht_nicht', 'on') %}
         {% set override = is_state('input_boolean.batterie_override', 'on') %}
-        {% set fehlend = (ziel - soc) / 100 * 20 / 0.9 %}
-        {% set reicht = states('sensor.energy_production_today_remaining') | float(0) >= fehlend %}
         {% set alt = this.state %}
         {% if override %}override
-        {% elif fenster and soc < mind and not reicht %}netz_laden
+        {% elif fenster and soc < mind and reicht_nicht %}netz_laden
         {% elif alt == 'netz_laden' and fenster and soc < ziel %}netz_laden
         {% elif soc <= 13 and pv < 300 %}boden
         {% elif alt == 'boden' and soc <= 15 and pv < 300 %}boden
@@ -272,7 +271,7 @@
         {% elif alt == 'voll_halten' and soc >= ziel - 5 and preis < merk %}voll_halten
         {% else %}self_use{% endif %}
         {% endif %}
-
+        
     - name: "Batterie Ziel Modus"
       unique_id: batterie_ziel_modus
       icon: mdi:battery-charging-outline
@@ -283,6 +282,7 @@
         {% else %}Self Use{% endif %}
 
 - binary_sensor:
+
     # WP zieht tatsächlich Strom (Shelly-Messung, nicht Vaillant-Werte)
     - name: "WP laeuft"
       unique_id: wp_laeuft
@@ -372,6 +372,13 @@
         {% set be = state_attr(pl, 'break_even_ct') | float(0) %}
         {% set soc = states('sensor.solax_inverter_battery_capacity') | float(100) %}
         {{ ns.im_plan or (laedt and preis <= be and soc < states('sensor.batterie_soc_ziel') | float(80)) }}
+
+## neu
+    - name: "Batterie Modus Abweichung"
+      unique_id: batterie_modus_abweichung
+      icon: mdi:compare-horizontal
+      state: "{{ has_value('select.batterie_modus') and states('sensor.batterie_ziel_modus') != states('select.batterie_modus') }}"
+      
 
 - trigger:
     - trigger: time_pattern
