@@ -266,12 +266,12 @@
         {% elif fenster and soc < mind and reicht_nicht %}netz_laden
         {% elif alt == 'netz_laden' and fenster and soc < ziel %}netz_laden
         {% elif soc <= 13 and pv < 300 %}boden
-        {% elif alt == 'boden' and soc <= 15 and pv < 300 %}boden
+        {% elif alt == 'boden' and soc <= 15 and pv < 400 %}boden
         {% elif soc >= ziel and preis < merk - 2 and pv < 500 %}voll_halten
-        {% elif alt == 'voll_halten' and soc >= ziel - 5 and preis < merk %}voll_halten
+        {% elif alt == 'voll_halten' and soc >= ziel - 5 and preis < merk + 3 %}voll_halten
         {% else %}self_use{% endif %}
         {% endif %}
-        
+                
     - name: "Batterie Ziel Modus"
       unique_id: batterie_ziel_modus
       icon: mdi:battery-charging-outline
