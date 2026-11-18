@@ -57,7 +57,10 @@
         - sensor.patrice_klimasensor_temperature
         - sensor.wohnzimmer_klimasensor_temperature
         - sensor.schlafzimmer_klimasensor_temperature
-      to: 'available'
+      from: 'unavailable'
+  condition:
+    - condition: template
+      value_template: "{{ trigger.to_state.state not in ['unavailable', 'unknown'] }}"
   variables:
     ziel_switch: >-
       {{ area_entities(area_id(trigger.entity_id)) | select('match', '^switch\.shelly_') | first }}
