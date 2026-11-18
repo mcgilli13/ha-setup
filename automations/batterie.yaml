@@ -338,3 +338,26 @@
         entity_id: input_number.batterie_entladeschwelle
       data:
         value: 70
+
+- id: 'batterie_entladeboden_setzen'
+  alias: Batterie Entladeboden setzen
+  description: Steuert die Entlade-Untergrenze im Self-Use-Betrieb, ohne Manuell-Modus
+  mode: single
+  triggers:
+    - trigger: state
+      entity_id: sensor.batterie_entladeboden_ziel
+      for: "00:01:00"
+    - trigger: homeassistant
+      event: start
+  conditions:
+    - condition: template
+      value_template: >
+        {{ has_value('sensor.batterie_entladeboden_ziel')
+           and states('number.solax_inverter_selfuse_discharge_min_soc') | float(0)
+               != states('sensor.batterie_entladeboden_ziel') | float(0) }}
+  actions:
+    - action: number.set_value
+      target:
+        entity_id: number.solax_inverter_selfuse_discharge_min_soc
+      data:
+        value: "{{ states('sensor.batterie_entladeboden_ziel') | float(13) }}"
