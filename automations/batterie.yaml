@@ -361,3 +361,26 @@
         entity_id: number.solax_inverter_selfuse_discharge_min_soc
       data:
         value: "{{ states('sensor.batterie_entladeboden_ziel') | float(13) }}"
+
+- id: 'batterie_modus_ziel_setzen'
+  alias: Batterie Modus nach Ziel-Modus setzen
+  description: Einziger Schreiber für select.batterie_modus, übernimmt sensor.batterie_ziel_modus
+  enabled: false
+  mode: single
+  triggers:
+    - trigger: state
+      entity_id: sensor.batterie_ziel_modus
+      for: "00:01:00"
+    - trigger: homeassistant
+      event: start
+  conditions:
+    - condition: template
+      value_template: >
+        {{ states('sensor.batterie_ziel_modus') in ['Self Use', 'Netz laden', 'Halten']
+           and states('select.batterie_modus') != states('sensor.batterie_ziel_modus') }}
+  actions:
+    - action: select.select_option
+      target:
+        entity_id: select.batterie_modus
+      data:
+        option: "{{ states('sensor.batterie_ziel_modus') }}"
