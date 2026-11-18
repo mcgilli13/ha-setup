@@ -287,6 +287,12 @@
         {% if is_state('sensor.batterie_entscheidung_grund', 'entladen') %}13
         {% else %}95{% endif %}
 
+    - name: "Batterie Strompreis ct"
+      unique_id: batterie_strompreis_ct
+      unit_of_measurement: "ct/kWh"
+      state_class: measurement
+      state: "{{ (states('sensor.tibber_strompreis') | float(0) * 100) | round(2) }}"
+
 - binary_sensor:
 
     # WP zieht tatsächlich Strom (Shelly-Messung, nicht Vaillant-Werte)
