@@ -365,7 +365,6 @@
 - id: 'batterie_modus_ziel_setzen'
   alias: Batterie Modus nach Ziel-Modus setzen
   description: Einziger Schreiber für select.batterie_modus, übernimmt sensor.batterie_ziel_modus
-  enabled: false
   mode: single
   triggers:
     - trigger: state
