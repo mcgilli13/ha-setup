@@ -288,7 +288,6 @@
   alias: Batterie voll halten beenden
   description: Entladen freigeben, wenn der Strom teurer ist als das Laden, oder die PV läuft
   mode: single
-  triggers:
     - trigger: template
       value_template: >
         {{ is_state('input_boolean.batterie_voll_halten', 'on')
