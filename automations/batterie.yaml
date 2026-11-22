@@ -369,6 +369,11 @@
     - trigger: state
       entity_id: sensor.batterie_ziel_modus
       for: "00:01:00"
+    - trigger: state
+      entity_id: select.batterie_modus
+      for: "00:01:00"
+    - trigger: time_pattern
+      minutes: "/10"
     - trigger: homeassistant
       event: start
   conditions:
