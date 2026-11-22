@@ -285,7 +285,7 @@
         {% set boden = states('sensor.batterie_entladeboden_ziel') | float(13) %}
         {% set alt = this.state %}
         {% if g in ['override', 'netz_laden'] %}Netz laden
-        {% elif (soc <= boden + 1 and pv < 300) or (alt == 'Halten' and pv < 500 and soc < boden + 3) %}Halten
+        {% elif (soc <= boden + 3 and pv < 300) or (alt == 'Halten' and pv < 500 and soc < boden + 3) %}Halten
         {% else %}Self Use{% endif %}
         {% endif %}
 
