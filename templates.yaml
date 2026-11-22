@@ -281,11 +281,10 @@
         {% else %}
         {% set g = states('sensor.batterie_entscheidung_grund') %}
         {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
-        {% set pv = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
         {% set boden = states('sensor.batterie_entladeboden_ziel') | float(13) %}
         {% set alt = this.state %}
         {% if g in ['override', 'netz_laden'] %}Netz laden
-        {% elif (soc <= boden + 3 and pv < 300) or (alt == 'Halten' and pv < 500 and soc < boden + 3) %}Halten
+        {% elif soc <= boden + 1 or (alt == 'Halten' and soc < boden + 3) %}Halten
         {% else %}Self Use{% endif %}
         {% endif %}
 
