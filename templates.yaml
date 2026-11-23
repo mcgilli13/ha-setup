@@ -255,17 +255,15 @@
         {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
         {% set preis = states('sensor.tibber_strompreis') | float(0) * 100 %}
         {% set ziel = states('sensor.batterie_soc_ziel') | float(80) %}
-        {% set mind = states('sensor.batterie_soc_mindest') | float(60) %}
-        {% set merk = states('input_number.batterie_entladeschwelle') | float(40) %}
-        {% set schwelle = merk %}
-        {% set be = state_attr('sensor.batterie_ladeplan_start', 'break_even_ct') | float(0) %}
+        {% set schwelle = states('input_number.batterie_entladeschwelle') | float(40) %}
         {% set fenster = is_state('binary_sensor.batterie_preisfenster_gut', 'on') %}
         {% set reicht_nicht = is_state('binary_sensor.batterie_pv_prognose_reicht_nicht', 'on') %}
         {% set erlaubt = is_state('input_boolean.batterie_netzladen_erlaubt', 'on') %}
         {% set override = is_state('input_boolean.override_batterie_laden', 'on') %}
         {% set alt = this.state %}
         {% if override %}override
-        {% elif erlaubt and fenster and soc < ziel and reicht_nicht %}netz_laden        {% elif soc > 13 and preis >= schwelle %}entladen
+        {% elif erlaubt and fenster and soc < ziel and reicht_nicht %}netz_laden
+        {% elif soc > 13 and preis >= schwelle %}entladen
         {% elif alt == 'entladen' and soc > 12 and preis >= schwelle - 1 %}entladen
         {% else %}sparen{% endif %}
         {% endif %}
