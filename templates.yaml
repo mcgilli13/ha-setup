@@ -282,8 +282,9 @@
         {% set g = states('sensor.batterie_entscheidung_grund') %}
         {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
         {% set alt = this.state %}
+        {% set ziel = states('sensor.batterie_soc_ziel') | float(80) %}
         {% if g in ['override', 'netz_laden'] %}Netz laden
-        {% elif g == 'sparen' and (soc <= 96 or (alt == 'Halten' and soc < 98)) %}Halten
+        {% elif g == 'sparen' and soc < ziel %}Halten
         {% elif g == 'entladen' and (soc <= 14 or (alt == 'Halten' and soc < 16)) %}Halten
         {% else %}Self Use{% endif %}
         {% endif %}
