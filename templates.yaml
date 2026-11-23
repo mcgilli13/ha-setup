@@ -254,11 +254,10 @@
         {% else %}
         {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
         {% set preis = states('sensor.tibber_strompreis') | float(0) * 100 %}
-        {% set tmax = (state_attr('sensor.tibber_strompreis', 'max_price') | float(0)) * 100 %}
         {% set ziel = states('sensor.batterie_soc_ziel') | float(80) %}
         {% set mind = states('sensor.batterie_soc_mindest') | float(60) %}
         {% set merk = states('input_number.batterie_entladeschwelle') | float(40) %}
-        {% set schwelle = [merk, tmax - 3] | max %}
+        {% set schwelle = merk %}
         {% set be = state_attr('sensor.batterie_ladeplan_start', 'break_even_ct') | float(0) %}
         {% set fenster = is_state('binary_sensor.batterie_preisfenster_gut', 'on') %}
         {% set reicht_nicht = is_state('binary_sensor.batterie_pv_prognose_reicht_nicht', 'on') %}
@@ -266,9 +265,7 @@
         {% set override = is_state('input_boolean.override_batterie_laden', 'on') %}
         {% set alt = this.state %}
         {% if override %}override
-        {% elif erlaubt and fenster and soc < mind and reicht_nicht %}netz_laden
-        {% elif erlaubt and alt == 'netz_laden' and preis <= be and soc < ziel %}netz_laden
-        {% elif soc > 13 and preis >= schwelle %}entladen
+        {% elif erlaubt and fenster and soc < ziel and reicht_nicht %}netz_laden        {% elif soc > 13 and preis >= schwelle %}entladen
         {% elif alt == 'entladen' and soc > 12 and preis >= schwelle - 1 %}entladen
         {% else %}sparen{% endif %}
         {% endif %}
@@ -282,11 +279,13 @@
         {% set g = states('sensor.batterie_entscheidung_grund') %}
         {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
         {% set pv = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
+        {% set ziel = states('sensor.batterie_soc_ziel') | float(80) %}
         {% set alt = this.state %}
         {% if g in ['override', 'netz_laden'] %}Netz laden
-        {% elif g == 'entladen' and (soc <= 14 or (alt == 'Halten' and soc < 16)) %}Halten
-        {% elif g == 'sparen' and pv <= 100 and (soc <= 13 or (alt == 'Halten' and soc < 15)) %}Halten
-        {% else %}Self Use{% endif %}
+        {% elif g == 'entladen' and (soc <= 13 or (alt == 'Halten' and soc < 15)) %}Halten
+        {% elif g == 'entladen' %}Self Use
+        {% elif pv > 100 and soc >= ziel %}Self Use
+        {% else %}Halten{% endif %}
         {% endif %}
 
     - name: "Batterie Entladeboden Ziel"
@@ -294,8 +293,9 @@
       unit_of_measurement: "%"
       state: >-
         {% set pv = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
+        {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
         {% set ziel = states('sensor.batterie_soc_ziel') | float(80) | int %}
-        {% if states('sensor.batterie_entscheidung_grund') == 'sparen' and pv > 100 %}{{ ziel }}
+        {% if states('sensor.batterie_entscheidung_grund') == 'sparen' and pv > 100 and soc >= ziel %}{{ ziel }}
         {% else %}10{% endif %}
 
     - name: "Batterie Strompreis ct"
