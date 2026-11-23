@@ -375,21 +375,7 @@
 
     - name: "Batterie Preisfenster gut"
       unique_id: batterie_preisfenster_gut
-      state: >
-        {% set pl = 'sensor.batterie_ladeplan_start' %}
-        {% set jetzt = now() %}
-        {% set ns = namespace(im_plan=false) %}
-        {% for s in state_attr(pl, 'segmente') or [] %}
-          {% if as_datetime(s.start) <= jetzt + timedelta(minutes=1) and jetzt < as_datetime(s.end) %}
-            {% set ns.im_plan = true %}
-          {% endif %}
-        {% endfor %}
-        {# Laufendes Netzladen nicht abbrechen, solange der Preis unter dem Break-even liegt und das Ziel nicht erreicht ist #}
-        {% set laedt = is_state('select.batterie_modus', 'Netz laden') and is_state('input_boolean.batterie_netzladen_auto', 'on') %}
-        {% set preis = states('sensor.tibber_strompreis') | float(9) * 100 %}
-        {% set be = state_attr(pl, 'break_even_ct') | float(0) %}
-        {% set soc = states('sensor.solax_inverter_battery_capacity') | float(100) %}
-        {{ ns.im_plan or (laedt and preis <= be and soc < states('sensor.batterie_soc_ziel') | float(80)) }}
+      state: "{{ is_state('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'on') }}"
 
 ## neu
     - name: "Batterie Modus Abweichung"
