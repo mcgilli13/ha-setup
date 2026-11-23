@@ -281,18 +281,22 @@
         {% else %}
         {% set g = states('sensor.batterie_entscheidung_grund') %}
         {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
+        {% set pv = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
         {% set alt = this.state %}
-        {% set ziel = states('sensor.batterie_soc_ziel') | float(80) %}
         {% if g in ['override', 'netz_laden'] %}Netz laden
-        {% elif g == 'sparen' and soc < ziel %}Halten
         {% elif g == 'entladen' and (soc <= 14 or (alt == 'Halten' and soc < 16)) %}Halten
+        {% elif g == 'sparen' and pv <= 100 and (soc <= 13 or (alt == 'Halten' and soc < 15)) %}Halten
         {% else %}Self Use{% endif %}
         {% endif %}
 
     - name: "Batterie Entladeboden Ziel"
       unique_id: batterie_entladeboden_ziel
       unit_of_measurement: "%"
-      state: "10"
+      state: >-
+        {% set pv = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
+        {% set ziel = states('sensor.batterie_soc_ziel') | float(80) | int %}
+        {% if states('sensor.batterie_entscheidung_grund') == 'sparen' and pv > 100 %}{{ ziel }}
+        {% else %}10{% endif %}
 
     - name: "Batterie Strompreis ct"
       unique_id: batterie_strompreis_ct
