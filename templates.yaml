@@ -291,7 +291,7 @@
     - name: "Batterie Entladeboden Ziel"
       unique_id: batterie_entladeboden_ziel
       unit_of_measurement: "%"
-      state: "13"
+      state: "10"
 
     - name: "Batterie Strompreis ct"
       unique_id: batterie_strompreis_ct
