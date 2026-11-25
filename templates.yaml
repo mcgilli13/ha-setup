@@ -252,12 +252,11 @@
         {% set g = states('sensor.batterie_entscheidung_grund') %}
         {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
         {% set pv = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
-        {% set ziel = states('sensor.batterie_soc_ziel') | float(80) %}
         {% set alt = this.state %}
         {% if g in ['override', 'netz_laden'] %}Netz laden
         {% elif g == 'entladen' and (soc <= 13 or (alt == 'Halten' and soc < 15)) %}Halten
         {% elif g == 'entladen' %}Self Use
-        {% elif pv > 100 and soc >= ziel %}Self Use
+        {% elif pv > 100 %}Self Use
         {% else %}Halten{% endif %}
         {% endif %}
 
@@ -267,10 +266,10 @@
       state: >-
         {% set pv = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
         {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
-        {% set ziel = states('sensor.batterie_soc_ziel') | float(80) | int %}
-        {% if states('sensor.batterie_entscheidung_grund') == 'sparen' and pv > 100 and soc >= ziel %}{{ ziel }}
+        {% set ziel = states('sensor.batterie_soc_ziel') | float(80) %}
+        {% if states('sensor.batterie_entscheidung_grund') == 'sparen' and pv > 100 %}{{ [soc, ziel] | min | int }}
         {% else %}10{% endif %}
-
+        
     - name: "Batterie Strompreis ct"
       unique_id: batterie_strompreis_ct
       unit_of_measurement: "ct/kWh"
