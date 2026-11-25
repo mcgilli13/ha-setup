@@ -10,24 +10,6 @@
         {# Batterie positiv = Entladung -> zählt wie Bezug #}
         {{ (netz + ([batt, 0] | max)) | round(0) }}
 
-    - name: "SolaX Batterie Leistung Dashboard"
-      unique_id: solax_battery_power_dashboard
-      unit_of_measurement: "W"
-      device_class: power
-      state_class: measurement
-      state: >
-        {% set power = states('sensor.solax_inverter_total_battery_power_charge') | float(0) | abs %}
-        {% set status = states('sensor.solax_inverter_bdc_status') | lower | trim %}
-        
-        {% if status == 'charge' or status == 'charging' %}
-          {{ power * -1 }}
-        {% elif status == 'discharge' or status == 'discharging' %}
-          {{ power }}
-        {% else %}
-          0
-        {% endif %}          
-        
-
     # Stabiler Hausverbrauch / Grid-Sensor
     - name: "Hausverbrauch aktuell"
       unique_id: "Hausverbrauch_aktuell"
@@ -238,12 +220,64 @@
         {% set winter = (now().month in [10, 11, 12, 1, 2, 3]) if s == 'Auto' else s == 'Winter' %}
         {{ 80 if winter else 70 }}
 
-    - name: "Batterie Entladeschwelle"
-      unique_id: batterie_entladeschwelle
-      unit_of_measurement: "ct"
-      state: "{{ states('input_number.batterie_entladeschwelle') | float(0) | round(1) }}"
+    - name: "Batterie Entscheidung Grund"
+      unique_id: batterie_entscheidung_grund
+      icon: mdi:battery-sync
+      state: >-
+        {% if not has_value('sensor.solax_inverter_battery_capacity')
+              or not has_value('sensor.tibber_strompreis') %}unbekannt
+        {% else %}
+        {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
+        {% set preis = states('sensor.tibber_strompreis') | float(0) * 100 %}
+        {% set ziel = states('sensor.batterie_soc_ziel') | float(80) %}
+        {% set schwelle = states('input_number.batterie_entladeschwelle') | float(40) %}
+        {% set fenster = is_state('binary_sensor.batterie_preisfenster_gut', 'on') %}
+        {% set reicht_nicht = is_state('binary_sensor.batterie_pv_prognose_reicht_nicht', 'on') %}
+        {% set erlaubt = is_state('input_boolean.batterie_netzladen_erlaubt', 'on') %}
+        {% set override = is_state('input_boolean.override_batterie_laden', 'on') %}
+        {% set alt = this.state %}
+        {% if override %}override
+        {% elif erlaubt and fenster and soc < ziel and reicht_nicht %}netz_laden
+        {% elif soc > 13 and preis >= schwelle %}entladen
+        {% elif alt == 'entladen' and soc > 12 and preis >= schwelle - 1 %}entladen
+        {% else %}sparen{% endif %}
+        {% endif %}
+
+    - name: "Batterie Ziel Modus"
+      unique_id: batterie_ziel_modus
+      icon: mdi:battery-charging-outline
+      state: >-
+        {% if not has_value('sensor.solax_inverter_battery_capacity') %}Self Use
+        {% else %}
+        {% set g = states('sensor.batterie_entscheidung_grund') %}
+        {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
+        {% set pv = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
+        {% set alt = this.state %}
+        {% if g in ['override', 'netz_laden'] %}Netz laden
+        {% elif g == 'entladen' and (soc <= 13 or (alt == 'Halten' and soc < 15)) %}Halten
+        {% elif g == 'entladen' %}Self Use
+        {% elif pv > 100 %}Self Use
+        {% else %}Halten{% endif %}
+        {% endif %}
+
+    - name: "Batterie Entladeboden Ziel"
+      unique_id: batterie_entladeboden_ziel
+      unit_of_measurement: "%"
+      state: >-
+        {% set pv = states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) %}
+        {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
+        {% set ziel = states('sensor.batterie_soc_ziel') | float(80) %}
+        {% if states('sensor.batterie_entscheidung_grund') == 'sparen' and pv > 100 %}{{ [soc, ziel] | min | int }}
+        {% else %}10{% endif %}
+        
+    - name: "Batterie Strompreis ct"
+      unique_id: batterie_strompreis_ct
+      unit_of_measurement: "ct/kWh"
+      state_class: measurement
+      state: "{{ (states('sensor.tibber_strompreis') | float(0) * 100) | round(2) }}"
 
 - binary_sensor:
+
     # WP zieht tatsächlich Strom (Shelly-Messung, nicht Vaillant-Werte)
     - name: "WP laeuft"
       unique_id: wp_laeuft
@@ -318,21 +352,14 @@
 
     - name: "Batterie Preisfenster gut"
       unique_id: batterie_preisfenster_gut
-      state: >
-        {% set pl = 'sensor.batterie_ladeplan_start' %}
-        {% set jetzt = now() %}
-        {% set ns = namespace(im_plan=false) %}
-        {% for s in state_attr(pl, 'segmente') or [] %}
-          {% if as_datetime(s.start) <= jetzt + timedelta(minutes=1) and jetzt < as_datetime(s.end) %}
-            {% set ns.im_plan = true %}
-          {% endif %}
-        {% endfor %}
-        {# Laufendes Netzladen nicht abbrechen, solange der Preis unter dem Break-even liegt und das Ziel nicht erreicht ist #}
-        {% set laedt = is_state('select.batterie_modus', 'Netz laden') and is_state('input_boolean.batterie_netzladen_auto', 'on') %}
-        {% set preis = states('sensor.tibber_strompreis') | float(9) * 100 %}
-        {% set be = state_attr(pl, 'break_even_ct') | float(0) %}
-        {% set soc = states('sensor.solax_inverter_battery_capacity') | float(100) %}
-        {{ ns.im_plan or (laedt and preis <= be and soc < states('sensor.batterie_soc_ziel') | float(80)) }}
+      state: "{{ is_state('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'on') }}"
+
+## neu
+    - name: "Batterie Modus Abweichung"
+      unique_id: batterie_modus_abweichung
+      icon: mdi:compare-horizontal
+      state: "{{ has_value('select.batterie_modus') and states('sensor.batterie_ziel_modus') != states('select.batterie_modus') }}"
+      
 
 - trigger:
     - trigger: time_pattern
@@ -358,34 +385,6 @@
           {{ fixed }}
         {% endif %}
 
-
-- triggers:
-    - trigger: time_pattern
-      minutes: "/30"
-    - trigger: homeassistant
-      event: start
-  actions:
-    - action: weather.get_forecasts
-      target:
-        entity_id: weather.forecast_home
-      data:
-        type: hourly
-      response_variable: wetter
-  sensor:
-    - name: "PV Prognose Bewölkung"
-      unique_id: pv_prognose_bewoelkung
-      unit_of_measurement: "%"
-      state: >
-        {% set jetzt = now() %}
-        {% set ns = namespace(summe=0, n=0) %}
-        {% for f in wetter['weather.forecast_home'].forecast | default([]) %}
-          {% set t = as_datetime(f.datetime) | as_local %}
-          {% if t.date() == jetzt.date() and 9 <= t.hour < 16 and t.hour >= jetzt.hour and f.cloud_coverage is defined %}
-            {% set ns.summe = ns.summe + f.cloud_coverage %}
-            {% set ns.n = ns.n + 1 %}
-          {% endif %}
-        {% endfor %}
-        {{ (ns.summe / ns.n) | round(0) if ns.n > 0 else 'unknown' }}
 
 - select:
     - name: "Batterie Modus"

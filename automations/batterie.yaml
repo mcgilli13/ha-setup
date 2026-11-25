@@ -1,3 +1,13 @@
+# ---------------------------------------------------------------------------
+# Batterie-Automationen
+# Der Ein-Schreiber ist die einzige Stelle, die select.batterie_modus setzt.
+# Alle anderen Automationen setzen nur Helfer oder Untergrenzen.
+# ---------------------------------------------------------------------------
+
+# Speichert den Preis, zu dem Netz geladen wurde, als Entladeschwelle.
+# Wird bei jedem Start von "Netz laden" ausgeführt, egal ob automatisch, manuell oder per Override.
+# Schwelle = Ladepreis / 0,9 (Wirkungsgrad) + 3 ct Marge, höchstens Tagesmaximum - 1 ct.
+# Fehlt der Ladeplan-Preis, dient der aktuelle Tibber-Preis als Ersatz.
 - id: 'batterie_ladepreis_merken'
   alias: Ladepreis merken bei Netz laden
   description: Speichert den Preis, zu dem aus dem Netz geladen wird (automatisch, manuell oder Override)
@@ -13,174 +23,16 @@
         entity_id: input_number.batterie_entladeschwelle
       data:
         value: >
+          {# Ladepreis aus dem Ladeplan, sonst aktueller Tibber-Preis #}
           {% set lade = state_attr('sensor.batterie_ladeplan_start', 'preis_ct') | float(states('sensor.tibber_strompreis') | float(0) * 100) %}
+          {# Tagesmaximum aus Tibber, in ct #}
           {% set max_tag = (state_attr('sensor.tibber_strompreis', 'max_price') | float(0)) * 100 %}
+          {# Schwelle: Ladepreis / Wirkungsgrad + 3 ct, höchstens Tagesmaximum - 1 ct #}
           {{ ([lade / 0.9 + 3, max_tag - 1] | min if max_tag > 0 else lade / 0.9 + 3) | round(1) }}
 
-- alias: Batterie Netzladen im Preisfenster
-  id: batterie_netzladen_preisfenster
-  mode: single
-
-  trigger:
-    - platform: template
-      value_template: >
-        {{ is_state('binary_sensor.batterie_preisfenster_gut', 'on')
-           and is_state('binary_sensor.batterie_pv_prognose_reicht_nicht', 'on')
-
-           and (is_state('select.batterie_modus', 'Self Use')
-              or (is_state('select.batterie_modus', 'Halten') and is_state('input_boolean.batterie_boden_halten', 'on')))
-           and is_state('input_boolean.batterie_netzladen_erlaubt', 'on')
-
-           and states('sensor.solax_inverter_battery_capacity') | float(100) < states('sensor.batterie_soc_mindest') | float(60)
-           and states('sensor.solax_energy_dashboard_solax_solar_power') | float(99999) < 4000
-           and is_state('input_boolean.ev_force_charging', 'off')
-           and is_state('input_boolean.batterie_netzladen_erlaubt', 'on')
-           and is_state('select.solax_ev_charger_charger_use_mode', 'Stop') }}
-      for: "00:02:00"
-
-  action:
-    - action: input_boolean.turn_on
-      target:
-        entity_id: input_boolean.batterie_netzladen_auto
-    - action: select.select_option
-      target:
-        entity_id: select.batterie_modus
-      data:
-        option: "Netz laden"
-
-- alias: Batterie Halten beenden bei Spitzenpreis
-  id: batterie_halten_preis
-  mode: single
-
-  trigger:
-    - platform: template
-      value_template: >
-        {{ is_state('select.batterie_modus', 'Halten')
-           and is_state('input_boolean.batterie_boden_halten', 'off')
-           and is_state('input_boolean.batterie_voll_halten', 'off')
-           and states('sensor.tibber_strompreis') | float(0) * 100 >= states('sensor.batterie_entladeschwelle') | float(999) }}
-      for: "00:01:00"
-      
-  action:
-    - action: select.select_option
-      target:
-        entity_id: select.batterie_modus
-      data:
-        option: "Self Use"
-
-- alias: Batterie Netzladen Sicherheitsabschaltung
-  id: batterie_netzladen_sicherheit
-  mode: single
-
-  trigger:
-    - platform: template
-      value_template: >
-        {{ is_state('select.batterie_modus', 'Netz laden')
-           and states('sensor.solax_inverter_battery_capacity') | float(0) >= states('sensor.batterie_soc_ziel') | float(80) }}
-    - platform: state
-      entity_id: select.batterie_modus
-      to: "Netz laden"
-      for: "01:30:00"
-
-  condition:
-    - condition: state
-      entity_id: select.batterie_modus
-      state: "Netz laden"
-    - condition: state
-      entity_id: input_boolean.override_batterie_laden
-      state: "off"
-
-  action:
-    - action: select.select_option
-      target:
-        entity_id: select.batterie_modus
-      data:
-        option: "Self Use"
-
-- alias: Batterie Netzladen Fenster Ende
-  id: batterie_netzladen_fenster_ende
-  mode: single
-
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.batterie_preisfenster_gut
-      to: "off"
-      for: "00:01:00"
-    # Sonne ist da: Rest macht die PV
-    - platform: numeric_state
-      entity_id: sensor.solax_energy_dashboard_solax_solar_power
-      above: 6000
-      for: "00:05:00"
-    # Modus wurde anderweitig verlassen (z. B. durch die Sicherheitsabschaltung bei 80 %)
-    - platform: state
-      entity_id: select.batterie_modus
-      from: "Netz laden"
-    #  Trigger, damit ein laufendes automatisches Laden sofort stoppt
-    - platform: state
-      entity_id: input_boolean.batterie_netzladen_erlaubt
-      to: "off"
-
-  condition:
-    - condition: state
-      entity_id: input_boolean.batterie_netzladen_auto
-      state: "on"
-    - condition: state
-      entity_id: input_boolean.override_batterie_laden
-      state: "off"
-
-  action:
-    - if:
-        - condition: state
-          entity_id: select.batterie_modus
-          state: "Netz laden"
-      then:
-        - action: select.select_option
-          target:
-            entity_id: select.batterie_modus
-          data:
-            option: "Self Use"
-    - action: input_boolean.turn_off
-      target:
-        entity_id: input_boolean.batterie_netzladen_auto
-
-- id: 'override_batterie_laden_durchsetzen'
-  alias: Override Batterie laden durchsetzen
-  description: Solange der Override an ist, bleibt die Batterie im Modus Netz laden
-  mode: single
-  triggers:
-    # Pegelbasiert: greift beim Einschalten und auch, wenn jemand den Modus wieder wegschaltet
-    - trigger: template
-      value_template: >
-        {{ is_state('input_boolean.override_batterie_laden', 'on')
-           and not is_state('select.batterie_modus', 'Netz laden') }}
-      for: "00:00:10"
-  conditions: []
-  actions:
-    - action: select.select_option
-      target:
-        entity_id: select.batterie_modus
-      data:
-        option: "Netz laden"
-
-- id: 'override_batterie_laden_beenden'
-  alias: Override Batterie laden beenden
-  description: Beim Ausschalten zurück auf Self Use
-  mode: single
-  triggers:
-    - trigger: state
-      entity_id: input_boolean.override_batterie_laden
-      to: "off"
-  conditions:
-    - condition: state
-      entity_id: select.batterie_modus
-      state: "Netz laden"
-  actions:
-    - action: select.select_option
-      target:
-        entity_id: select.batterie_modus
-      data:
-        option: "Self Use"
-
+# Warnt, wenn Netzladen gesetzt ist, die Batterie aber nicht lädt.
+# Typische Ursache: Wechselrichter im Idle-Modus.
+# Die 3 Minuten verhindern Fehlalarme beim Umschalten.
 - id: 'batterie_netzladen_watchdog'
   alias: Batterie Netzladen reagiert nicht
   description: Netz laden ist gesetzt, aber die Batterie lädt nicht (z. B. Wechselrichter im Idle Mode)
@@ -188,6 +40,7 @@
   triggers:
     - trigger: template
       value_template: >
+        {# Modus Netz laden, kein Override, Ladestand unter 90 %, Batterie lädt nicht (Leistung > -1000 W) #}
         {{ is_state('select.batterie_modus', 'Netz laden')
            and is_state('input_boolean.override_batterie_laden', 'off')
            and states('sensor.solax_inverter_battery_capacity') | float(100) < 90
@@ -201,125 +54,9 @@
           Netzladen läuft nicht: Modus "Netz laden", aber die Batterie lädt nicht
           (Wechselrichter: {{ states('sensor.solax_inverter_run_mode') }}).
 
-- id: 'batterie_boden_halten_start'
-  alias: Batterie Boden halten
-  description: Vor dem 10-%-Boden auf Halten schalten, damit der Wechselrichter nicht in den Idle Mode fällt
-  mode: single
-  triggers:
-    - trigger: template
-      value_template: >
-        {{ is_state('select.batterie_modus', 'Self Use')
-           and is_state('input_boolean.batterie_netzladen_erlaubt', 'on')
-           and is_state('input_boolean.override_batterie_laden', 'off')
-           and states('sensor.solax_inverter_battery_capacity') | float(100) <= 13
-           and states('sensor.solax_energy_dashboard_solax_solar_power') | float(99999) < 300 }}
-      for: "00:01:00"
-  conditions: []
-  actions:
-    - action: input_boolean.turn_on
-      target:
-        entity_id: input_boolean.batterie_boden_halten
-    - action: select.select_option
-      target:
-        entity_id: select.batterie_modus
-      data:
-        option: "Halten"
-
-- id: 'batterie_boden_halten_ende'
-  alias: Batterie Boden halten beenden
-  description: Das Halten lösen, sobald die PV läuft oder der Modus anders verlassen wird
-  mode: single
-  triggers:
-    - trigger: template
-      value_template: >
-        {{ is_state('input_boolean.batterie_boden_halten', 'on')
-           and is_state('select.batterie_modus', 'Halten')
-           and states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) >= 500 }}
-      for: "00:05:00"
-    # Start des Netzladens oder Eingriff von Hand
-    - trigger: state
-      entity_id: select.batterie_modus
-      from: "Halten"
-  conditions:
-    - condition: state
-      entity_id: input_boolean.batterie_boden_halten
-      state: "on"
-  actions:
-    - if:
-        - condition: state
-          entity_id: select.batterie_modus
-          state: "Halten"
-      then:
-        - action: select.select_option
-          target:
-            entity_id: select.batterie_modus
-          data:
-            option: "Self Use"
-    - action: input_boolean.turn_off
-      target:
-        entity_id: input_boolean.batterie_boden_halten
-
-- id: 'batterie_voll_halten_start'
-  alias: Batterie voll halten
-  description: Voll geladene Batterie halten, bis sich das Entladen rentiert
-  mode: single
-  triggers:
-    - trigger: template
-      value_template: >
-        {{ is_state('select.batterie_modus', 'Self Use')
-           and is_state('input_boolean.batterie_netzladen_erlaubt', 'on')
-           and is_state('input_boolean.override_batterie_laden', 'off')
-           and states('sensor.solax_inverter_battery_capacity') | float(0) >= states('sensor.batterie_soc_ziel') | float(80)
-           and states('sensor.solax_energy_dashboard_solax_solar_power') | float(99999) < 500
-           and states('sensor.tibber_strompreis') | float(99) * 100 < states('sensor.batterie_entladeschwelle') | float(0) - 2 }}
-      for: "00:01:00"
-  conditions: []
-  actions:
-    - action: input_boolean.turn_on
-      target:
-        entity_id: input_boolean.batterie_voll_halten
-    - action: select.select_option
-      target:
-        entity_id: select.batterie_modus
-      data:
-        option: "Halten"
-
-- id: 'batterie_voll_halten_ende'
-  alias: Batterie voll halten beenden
-  description: Entladen freigeben, wenn der Strom teurer ist als das Laden, oder die PV läuft
-  mode: single
-  triggers:
-    - trigger: template
-      value_template: >
-        {{ is_state('input_boolean.batterie_voll_halten', 'on')
-           and is_state('select.batterie_modus', 'Halten')
-           and states('sensor.tibber_strompreis') | float(0) * 100 >= states('sensor.batterie_entladeschwelle') | float(999) }}
-      for: "00:01:00"
-    - trigger: template
-      value_template: >
-        {{ is_state('input_boolean.batterie_voll_halten', 'on')
-           and is_state('select.batterie_modus', 'Halten')
-           and states('sensor.solax_energy_dashboard_solax_solar_power') | float(0) >= 500 }}
-      for: "00:05:00"
-  conditions:
-    - condition: state
-      entity_id: input_boolean.batterie_voll_halten
-      state: "on"
-  actions:
-    - if:
-        - condition: state
-          entity_id: select.batterie_modus
-          state: "Halten"
-      then:
-        - action: select.select_option
-          target:
-            entity_id: select.batterie_modus
-          data:
-            option: "Self Use"
-    - action: input_boolean.turn_off
-      target:
-        entity_id: input_boolean.batterie_voll_halten
-
+# Setzt die Entladeschwelle auf 70 ct, wenn sie nach einem Neustart oder durch einen Fehler auf 0 steht.
+# Ohne diesen Schutz würde jede Spitze als Entladefenster gelten.
+# Läuft außerdem täglich um 00:05 als Kontrolle.
 - id: 'batterie_entladeschwelle_startwert'
   alias: Entladeschwelle Startwert setzen
   description: Verhindert, dass die Entladeschwelle nach einem Neustart auf 0 steht
@@ -338,3 +75,64 @@
         entity_id: input_number.batterie_entladeschwelle
       data:
         value: 70
+
+# Schreibt die Entlade-Untergrenze des Wechselrichters aus dem Sensor batterie_entladeboden_ziel.
+# Die Untergrenze bestimmt, wie weit die Batterie im Self-Use entladen darf.
+# Der Sensor muss eine Minute stabil sein, damit kurze Schwankungen nichts auslösen.
+# Schreibt nur, wenn Sensor und Wechselrichter-Wert voneinander abweichen.
+- id: 'batterie_entladeboden_setzen'
+  alias: Batterie Entladeboden setzen
+  description: Steuert die Entlade-Untergrenze im Self-Use-Betrieb, ohne Manuell-Modus
+  mode: single
+  triggers:
+    - trigger: state
+      entity_id: sensor.batterie_entladeboden_ziel
+      for: "00:01:00"
+    - trigger: homeassistant
+      event: start
+  conditions:
+    - condition: template
+      value_template: >
+        {# Nur schreiben, wenn der Wert wirklich abweicht #}
+        {{ has_value('sensor.batterie_entladeboden_ziel')
+           and states('number.solax_inverter_selfuse_discharge_min_soc') | float(0)
+               != states('sensor.batterie_entladeboden_ziel') | float(0) }}
+  actions:
+    - action: number.set_value
+      target:
+        entity_id: number.solax_inverter_selfuse_discharge_min_soc
+      data:
+        value: "{{ states('sensor.batterie_entladeboden_ziel') | float(13) }}"
+
+# Der Ein-Schreiber: Übernimmt den Ziel-Modus in den Wechselrichter.
+# Auslöser: Änderung des Ziel-Modus, Änderung des Wechselrichter-Modus (Korrektur bei Abweichung),
+# Zehn-Minuten-Takt (Sicherheitsnetz) und Start von HA.
+# Jeder Auslöser wartet eine Minute, damit kurze Schwankungen nicht sofort schalten.
+# Die Bedingung schreibt nur bei einer echten Abweichung und nur gültige Modi.
+- id: 'batterie_modus_ziel_setzen'
+  alias: Batterie Modus nach Ziel-Modus setzen
+  description: Einziger Schreiber für select.batterie_modus, übernimmt sensor.batterie_ziel_modus
+  mode: single
+  triggers:
+    - trigger: state
+      entity_id: sensor.batterie_ziel_modus
+      for: "00:01:00"
+    - trigger: state
+      entity_id: select.batterie_modus
+      for: "00:01:00"
+    - trigger: time_pattern
+      minutes: "/10"
+    - trigger: homeassistant
+      event: start
+  conditions:
+    - condition: template
+      value_template: >
+        {# Nur gültige Modi, und nur bei Abweichung #}
+        {{ states('sensor.batterie_ziel_modus') in ['Self Use', 'Netz laden', 'Halten']
+           and states('select.batterie_modus') != states('sensor.batterie_ziel_modus') }}
+  actions:
+    - action: select.select_option
+      target:
+        entity_id: select.batterie_modus
+      data:
+        option: "{{ states('sensor.batterie_ziel_modus') }}"
