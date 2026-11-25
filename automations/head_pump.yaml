@@ -271,3 +271,27 @@
     - action: rest_command.ac_thor_power
       data:
         power: "{{ senden }}"
+
+- id: wp_warmwasser_schreiben
+  alias: WP Warmwasser Sollwert schreiben
+  mode: single
+  triggers:
+    - trigger: state
+      entity_id: sensor.wp_warmwasser_ziel
+      for: "00:01:00"
+    - trigger: time_pattern
+      minutes: "/10"
+    - trigger: homeassistant
+      event: start
+  conditions:
+    - condition: template
+      value_template: >
+        {{ has_value('sensor.wp_warmwasser_ziel')
+           and state_attr('water_heater.zuhause_domestic_hot_water_0', 'temperature') | float(0)
+               != states('sensor.wp_warmwasser_ziel') | float(0) }}
+  actions:
+    - action: water_heater.set_temperature
+      target:
+        entity_id: water_heater.zuhause_domestic_hot_water_0
+      data:
+        temperature: "{{ states('sensor.wp_warmwasser_ziel') | int }}"

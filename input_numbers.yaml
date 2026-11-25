@@ -45,3 +45,40 @@ batterie_ladepreis_merker:
   unit_of_measurement: "ct/kWh"
   mode: box
   icon: mdi:battery-charging-100
+
+pv_verbraucher_manuell:
+  name: PV-Verbraucher Manuell
+  icon: mdi:tune-vertical
+  min: 0
+  max: 9000
+  step: 200
+  unit_of_measurement: W
+  mode: slider
+  initial: 0
+
+wp_warmwasser_normal:
+  name: WP Warmwasser normal
+  min: 40
+  max: 60
+  step: 1
+  unit_of_measurement: "°C"
+  mode: slider
+  initial: 44
+
+wp_warmwasser_boost:
+  name: WP Warmwasser Boost
+  min: 45
+  max: 60
+  step: 1
+  unit_of_measurement: "°C"
+  mode: slider
+  initial: 55
+
+heizstab_temp_max:
+  name: Heizstab Temperatur max
+  min: 55
+  max: 65
+  step: 1
+  unit_of_measurement: "°C"
+  mode: slider
+  initial: 62

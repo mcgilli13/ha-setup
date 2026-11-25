@@ -13,3 +13,21 @@ ev_auto_typ:
     - "Mercedes"  # 3-phasig
     - "Cupra"     # 1-phasig
   initial: "Cupra"
+
+pv_verbraucher_geraet:
+  name: PV-Verbraucher Gerät
+  icon: mdi:devices
+  options:
+    - "Heizstab"
+    - "AC-Thor"
+  initial: "Heizstab"
+
+pv_verbraucher_modus:
+  name: PV-Verbraucher Modus
+  icon: mdi:solar-power-variant
+  options:
+    - "Aus"
+    - "Auto"
+    - "Manuell"
+  initial: "Aus"
+

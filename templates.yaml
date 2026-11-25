@@ -269,12 +269,57 @@
         {% set ziel = states('sensor.batterie_soc_ziel') | float(80) %}
         {% if states('sensor.batterie_entscheidung_grund') == 'sparen' and pv > 100 %}{{ [soc, ziel] | min | int }}
         {% else %}10{% endif %}
-        
+
     - name: "Batterie Strompreis ct"
       unique_id: batterie_strompreis_ct
       unit_of_measurement: "ct/kWh"
       state_class: measurement
       state: "{{ (states('sensor.tibber_strompreis') | float(0) * 100) | round(2) }}"
+
+## neu
+    - name: "PV frei"
+      unique_id: pv_frei
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      state: >
+        {{ (states('sensor.pv_ueberschuss_brutto') | float(0)
+           - states('sensor.solax_ev_charger_charge_power_total') | float(0)) | round(0) }}
+
+    - name: "WP Warmwasser Ziel"
+      unique_id: wp_warmwasser_ziel
+      unit_of_measurement: "°C"
+      state: >
+        {% set normal = states('input_number.wp_warmwasser_normal') | int(44) %}
+        {% set boost = states('input_number.wp_warmwasser_boost') | int(55) %}
+        {% set alt = this.state | int(normal) %}
+        {% set stopp = now().hour >= 17
+             or is_state('binary_sensor.wp_netzbezug_1h', 'on')
+             or states('sensor.hausverbrauch_aktuell') | float(0) > 5000 %}
+        {% if stopp %}{{ normal }}
+        {% elif alt == boost or is_state('binary_sensor.wp_boost_bedingung', 'on') %}{{ boost }}
+        {% else %}{{ normal }}{% endif %}
+
+    - name: "Heizstab Ziel Stufe"
+      unique_id: heizstab_ziel_stufe
+      state: >
+        {% set geraet = states('input_select.pv_verbraucher_geraet') %}
+        {% set modus = states('input_select.pv_verbraucher_modus') %}
+        {% set temp = states('sensor.zuhause_domestic_hot_water_0_tank_temperature') | float(99) %}
+        {% set akt = (states('sensor.heizstab_leistung') | float(0) // 3000) | int %}
+        {% if geraet != 'Heizstab' or modus == 'Aus' %}
+          0
+        {% elif temp >= states('input_number.heizstab_temp_max') | float(62)
+             or not is_state('binary_sensor.speicher_temperatur_gueltig', 'on') %}
+          0
+        {% elif modus == 'Manuell' %}
+          {{ (states('input_number.pv_verbraucher_manuell') | float(0) // 3000) | int }}
+        {% elif not is_state('binary_sensor.pv_verbraucher_erlaubt', 'on') %}
+          0
+        {% else %}
+          {# Platzhalter: bisherige Stufenlogik aus heizstab_stufen hier einsetzen #}
+          {{ akt }}
+        {% endif %}
 
 - binary_sensor:
 
@@ -354,13 +399,42 @@
       unique_id: batterie_preisfenster_gut
       state: "{{ is_state('binary_sensor.control_tibber_price_bestpreis_zeitraum', 'on') }}"
 
-## neu
     - name: "Batterie Modus Abweichung"
       unique_id: batterie_modus_abweichung
       icon: mdi:compare-horizontal
       state: "{{ has_value('select.batterie_modus') and states('sensor.batterie_ziel_modus') != states('select.batterie_modus') }}"
-      
 
+## neu
+
+    - name: "PV Verbraucher erlaubt"
+      unique_id: pv_verbraucher_erlaubt
+      state: >
+        {% set soc = states('sensor.solax_inverter_battery_capacity') | float(0) %}
+        {% set laeuft = states('sensor.my_pv_ac_thor_9s_leistung') | float(0) > 0
+                        or states('sensor.heizstab_leistung') | float(0) > 0 %}
+        {{ is_state('binary_sensor.wp_laeuft', 'off')
+           and is_state('input_boolean.ev_force_charging', 'off')
+           and soc >= (75 if laeuft else 80) }}
+
+    - name: "WP Boost Bedingung"
+      unique_id: wp_boost_bedingung
+      delay_on: "00:05:00"
+      state: >
+        {{ 6 <= now().hour < 17
+           and states('sensor.pv_ueberschuss_vor_wp') | float(0) > 4000 }}
+
+    - name: "WP Netzbezug 1h"
+      unique_id: wp_netzbezug_1h
+      delay_on: "01:00:00"
+      state: "{{ states('sensor.hausverbrauch_aktuell') | float(0) > 1000 }}"
+
+    - name: "Speicher Temperatur gueltig"
+      unique_id: speicher_temperatur_gueltig
+      state: >
+        {% set a = states('sensor.zuhause_domestic_hot_water_0_tank_temperature') | float(-1) %}
+        {% set b = state_attr('water_heater.zuhause_domestic_hot_water_0', 'current_temperature') | float(-1) %}
+        {{ 0 < a < 90 and 0 < b < 90 and (a - b) | abs < 3 }}
+        
 - trigger:
     - trigger: time_pattern
       minutes: "/5"
