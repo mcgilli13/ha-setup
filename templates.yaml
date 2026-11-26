@@ -260,7 +260,7 @@
         {% else %}Halten{% endif %}
         {% endif %}
 
-     - name: "Batterie Entladeboden Ziel"
+    - name: "Batterie Entladeboden Ziel"
       unique_id: batterie_entladeboden_ziel
       unit_of_measurement: "%"
       state: >-
