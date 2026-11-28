@@ -73,49 +73,21 @@
           - switch.s1_02
   mode: single
 
-- id: '1765627713197'
-  alias: Kamin ein
-  description: ''
-  triggers:
-  - trigger: time
-    at: '16:00:00'
-    weekday:
-    - fri
-    - thu
-    - wed
-    - tue
-    - mon
-    - sat
-    - sun
-  conditions: []
-  actions:
-  - device_id: c6d1e7a8d811e56e0d208dfa40fc6451
-    domain: button
-    entity_id: 7b9f0b2bbcd11f2bead1dcb1a2f90f34
-    type: press
+- id: 'kamin_zeitplan'
+  alias: Kamin Zeitplan
+  description: Drückt den IR-Taster des Kamins zur Start- und Endzeit
   mode: single
-
-- id: '1765627742859'
-  alias: Kamin aus
-  description: ''
   triggers:
-  - trigger: time
-    at: '20:00:00'
-    weekday:
-    - fri
-    - thu
-    - wed
-    - tue
-    - mon
-    - sat
-    - sun
-  conditions: []
+    - trigger: time
+      at: input_datetime.kamin_start
+      id: ein
+    - trigger: time
+      at: input_datetime.kamin_ende
+      id: aus
   actions:
-  - device_id: c6d1e7a8d811e56e0d208dfa40fc6451
-    domain: button
-    entity_id: 7b9f0b2bbcd11f2bead1dcb1a2f90f34
-    type: press
-  mode: single
+    - action: button.press
+      target:
+        entity_id: button.ir_fireplace_ir_ein_aus
 
 - id: 'steckdose_04_zeitplan'
   alias: Steckdose Aussen Zeitplan
