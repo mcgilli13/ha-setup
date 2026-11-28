@@ -117,3 +117,48 @@
     type: press
   mode: single
 
+- id: 'steckdose_04_zeitplan'
+  alias: Steckdose Aussen Zeitplan
+  description: Schaltet switch.outside_s_04 zwischen Start- und Endzeit ein und aus
+  mode: single
+  triggers:
+    # Einschalten zur Startzeit
+    - trigger: time
+      at: input_datetime.steckdose_04_start
+      id: ein
+    # Ausschalten zur Endzeit
+    - trigger: time
+      at: input_datetime.steckdose_04_ende
+      id: aus
+    # Nach einem Neustart: einschalten, wenn wir gerade im Zeitfenster sind
+    - trigger: homeassistant
+      event: start
+      id: neustart
+  conditions: []
+  actions:
+    - choose:
+        - conditions:
+            - condition: trigger
+              id: ein
+          sequence:
+            - action: switch.turn_on
+              target:
+                entity_id: switch.outside_s_04
+        - conditions:
+            - condition: trigger
+              id: aus
+          sequence:
+            - action: switch.turn_off
+              target:
+                entity_id: switch.outside_s_04
+        - conditions:
+            - condition: trigger
+              id: neustart
+            - condition: template
+              value_template: >
+                {% set jetzt = now().strftime('%H:%M:%S') %}
+                {{ states('input_datetime.steckdose_04_start') <= jetzt < states('input_datetime.steckdose_04_ende') }}
+          sequence:
+            - action: switch.turn_on
+              target:
+                entity_id: switch.outside_s_04

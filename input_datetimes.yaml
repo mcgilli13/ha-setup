@@ -3,3 +3,17 @@ rollladen_oeffnen_fruehestens:
   has_time: true
   has_date: false
   initial: "07:15:00"
+
+steckdose_04_start:
+  name: "Steckdose 04 Start"
+  has_date: false
+  has_time: true
+  initial: "08:00:00"
+  icon: mdi:clock-start
+
+steckdose_04_ende:
+  name: "Steckdose 04 Ende"
+  has_date: false
+  has_time: true
+  initial: "18:00:00"
+  icon: mdi:clock-end
