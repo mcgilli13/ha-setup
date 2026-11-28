@@ -31,3 +31,16 @@ kamin_ende:
   has_time: true
   initial: "20:30:00"
   icon: mdi:clock-end
+
+brunnen_start:
+  name: "Brunnen Start"
+  has_date: false
+  has_time: true
+  initial: "08:00:00"
+  icon: mdi:clock-start
+brunnen_ende:
+  name: "Brunnen Ende"
+  has_date: false
+  has_time: true
+  initial: "19:00:00"
+  icon: mdi:clock-end
