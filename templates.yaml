@@ -434,7 +434,8 @@
       state: >
         {% set a = states('sensor.zuhause_domestic_hot_water_0_tank_temperature') | float(-1) %}
         {% set b = state_attr('water_heater.zuhause_domestic_hot_water_0', 'current_temperature') | float(-1) %}
-        {{ 0 < a < 90 and 0 < b < 90 and (a - b) | abs < 3 }}
+        {% set tol = 6 if is_state('binary_sensor.wp_laeuft', 'on') else 3 %}
+        {{ 0 < a < 90 and 0 < b < 90 and (a - b) | abs < tol }}
 
 - trigger:
     - trigger: time_pattern
