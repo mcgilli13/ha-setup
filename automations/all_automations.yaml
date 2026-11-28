@@ -43,35 +43,37 @@
         message: "Trockner Nachlauf beendet: Wäsche ist kalt"
   mode: single
 
-- id: '1739168879557'
-  alias: Brunnen einschalten
-  description: ''
+- id: 'brunnen_zeitplan'
+  alias: Brunnen Zeitplan
+  description: Schaltet die Brunnen-Schalter zur Start- und Endzeit
+  mode: single
   triggers:
     - trigger: time
-      at: "08:00:00"
-  conditions: []
-  actions:
-    - action: switch.turn_on
-      target:
-        entity_id:
-          - switch.s1_01
-          - switch.s1_02
-  mode: single
-
-- id: '1739168967583'
-  alias: Brunnen ausschalten
-  description: ''
-  triggers:
+      at: input_datetime.brunnen_start
+      id: ein
     - trigger: time
-      at: "19:00:00"
-  conditions: []
+      at: input_datetime.brunnen_ende
+      id: aus
   actions:
-    - action: switch.turn_off
-      target:
-        entity_id:
-          - switch.s1_01
-          - switch.s1_02
-  mode: single
+    - choose:
+        - conditions:
+            - condition: trigger
+              id: ein
+          sequence:
+            - action: switch.turn_on
+              target:
+                entity_id:
+                  - switch.s1_01
+                  - switch.s1_02
+        - conditions:
+            - condition: trigger
+              id: aus
+          sequence:
+            - action: switch.turn_off
+              target:
+                entity_id:
+                  - switch.s1_01
+                  - switch.s1_02
 
 - id: 'kamin_zeitplan'
   alias: Kamin Zeitplan

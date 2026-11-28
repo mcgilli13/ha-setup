@@ -38,6 +38,7 @@ brunnen_start:
   has_time: true
   initial: "08:00:00"
   icon: mdi:clock-start
+  
 brunnen_ende:
   name: "Brunnen Ende"
   has_date: false
